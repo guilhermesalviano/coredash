@@ -3,7 +3,7 @@
   &nbsp;&nbsp;
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=36&pause=2000&color=6366F1&vCenter=true&width=260&height=48&lines=CoreDash" alt="CoreDash" />
 </p>
-CoreDash is a lightweight, self-hosted personal dashboard designed to breathe new life into older hardware.
+CoreDash is a lightweight, self-hosted personal dashboard.
 
 ## 🚀 Overview
 Built for personal automation, system monitoring, and habit tracking, CoreDash is optimized for low-cost, "home lab" style hardware.
