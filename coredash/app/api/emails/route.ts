@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { fetchGoogleGmailAPI } from "@/services/google-gmail-api";
-import { gmailListCache } from "@/lib/gmail-cache";
+import { gmailAliasIdCache, gmailListCache } from "@/lib/gmail-cache";
 import { GmailInternalAPIResponse } from "@/types/gmail";
 import logger from "@/lib/logger";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const pageToken = searchParams.get("pageToken") ?? undefined;
+  const startAtRaw = Number(searchParams.get("startAt") ?? "1");
+  const startAt = Number.isFinite(startAtRaw) && startAtRaw > 0 ? Math.floor(startAtRaw) : 1;
 
   // Don't cache paginated requests
   if (!pageToken) {
@@ -19,9 +21,17 @@ export async function GET(request: Request) {
 
   try {
     const result = await fetchGoogleGmailAPI({ pageToken });
+    const emailsWithRecentId = result.emails.map((email, index) => {
+      const recentId = String(startAt + index);
+      gmailAliasIdCache.set(recentId, email.id);
+      return {
+        ...email,
+        id: recentId,
+      };
+    });
 
     const responseBody: GmailInternalAPIResponse = {
-      emails: result.emails,
+      emails: emailsWithRecentId,
       nextPageToken: result.nextPageToken,
     };
 

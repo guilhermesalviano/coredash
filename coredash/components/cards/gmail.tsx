@@ -194,7 +194,7 @@ export default function GmailCard() {
   const [loadingBody, setLoadingBody] = useState(false);
 
   useEffect(() => {
-    fetch("/api/emails/recent")
+    fetch("/api/emails")
       .then((r) => r.json())
       .then((json) => {
         setEmails(json.data?.emails ?? []);
@@ -208,7 +208,8 @@ export default function GmailCard() {
     if (!nextPageToken || loadingMore) return;
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/emails/recent?pageToken=${nextPageToken}`);
+      const startAt = emails.length + 1;
+      const res = await fetch(`/api/emails?pageToken=${encodeURIComponent(nextPageToken)}&startAt=${startAt}`);
       const json = await res.json();
       setEmails((prev) => [...prev, ...(json.data?.emails ?? [])]);
       setNextPageToken(json.data?.nextPageToken);
@@ -243,7 +244,7 @@ export default function GmailCard() {
 
     setLoadingBody(true);
     try {
-      const res = await fetch(`/api/emails/message?id=${id}`);
+      const res = await fetch(`/api/emails/${id}`);
       const json = await res.json();
       if (json.data) {
         setOpenEmail((prev) => prev ? { ...prev, body: json.data.body } : prev);

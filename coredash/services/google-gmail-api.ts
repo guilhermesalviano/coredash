@@ -58,6 +58,31 @@ export async function markGmailMessageAsRead(id: string): Promise<void> {
   });
 }
 
+export async function resolveRecentGmailMessageId(positionOrId: string): Promise<string | null> {
+  if (!/^\d+$/.test(positionOrId)) return positionOrId;
+
+  const position = Number(positionOrId);
+  if (!Number.isInteger(position) || position < 1) return null;
+
+  const auth = new google.auth.OAuth2(
+    GOOGLE.gmailClientId,
+    GOOGLE.gmailClientSecret,
+  );
+
+  auth.setCredentials({ refresh_token: GOOGLE.gmailRefreshToken });
+
+  const gmail = google.gmail({ version: 'v1', auth });
+
+  const listRes = await gmail.users.messages.list({
+    userId: 'me',
+    maxResults: position,
+    labelIds: ['INBOX'],
+  });
+
+  const messages = listRes.data.messages ?? [];
+  return messages[position - 1]?.id ?? null;
+}
+
 export async function fetchGmailMessage(id: string): Promise<GmailMessage> {
   const auth = new google.auth.OAuth2(
     GOOGLE.gmailClientId,
