@@ -12,6 +12,23 @@ function getEventType(summary: string) {
   return "default";
 }
 
+function formatCalendarName(name: string): string {
+  const emailMatch = name.match(/^[^@]+@(.+)$/);
+  return emailMatch ? emailMatch[1] : name;
+}
+
+const CALENDAR_COLORS = [
+  "#6EE7B7", "#93C5FD", "#FCA5A5", "#FCD34D",
+  "#C4B5FD", "#F9A8D4", "#6EE7F3", "#86EFAC",
+];
+
+// Deterministic color per calendar name
+function getCalendarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return CALENDAR_COLORS[hash % CALENDAR_COLORS.length];
+}
+
 const calendarCache = createMemoryCache<CalendarInternalAPIResponse>(ONE_MINUTE_IN_MS * 60 * 3);
 
 export async function GET(req: NextRequest) {
@@ -44,7 +61,7 @@ export async function GET(req: NextRequest) {
           start: event.start.dateTime ? format(parseISO(event.start.dateTime), "dd/MM - HH:mm") : event.start.date 
             ? format(parseISO(event.start.date), "dd/MM/yyyy") : "Horário não definido",
           end: (event.end.dateTime ? format(event.end.dateTime, "HH:mm") : ""),
-          title: event.summary,
+          title: [formatCalendarName(event.calendarName ?? ""), event.summary || "Ocupado"].filter(Boolean).join(" - "),
           type: getEventType(event.description || event.summary)
         }
       });
@@ -65,10 +82,14 @@ export async function GET(req: NextRequest) {
           id: event.id,
           start: (event.start.dateTime ? format(event.start.dateTime, "HH:mm") : "All day"),
           end: (event.end.dateTime ? format(event.end.dateTime, "HH:mm") : ""),
-          title: event.summary,
-          color: "#6EE7B7",
+          title: [formatCalendarName(event.calendarName ?? ""), event.summary || "Ocupado"].filter(Boolean).join(" - "),
+          color: getCalendarColor(event.calendarName ?? ""),
           type: getEventType(event.summary)
         }
+      }).sort((a, b) => {
+        if (a.start === "All day" && b.start !== "All day") return -1;
+        if (a.start !== "All day" && b.start === "All day") return 1;
+        return a.start.localeCompare(b.start);
       });
 
     const responseBody: CalendarInternalAPIResponse = { 

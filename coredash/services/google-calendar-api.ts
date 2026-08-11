@@ -2,6 +2,7 @@ import { GOOGLE } from '@/config/config';
 import { CalendarEventsResponse } from '@/types/services';
 import { addDays } from 'date-fns';
 import { google } from 'googleapis';
+import logger from '@/lib/logger';
 
 export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> {
  const auth = new google.auth.GoogleAuth({
@@ -21,26 +22,35 @@ export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> 
 
   const calendarsIds = GOOGLE.calendarIds;
 
-  if (!calendarsIds) throw new Error("Env 'GOOGLE_CALENDAR_IDS' not defined.");
+  if (!calendarsIds || calendarsIds.length === 0) throw new Error("Env 'GOOGLE_CALENDAR_IDS' not defined.");
 
   let allEvents: CalendarEventsResponse = [];
 
   for (const calendarId of calendarsIds) {
-    const response = await calendar.events.list({
-      calendarId: calendarId,
-      timeMin: startOfDay,
-      timeMax: endOfDay,
-      singleEvents: true,
-      orderBy: 'startTime',
-    });
+    try {
+      const [calendarMeta, response] = await Promise.all([
+        calendar.calendars.get({ calendarId }),
+        calendar.events.list({
+          calendarId: calendarId,
+          timeMin: startOfDay,
+          timeMax: endOfDay,
+          singleEvents: true,
+          orderBy: 'startTime',
+        }),
+      ]);
 
-    if (response.status !== 200){
-      throw new Error(`Error searching Google Calendar API for ID: ${calendarId}`);
+      if (response.status !== 200) {
+        logger.warn(`Google Calendar: status ${response.status} for calendar "${calendarId}"`);
+        continue;
+      }
+
+      const calendarName = calendarMeta.data.summary || calendarId;
+      const fetchedItems = (response.data.items as CalendarEventsResponse) || [];
+      allEvents.push(...fetchedItems.map((item) => ({ ...item, calendarName })));
+    } catch (err) {
+      // A service account needs explicit access to shared calendars — share it via Google Calendar settings
+      logger.warn(`Google Calendar: failed to fetch calendar "${calendarId}": ${err}`);
     }
-
-    const fetchedItems = (response.data.items as CalendarEventsResponse) || [];
-
-    allEvents.push(...fetchedItems);
   }
 
   return allEvents;

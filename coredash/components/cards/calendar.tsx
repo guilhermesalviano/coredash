@@ -7,6 +7,10 @@ const EVENT_MAPPING: Record<string, { emoji: string; bg: string; color: string }
   default:  { emoji: "🚩", bg: "bg-slate-50", color: "text-slate-600" },
 };
 
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 function nextEventMessage(date: string, title: string) {
   const eventDate = parse(date, "dd/MM/yyyy", new Date());
   if (isNaN(eventDate.getTime())) return `Próximo evento: ${title} em ${date}`;
@@ -51,17 +55,28 @@ export default function CalendarCard({ data }: { data: CalendarCardData }) {
             <span className="event-title">Nenhum evento para hoje</span>
           </div>
         )}
-        {data.todayEvents?.map((ev) => (
+        {data.todayEvents?.map((ev) => {
+          const separatorIdx = ev.title.indexOf(" - ");
+          const calendarName = separatorIdx !== -1 ? ev.title.slice(0, separatorIdx) : null;
+          const eventTitle = separatorIdx !== -1 ? ev.title.slice(separatorIdx + 3) : ev.title;
+          return (
           <div key={ev.id} className="calendar-event max-sm:flex-col max-sm:gap-2!" style={{ borderLeft: `3px solid ${ev.color}` }}>
             <div className="flex items-center gap-2">
-              <span className="event-title">Personal:</span>
-              <span className="event-time">{ev.start}</span>
-              <span>-</span>
-              <span className="event-time">{ev.end}</span>
+              {calendarName && <span className="event-title">{capitalize(calendarName)}:</span>}
+              {ev.start === "All day" ? (
+                <span className="event-time">{ev.start}</span>
+              ) : (
+                <>
+                  <span className="event-time">{ev.start}</span>
+                  <span>-</span>
+                  <span className="event-time">{ev.end}</span>
+                </>
+              )}
             </div>
-            <span className="event-title">{ev.title}</span>
+            <span className="event-title">{eventTitle}</span>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {data.importantEvents?.filter((ev) => ev.type == "birthday").map((ev) => {
