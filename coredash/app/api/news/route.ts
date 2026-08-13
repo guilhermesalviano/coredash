@@ -1,4 +1,5 @@
 import { ONE_MINUTE_IN_MS } from "@/constants";
+import { formatResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
 import { fetchGoogleNewsAPI } from "@/services/google-news-api";
 import { fetchMediastackAPI } from "@/services/mediastack-api";
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     const cached = newsCache.get("default");
     if (cached) {
       logger.info("News data retrieved from cache successfully");
-      return NextResponse.json({ message: "News data from cache successfully", data: cached });
+      return formatResponse(req, { message: "News data from cache successfully", data: cached });
     }
 
     const googleNewsData = await fetchGoogleNewsAPI();
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
 
       newsCache.set("default", news);
 
-      return NextResponse.json({ message: "News data retrieved successfully from serpapi", data: news });
+      return formatResponse(req, { message: "News data retrieved successfully from serpapi", data: news });
     }
 
     const mediastackData = await fetchMediastackAPI();
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     newsCache.set("default", news);
 
-    return NextResponse.json({ message: "News data retrieved successfully from mediastack", data: news });
+    return formatResponse(req, { message: "News data retrieved successfully from mediastack", data: news });
   } catch (error: unknown) {
     console.error(error);
     return NextResponse.json({ error: "Failed to retrieve news data" }, { status: 500 });

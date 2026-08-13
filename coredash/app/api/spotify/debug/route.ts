@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { formatResponse } from "@/lib/api-response";
 import { CONFIG, SPOTIFY } from "@/config/config";
 import { getSpotifyRedirectUri } from "@/utils/spotify-redirect-uri";
 
 export async function GET(req: NextRequest) {
   const resolvedRedirectUri = getSpotifyRedirectUri();
-  return NextResponse.json({
+  return formatResponse(req, {
     resolvedRedirectUri,
     registerThisInSpotifyDashboard: resolvedRedirectUri,
     requestOrigin: req.nextUrl.origin,

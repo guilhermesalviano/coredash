@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabaseConnection } from "@/lib/db";
+import { formatResponse } from "@/lib/api-response";
 import { HabitTracker } from "@/entities/HabitTracker";
 import { ONE_MINUTE_IN_MS } from "@/constants";
 import { createMemoryCache } from "@/utils/in-memory-cache";
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
     const cached = habitCache.get("default");
     if (cached) {
       logger.info("Habits data retrieved from cache successfully");
-      return NextResponse.json({ message: "Habits data from cache successfully", data: cached });
+      return formatResponse(req, { message: "Habits data from cache successfully", data: cached });
     }
 
     const db = await getDatabaseConnection();
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     habitCache.set("default", completions);
 
-    return NextResponse.json({ 
+    return formatResponse(req, { 
       message: "Habits retrieved successfully", 
       data: completions
     });

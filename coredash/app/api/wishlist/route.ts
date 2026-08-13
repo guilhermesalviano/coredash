@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabaseConnection } from "@/lib/db";
+import { formatResponse } from "@/lib/api-response";
 import { format } from "date-fns";
 import { WishlistAmazon } from "@/entities/WishlistAmazon";
 import { WishlistInternalAPIResponse } from "@/types/wishlist-api";
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
   try {
     const cached = wishlistCache.get("default");
     if (cached) {
-      return NextResponse.json({ message: "Wishlist data from cache successfully", data: cached });
+      return formatResponse(req, { message: "Wishlist data from cache successfully", data: cached });
     }
 
     const today = new Date();
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest) {
 
     wishlistCache.set("default", wishlistData);
 
-    return NextResponse.json({ message: "Products data retrieved successfully", data: wishlistData }, { status: 200 })
+    return formatResponse(req, { message: "Products data retrieved successfully", data: wishlistData }, { status: 200 })
   } catch (error: unknown) {
     console.error(error)
     return NextResponse.json({ error: "Failed to retrieve products data" }, { status: 500 });

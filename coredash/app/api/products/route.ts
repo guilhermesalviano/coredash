@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { formatResponse } from "@/lib/api-response";
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function GET(req: NextRequest) {
       { name: "MacBook Air M3", price: "R$ 12.799", store: "Kabum", alert: true },
     ];
     
-    return NextResponse.json({ message: "Products data retrieved successfully", data: mockProducts }, { status: 200 })
+    return formatResponse(req, { message: "Products data retrieved successfully", data: mockProducts }, { status: 200 })
   } catch (error: unknown) {
     console.error(error)
     return NextResponse.json({ error: "Failed to retrieve products data" }, { status: 500 });

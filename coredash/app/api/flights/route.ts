@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabaseConnection } from "@/lib/db";
+import { formatResponse } from "@/lib/api-response";
 import { FlightCrawled } from "@/entities/FlightCrawled";
 import { format } from "date-fns";
 
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
       .getRawMany();
     
     if (!flights) {
-      return NextResponse.json({ message: "No flights data retrieved", data: null }, { status: 200 })
+      return formatResponse(req, { message: "No flights data retrieved", data: null }, { status: 200 })
     }
 
     const flightsResult = flights.map((flight) => ({
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
       trend: "▼",
     })).slice(0, 5);
 
-    return NextResponse.json({ message: "Flights data retrieved successfully", data: flightsResult }, { status: 200 })
+    return formatResponse(req, { message: "Flights data retrieved successfully", data: flightsResult }, { status: 200 })
   } catch (error: unknown) {
     console.error(error)
     return NextResponse.json({ error: "Failed to retrieve flights data" }, { status: 500 });

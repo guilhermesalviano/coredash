@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@toon-format/toon": "^4.1.1",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
     "googleapis": "^171.4.0",
@@ -27,7 +28,9 @@
     "yahoo-finance2": "^3.13.2"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["sqlite3"]
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,6 +1,7 @@
 import { fetchOpenMeteoAPI } from "@/services/open-meteo-api";
 import { NextRequest, NextResponse } from "next/server";
 import { ONE_MINUTE_IN_MS } from "@/constants";
+import { formatResponse } from "@/lib/api-response";
 import { getWeatherCondition, getWeatherIcon } from "@/utils/weather";
 import { withRetry } from "@/utils/retry";
 import { createMemoryCache } from "@/utils/in-memory-cache";
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
     const cached = weatherCache.get(cacheKey);
     if (cached) {
       logger.info("Weather data retrieved from cache successfully");
-      return NextResponse.json({ message: "Weather data from cache successfully", data: cached });
+      return formatResponse(req, { message: "Weather data from cache successfully", data: cached });
     }
 
     const weather = await withRetry(() =>
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     weatherCache.set(cacheKey, weatherData);
 
-    return NextResponse.json({ message: "Weather data retrieved successfully", data: weatherData }, { status: 200 })
+    return formatResponse(req, { message: "Weather data retrieved successfully", data: weatherData }, { status: 200 })
   } catch (error: unknown) {
     console.error("All retry attempts failed:", error);
 
