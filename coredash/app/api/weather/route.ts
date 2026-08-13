@@ -1,5 +1,5 @@
 import { fetchOpenMeteoAPI } from "@/services/open-meteo-api";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { ONE_MINUTE_IN_MS } from "@/constants";
 import { getWeatherCondition, getWeatherIcon } from "@/utils/weather";
 import { withRetry } from "@/utils/retry";
@@ -8,6 +8,7 @@ import { WeatherInternalAPIResponse } from "@/types/weather-api";
 import getUserCity from "@/utils/get-user-city";
 import { LOCATION } from "@/config/config";
 import { isErrorResponse } from "@/utils/check-service-error";
+import { apiResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
 
 const weatherCache = createMemoryCache<WeatherInternalAPIResponse>(ONE_MINUTE_IN_MS * 60 * 1);
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
     const cached = weatherCache.get(cacheKey);
     if (cached) {
       logger.info("Weather data retrieved from cache successfully");
-      return NextResponse.json({ message: "Weather data from cache successfully", data: cached });
+      return apiResponse(req, { message: "Weather data from cache successfully", data: cached });
     }
 
     const weather = await withRetry(() =>
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    if (isErrorResponse(weather)) return NextResponse.json({ error: "Failed to retrieve weather data",  reason: weather.error }, { status: 503 });
+    if (isErrorResponse(weather)) return apiResponse(req, { error: "Failed to retrieve weather data",  reason: weather.error }, { status: 503 });
 
     const hours = weather.hourly.time
       .map((t: string, index: number) => ({
@@ -64,14 +65,15 @@ export async function GET(req: NextRequest) {
 
     weatherCache.set(cacheKey, weatherData);
 
-    return NextResponse.json({ message: "Weather data retrieved successfully", data: weatherData }, { status: 200 })
+    return apiResponse(req, { message: "Weather data retrieved successfully", data: weatherData }, { status: 200 })
   } catch (error: unknown) {
     console.error("All retry attempts failed:", error);
 
     const isNetworkError =
       error instanceof TypeError && error.message.includes("fetch");
 
-    return NextResponse.json(
+    return apiResponse(
+      req,
       {
         error: "Failed to retrieve weather data",
         reason: isNetworkError ? "Network error" : "External API error",

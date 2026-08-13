@@ -9,6 +9,7 @@ import { TodoCheck } from "@/entities/TodoCheck";
 import { createMemoryCache } from "@/utils/in-memory-cache";
 import { TodoInternalAPIResponse } from "@/types/todo";
 import { ONE_MINUTE_IN_MS } from "@/constants";
+import { apiResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
 
 const PRIORITYWEIGHT: Record<string, number> = {
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
   if (cached) {
     logger.info("Todos data retrieved from cache successfully");
     const filteredCached = onlyUnchecked ? cached.filter((todo) => todo.checked === 0) : cached;
-    return NextResponse.json({ message: "Todos data retrieved from cache", data: filteredCached });
+    return apiResponse(req, { message: "Todos data retrieved from cache", data: filteredCached });
   }
 
   try {
@@ -118,10 +119,10 @@ export async function GET(req: NextRequest) {
       ? todosMapped.filter((todo) => todo.checked === 0)
       : todosMapped;
 
-    return NextResponse.json({ message: "Todos data retrieved successfully", data: responseData });
+    return apiResponse(req, { message: "Todos data retrieved successfully", data: responseData });
   } catch (error: unknown) {
     console.error(error)
-    return NextResponse.json({ error: "Failed to retrieve todos data" }, { status: 500 });
+    return apiResponse(req, { error: "Failed to retrieve todos data" }, { status: 500 });
   }
 }
 

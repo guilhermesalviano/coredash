@@ -20,6 +20,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "reflect-metadata": "^0.2.2",
+    "smol-toml": "^1.8.0",
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
@@ -27,7 +28,9 @@
     "yahoo-finance2": "^3.13.2"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["sqlite3"]
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

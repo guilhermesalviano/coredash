@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { apiResponse } from "@/lib/api-response";
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,9 +9,9 @@ export async function GET(req: NextRequest) {
       { id: 3, label: "Curso de inglês", current: 8, target: 12, unit: "meses", color: "#FDE68A" },
     ];
     
-    return NextResponse.json({ message: "Goals data retrieved successfully", data: mockGoals }, { status: 200 })
+    return apiResponse(req, { message: "Goals data retrieved successfully", data: mockGoals }, { status: 200 })
   } catch (error: unknown) {
     console.error(error)
-    return NextResponse.json({ error: "Failed to retrieve goals data" }, { status: 500 });
+    return apiResponse(req, { error: "Failed to retrieve goals data" }, { status: 500 });
   }
 }

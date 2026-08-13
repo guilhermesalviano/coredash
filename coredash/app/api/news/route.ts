@@ -6,7 +6,8 @@ import { isErrorResponse } from "@/utils/check-service-error";
 import { createMemoryCache } from "@/utils/in-memory-cache";
 import { parseRelativeDate } from "@/utils/parse-relative-date";
 import { differenceInHours } from "date-fns";
-import { NextRequest, NextResponse } from "next/server";
+import { apiResponse } from "@/lib/api-response";
+import { NextRequest } from "next/server";
 
 interface NewsReturn {
   id: number;
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     const cached = newsCache.get("default");
     if (cached) {
       logger.info("News data retrieved from cache successfully");
-      return NextResponse.json({ message: "News data from cache successfully", data: cached });
+      return apiResponse(req, { message: "News data from cache successfully", data: cached });
     }
 
     const googleNewsData = await fetchGoogleNewsAPI();
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
 
       newsCache.set("default", news);
 
-      return NextResponse.json({ message: "News data retrieved successfully from serpapi", data: news });
+      return apiResponse(req, { message: "News data retrieved successfully from serpapi", data: news });
     }
 
     const mediastackData = await fetchMediastackAPI();
@@ -60,9 +61,9 @@ export async function GET(req: NextRequest) {
 
     newsCache.set("default", news);
 
-    return NextResponse.json({ message: "News data retrieved successfully from mediastack", data: news });
+    return apiResponse(req, { message: "News data retrieved successfully from mediastack", data: news });
   } catch (error: unknown) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to retrieve news data" }, { status: 500 });
+    return apiResponse(req, { error: "Failed to retrieve news data" }, { status: 500 });
   }
 }

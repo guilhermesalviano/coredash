@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { apiResponse } from "@/lib/api-response";
 import { fetchSpotifySearch } from "@/services/spotify-api";
 import logger from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
-  if (!q) return NextResponse.json({ data: [] });
+  if (!q) return apiResponse(req, { data: [] });
 
   try {
     const data = await fetchSpotifySearch(q);
-    return NextResponse.json({ data });
+    return apiResponse(req, { data });
   } catch (err: any) {
     logger.error("Spotify search error", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return apiResponse(req, { error: err.message }, { status: 500 });
   }
 }

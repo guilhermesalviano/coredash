@@ -1,20 +1,20 @@
-import { NextResponse } from "next/server";
 import { fetchGmailMessage, resolveRecentGmailMessageId } from "@/services/google-gmail-api";
 import { gmailAliasIdCache, gmailMessageCache } from "@/lib/gmail-cache";
 import { GmailMessage } from "@/types/gmail";
+import { apiResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   if (!id) {
-    return NextResponse.json({ error: "Missing required route param: id" }, { status: 400 });
+    return apiResponse(request, { error: "Missing required route param: id" }, { status: 400 });
   }
 
   const resolvedId = gmailAliasIdCache.get(id) ?? await resolveRecentGmailMessageId(id);
 
   if (!resolvedId) {
-    return NextResponse.json({ error: "Email not found" }, { status: 404 });
+    return apiResponse(request, { error: "Email not found" }, { status: 404 });
   }
 
   if (resolvedId !== id) {
@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const cached = gmailMessageCache.get(resolvedId);
   if (cached) {
     logger.info(`Gmail message ${resolvedId} retrieved from cache`);
-    return NextResponse.json({ message: "Email retrieved from cache", data: cached });
+    return apiResponse(request, { message: "Email retrieved from cache", data: cached });
   }
 
   try {
@@ -32,9 +32,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
     gmailMessageCache.set(resolvedId, email);
 
-    return NextResponse.json({ message: "Email retrieved successfully", data: email });
+    return apiResponse(request, { message: "Email retrieved successfully", data: email });
   } catch (error: unknown) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to retrieve Gmail message" }, { status: 500 });
+    return apiResponse(request, { error: "Failed to retrieve Gmail message" }, { status: 500 });
   }
 }

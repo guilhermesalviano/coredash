@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { fetchGoogleCalendarAPI } from "@/services/google-calendar-api";
 import { format, parseISO } from "date-fns";
 import { createMemoryCache } from "@/utils/in-memory-cache";
 import { ONE_MINUTE_IN_MS } from "@/constants";
 import { CalendarInternalAPIResponse } from "@/types/calendar";
+import { apiResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
 
 function getEventType(summary: string) {
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
   const cached = calendarCache.get(cacheKey);
   if (cached) {
     logger.info("Calendar data retrieved from cache successfully");
-    return NextResponse.json({ message: "Calendar data from cache successfully", data: cached });
+    return apiResponse(req, { message: "Calendar data from cache successfully", data: cached });
   }
 
   try {
@@ -103,9 +104,9 @@ export async function GET(req: NextRequest) {
 
     calendarCache.set(cacheKey, responseBody)
 
-    return NextResponse.json({ message: "Calendar data retrieved successfully", data: responseBody } );
+    return apiResponse(req, { message: "Calendar data retrieved successfully", data: responseBody } );
   } catch (error: unknown) {
     console.error(error)
-    return NextResponse.json({ error: "Failed to retrieve calendar data" }, { status: 500 });
+    return apiResponse(req, { error: "Failed to retrieve calendar data" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { HabitTracker } from "@/entities/HabitTracker";
 import { ONE_MINUTE_IN_MS } from "@/constants";
 import { createMemoryCache } from "@/utils/in-memory-cache";
 import { Repository } from "typeorm";
+import { apiResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
 
 const habitCache = createMemoryCache<Record<string, string[]>>(ONE_MINUTE_IN_MS * 60 * 3);
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
     const cached = habitCache.get("default");
     if (cached) {
       logger.info("Habits data retrieved from cache successfully");
-      return NextResponse.json({ message: "Habits data from cache successfully", data: cached });
+      return apiResponse(req, { message: "Habits data from cache successfully", data: cached });
     }
 
     const db = await getDatabaseConnection();
@@ -47,13 +48,13 @@ export async function GET(req: NextRequest) {
 
     habitCache.set("default", completions);
 
-    return NextResponse.json({ 
+    return apiResponse(req, { 
       message: "Habits retrieved successfully", 
       data: completions
     });
 
   } catch (error) {
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+    return apiResponse(req, { message: "Error", error }, { status: 500 });
   }
 }
 

@@ -5,13 +5,14 @@ import { HabitTracker } from "@/entities/HabitTracker";
 import { ONE_MINUTE_IN_MS } from "@/constants";
 import { StreakResponse } from "@/types/habit";
 import { createMemoryCache } from "@/utils/in-memory-cache";
+import { apiResponse } from "@/lib/api-response";
 
 const habitCache = createMemoryCache<StreakResponse>(ONE_MINUTE_IN_MS * 60 * 3);
 
 export async function GET(req: NextRequest) {
   const cached = habitCache.get("default");
   if (cached) {
-    return NextResponse.json({ message: "Habit data from cache successfully", data: cached });
+    return apiResponse(req, { message: "Habit data from cache successfully", data: cached });
   }
 
   try {
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
     ];
 
     if (records.length === 0) {
-      return NextResponse.json({ message: "Habit retrieve successfully", data: { streak: 0 } });
+      return apiResponse(req, { message: "Habit retrieve successfully", data: { streak: 0 } });
     };
 
     let streak = 0;
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
       if (i === 0) {
         const diffDays = Math.floor((today.getTime() - recordDate.getTime()) / (1000 * 3600 * 24));
         if (diffDays > 1) {
-          return NextResponse.json({ message: "Habit retrieve successfully", data: { streak: 0 } }, { status: 200 })
+          return apiResponse(req, { message: "Habit retrieve successfully", data: { streak: 0 } }, { status: 200 })
         };
         
         lastDayOfWeek = new Date(recordDate);
@@ -76,10 +77,10 @@ export async function GET(req: NextRequest) {
 
     habitCache.set("default", streakMap);
 
-    return NextResponse.json({ message: "Habit retrieve successfully", data: streakMap });
+    return apiResponse(req, { message: "Habit retrieve successfully", data: streakMap });
   } catch (error: unknown) {
     console.error(error)
-    return NextResponse.json({ error: "Failed to retrieve todos data" }, { status: 500 });
+    return apiResponse(req, { error: "Failed to retrieve todos data" }, { status: 500 });
   }
 }
 
