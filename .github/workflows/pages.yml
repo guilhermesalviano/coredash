@@ -2,7 +2,7 @@ name: Deploy landing page to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, claude/landing-page-generation-fkwo5f]
     paths:
       - 'docs/**'
       - '.github/workflows/pages.yml'
