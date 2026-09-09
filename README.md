@@ -45,6 +45,13 @@ npm install
 npm run dev
 ```
 
+For production mode, use `npm start`. It starts the standalone server and builds it automatically on the first run when needed:
+
+```bash
+cd coredash
+npm start
+```
+
 Start the mock external services from the repository root:
 
 ```bash
