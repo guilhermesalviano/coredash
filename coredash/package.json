@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "docker compose up -d && next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "node .next/standalone/server.js",
+    "lint": "eslint",
+    "mcp": "tsx mcp/stdio.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@modelcontextprotocol/server": "^2.0.0",
     "@toon-format/toon": "^4.1.1",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
@@ -25,7 +27,8 @@
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
-    "yahoo-finance2": "^3.13.2"
+    "yahoo-finance2": "^3.13.2",
+    "zod": "^4.6.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -43,6 +46,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

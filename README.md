@@ -84,6 +84,22 @@ API routes preserve the existing endpoint paths and response envelopes. Weather,
 
 The dashboard AI assistant uses `/api/ai/chat`, which streams responses through the configured server-side Ollama provider. Set `OLLAMA_URL` and `AI_MODEL` when using a non-default Ollama installation or model. The narrative endpoint also uses the server-side AI integration.
 
+### MCP server
+
+CoreDash starts its MCP server together with the standard Next.js server at `http://localhost:3000/api/mcp`. Start CoreDash normally, then configure the MCP-compatible client with:
+
+```json
+{
+  "mcpServers": {
+    "coredash": {
+      "url": "http://localhost:3000/api/mcp"
+    }
+  }
+}
+```
+
+The server exposes dashboard reads, todo and habit updates, Gmail actions, Spotify controls, and the CoreDash AI assistant. `npm run mcp` remains available when an MCP client specifically requires a stdio-launched server. Set `CORE_DASH_URL` when the MCP endpoint must call a CoreDash instance running at another address.
+
 ## Deployment
 
 CoreDash is designed for Docker-based deployment on low-cost or home-lab hardware:
