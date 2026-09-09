@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { DataSource, DataSourceOptions } from "typeorm";
+import { DataSource, type DataSourceOptions } from "typeorm";
 
 import { Todo } from "@/entities/Todo";
 import { TodoRecurrence } from "@/entities/TodoRecurrence";
@@ -13,16 +13,27 @@ import { HabitTracker } from "@/entities/HabitTracker";
 import { Notification } from "@/entities/Notification";
 import { CONFIG, DB } from "@/config/config";
 
-let initializationPromise: Promise<DataSource> | null = null;
+const entities = [
+  Todo,
+  TodoRecurrence,
+  WishlistAmazon,
+  TodoCheck,
+  FlightCrawled,
+  User,
+  HabitTracker,
+  Weather,
+  WeatherHour,
+  Notification,
+];
 
-const devType: DataSourceOptions = {
+const sqliteOptions: DataSourceOptions = {
   type: "sqlite",
-  database: "database.db",
-  synchronize: true,
-  logging: true,
+  database: DB.sqlitePath,
+  synchronize: DB.synchronize,
+  logging: CONFIG.isDev,
 };
 
-const prodType: DataSourceOptions = {
+const mariaDbOptions: DataSourceOptions = {
   type: "mariadb",
   host: DB.host,
   port: DB.port,
@@ -31,36 +42,31 @@ const prodType: DataSourceOptions = {
   password: DB.password,
   synchronize: false,
   logging: false,
-}
-
-const devOrProdDataSource = {
-  ...(CONFIG.isDev ? devType : prodType),
-  entities: [Todo, TodoRecurrence, WishlistAmazon, TodoCheck, FlightCrawled, User, HabitTracker, Weather, WeatherHour, Notification],
-  subscribers: [],
-  migrations: [],
 };
 
-export const AppDataSource = new DataSource(devOrProdDataSource);
+export const AppDataSource = new DataSource({
+  ...(DB.driver === "sqlite" ? sqliteOptions : mariaDbOptions),
+  entities,
+  subscribers: [],
+  migrations: [],
+});
 
-export const getDatabaseConnection = async () => {
-  if (AppDataSource.isInitialized) {
-    return AppDataSource;
-  }
+let initializationPromise: Promise<DataSource> | null = null;
 
-  if (initializationPromise) {
-    return initializationPromise;
-  }
+export async function getDatabaseConnection(): Promise<DataSource> {
+  if (AppDataSource.isInitialized) return AppDataSource;
+  if (initializationPromise) return initializationPromise;
 
   initializationPromise = AppDataSource.initialize()
-    .then((ds) => {
-      console.log("Data Source has been initialized!");
-      return ds;
+    .then((dataSource) => {
+      console.info(`Database initialized using ${DB.driver}`);
+      return dataSource;
     })
-    .catch((err) => {
+    .catch((error: unknown) => {
       initializationPromise = null;
-      console.error("Error during Data Source initialization", err);
-      throw err;
+      console.error("Database initialization failed", error);
+      throw error;
     });
 
   return initializationPromise;
-};
+}

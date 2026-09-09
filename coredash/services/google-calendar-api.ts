@@ -24,7 +24,7 @@ export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> 
 
   if (!calendarsIds || calendarsIds.length === 0) throw new Error("Env 'GOOGLE_CALENDAR_IDS' not defined.");
 
-  let allEvents: CalendarEventsResponse = [];
+  const allEvents: CalendarEventsResponse = [];
 
   for (const calendarId of calendarsIds) {
     try {

@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from "typeorm";
 
 @Entity("flight_crawled")
+@Index(["searchDate"])
 export class FlightCrawled {
   @PrimaryGeneratedColumn()
   id!: number;

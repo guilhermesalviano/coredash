@@ -1,4 +1,3 @@
-import { gunzipSync, gzipSync } from "zlib";
 
 /**
  * interface CacheEntry<T> { data: T; expiresAt: number; }

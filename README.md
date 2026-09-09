@@ -10,7 +10,9 @@ Run the published container:
 
 ```bash
 docker run -d \
-  -p 3000:3000 \
+  --env-file coredash/.env \
+  -p 127.0.0.1:3000:3000 \
+  -v coredash-data:/data \
   --name coredash \
   guilhermesalviano/coredash:latest
 ```
@@ -26,7 +28,7 @@ services:
     restart: unless-stopped
 ```
 
-Configure the environment variables from `coredash/.env.example` before deploying integrations such as Google, Spotify, stocks, news, and the database.
+Copy `coredash/.env.example` to `coredash/.env` and configure only the integrations you use. The default single-host setup uses SQLite in the persistent `/data` volume. For a local Docker deployment, use `docker compose -f docker-compose.local.yml up -d --build`. When Ollama runs on the host, set `OLLAMA_URL=http://host.docker.internal:11434` in `coredash/.env`; native Node runs can keep `http://localhost:11434`.
 
 ## Development
 

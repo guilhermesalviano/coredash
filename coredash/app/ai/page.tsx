@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDashboard } from "@/hooks/useDashboard";

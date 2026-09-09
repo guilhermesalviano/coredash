@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from "typeorm";
 
 @Entity("wishlist_amazon")
+@Index(["title", "searchDate"])
 export class WishlistAmazon {
   @PrimaryGeneratedColumn()
   id!: number;

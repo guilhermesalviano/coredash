@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Card from "@/components/card";
+import { useVisibilityPolling } from "@/hooks/use-visibility-polling";
 import {
   SpotifyDevice,
   SpotifyLibrary,
@@ -104,11 +105,12 @@ function ProgressBar({ progressMs, durationMs, isPlaying }: {
 }) {
   const [localMs, setLocalMs] = useState(progressMs);
   const rafRef = useRef<number>(0);
-  const lastTickRef = useRef(Date.now());
+  const lastTickRef = useRef<number>(0);
 
   useEffect(() => {
-    setLocalMs(progressMs);
+    const frame = requestAnimationFrame(() => setLocalMs(progressMs));
     lastTickRef.current = Date.now();
+    return () => cancelAnimationFrame(frame);
   }, [progressMs]);
 
   useEffect(() => {
@@ -476,7 +478,6 @@ export default function SpotifyCard() {
   const [data, setData] = useState<SpotifyPlayerResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [embedUri, setEmbedUri] = useState<string | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -489,11 +490,7 @@ export default function SpotifyCard() {
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
-    pollRef.current = setInterval(refresh, 12_000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [refresh]);
+  useVisibilityPolling(refresh, 12_000);
 
   const act = useCallback(async (body: object) => {
     await control(body);
@@ -542,7 +539,7 @@ export default function SpotifyCard() {
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--foreground)", marginBottom: 4 }}>Connect Spotify</div>
             <div style={{ fontSize: 12, color: "var(--muted)", maxWidth: 240 }}>
-              Link your account to see what's playing, browse your library, and control playback.
+              Link your account to see what&apos;s playing, browse your library, and control playback.
             </div>
           </div>
           <a

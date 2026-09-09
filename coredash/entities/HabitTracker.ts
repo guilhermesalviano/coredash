@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
 
 @Entity("habit_tracker")
+@Index(["habit", "createdAt"])
 export class HabitTracker {
   @PrimaryGeneratedColumn()
   id!: number;

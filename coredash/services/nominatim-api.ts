@@ -1,4 +1,4 @@
-import { EXTERNAL_SERVICES, UPDATE_INTERVAL_MS } from "@/config/config";
+import { EXTERNAL_SERVICES } from "@/config/config";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import logger from "@/lib/logger";
 import { ErrorResponse, LocationResponse, NominatimProps } from "@/types/services";

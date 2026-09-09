@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import OllamaProvider from "@/lib/ai/providers/ollama";
 import type { ChatRequest } from "@/features/ai/types";
+import { checkRateLimit, requestRateLimitKey } from "@/lib/rate-limit";
 
 const SYSTEM_PROMPT = "You are Rocky, a smart and concise personal assistant embedded in a personal dashboard. Be helpful, direct, and warm. Keep answers brief unless detail is needed. You can help with tasks, planning, questions, and anything the user needs.";
 
 export async function POST(request: NextRequest) {
+  const rateLimit = checkRateLimit(`ai:${requestRateLimitKey(request)}`, 10, 60_000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Too many AI requests" }, { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } });
+  }
   try {
     const body = (await request.json()) as ChatRequest;
     if (!Array.isArray(body.messages) || body.messages.some((message) => !message?.content || !["user", "assistant"].includes(message.role))) {
