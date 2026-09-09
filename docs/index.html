@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoreDash — self-hosted personal dashboard</title>
+<meta name="description" content="CoreDash is a self-hosted personal dashboard for weather, calendar, portfolio, habits, inbox and price alerts — run it with one docker command.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235a6e0f'/%3E%3Crect x='7' y='8' width='18' height='3' fill='%23ffffff'/%3E%3Crect x='7' y='15' width='9' height='3' fill='%23ffffff'/%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+  :root {
+    --bg: #f6f5ee;
+    --surface: #ffffff;
+    --surface-2: #edece0;
+    --ink: #1d1f14;
+    --ink-soft: #40432f;
+    --muted: #6f7259;
+    --border: #e0ddcc;
+    --accent: #5a6e0f;
+    --accent-strong: #3d4a0a;
+    --accent-soft: #ecf1da;
+    --term-bg: #1b1c14;
+    --term-text: #e7e4d4;
+    --term-accent: #a2c23f;
+    --term-border: #34351f;
+    --shadow: 0 1px 2px rgba(29,31,20,0.04), 0 8px 24px -12px rgba(29,31,20,0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e0f09;
+      --surface: #17180f;
+      --surface-2: #1e2015;
+      --ink: #edece0;
+      --ink-soft: #cfceb9;
+      --muted: #93967a;
+      --border: #2b2c1d;
+      --accent: #a7c93f;
+      --accent-strong: #c3e05e;
+      --accent-soft: #202417;
+      --term-bg: #0a0b06;
+      --term-text: #e7e4d4;
+      --term-accent: #c3e05e;
+      --term-border: #26271a;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e0f09;
+    --surface: #17180f;
+    --surface-2: #1e2015;
+    --ink: #edece0;
+    --ink-soft: #cfceb9;
+    --muted: #93967a;
+    --border: #2b2c1d;
+    --accent: #a7c93f;
+    --accent-strong: #c3e05e;
+    --accent-soft: #202417;
+    --term-bg: #0a0b06;
+    --term-text: #e7e4d4;
+    --term-accent: #c3e05e;
+    --term-border: #26271a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .mono {
+    font-family: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  h1, h2, h3 { text-wrap: balance; letter-spacing: -0.01em; }
+  a { color: inherit; }
+  img, svg { max-width: 100%; display: block; }
+  ::selection { background: var(--accent); color: var(--surface); }
+
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--accent);
+    position: relative;
+    flex: none;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: "";
+    position: absolute;
+    background: var(--surface);
+    border-radius: 1px;
+  }
+  .brand-mark::before { top: 6px; left: 6px; right: 6px; height: 3px; }
+  .brand-mark::after { top: 13px; left: 6px; width: 8px; height: 3px; }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  .nav-links a { text-decoration: none; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    padding: 8px 14px;
+    border-radius: 7px;
+    background: var(--ink);
+    color: var(--bg);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  @media (max-width: 720px) { .nav-links a:not(.nav-cta) { display: none; } }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 76px 0 64px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 44px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    padding: 5px 11px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+  .hero h1 {
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    line-height: 1.08;
+    margin: 0 0 20px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent-strong);
+  }
+  .hero p.lede {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 0 30px;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 34px;
+  }
+  .btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.88rem;
+    padding: 13px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--accent-strong); color: #fdfdf6; }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--ink); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .hero-stats .stat b {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 1.2rem;
+    color: var(--ink);
+  }
+  .hero-stats .stat span {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* ---------- Terminal ---------- */
+  .terminal {
+    background: var(--term-bg);
+    border: 1px solid var(--term-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    font-family: 'Space Mono', monospace;
+  }
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--term-border);
+  }
+  .terminal-bar .tdot { width: 9px; height: 9px; border-radius: 50%; background: #4d4f3a; }
+  .terminal-bar .tlabel {
+    margin-left: 6px;
+    font-size: 0.72rem;
+    color: #8b8d72;
+    letter-spacing: 0.03em;
+  }
+  .terminal pre {
+    margin: 0;
+    padding: 18px 16px 20px;
+    color: var(--term-text);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .terminal .prompt { color: var(--term-accent); }
+  .terminal .comment { color: #7d8065; }
+  .cursor {
+    display: inline-block;
+    width: 7px; height: 1em;
+    background: var(--term-accent);
+    vertical-align: text-bottom;
+    animation: blink 1s steps(1) infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- Dashboard mockup ---------- */
+  .device {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .device-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .device-bar .dtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .device-bar .dtitle .brand-mark { width: 16px; height: 16px; border-radius: 4px; }
+  .device-bar .dtitle .brand-mark::before { top: 4px; left: 4px; right: 4px; height: 2px; }
+  .device-bar .dtitle .brand-mark::after { top: 8px; left: 4px; width: 5px; height: 2px; }
+  .device-clock {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .device-live {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--accent-strong);
+  }
+  .device-live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  .grid-mock {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+  .wcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 13px 14px;
+  }
+  .wcard .wtitle {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .w-weather { grid-column: span 2; }
+  .w-stocks { grid-column: span 2; }
+  .w-habit { grid-column: span 2; }
+  .w-todo { grid-column: span 3; }
+  .w-calendar { grid-column: span 3; }
+  .w-brief { grid-column: span 6; }
+  @media (max-width: 620px) {
+    .w-weather, .w-stocks, .w-habit, .w-todo, .w-calendar, .w-brief { grid-column: span 6; }
+  }
+
+  .weather-temp { font-family: 'Space Mono', monospace; font-size: 1.7rem; font-weight: 700; }
+  .weather-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .stock-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 3px 0; font-variant-numeric: tabular-nums; }
+  .stock-row .up { color: var(--accent-strong); font-family: 'Space Mono', monospace; }
+
+  .habit-flame { font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; display:flex; align-items:baseline; gap:6px; }
+  .habit-flame span { font-size: 0.72rem; font-weight: 400; color: var(--muted); font-family: 'DM Sans', sans-serif; }
+  .habit-days { display: flex; gap: 4px; margin-top: 10px; }
+  .habit-days i { width: 14px; height: 14px; border-radius: 4px; background: var(--border); display: block; }
+  .habit-days i.on { background: var(--accent); }
+
+  .todo-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; padding: 4px 0; }
+  .todo-row .box { width: 13px; height: 13px; border-radius: 4px; border: 1.5px solid var(--border); flex: none; }
+  .todo-row.done .box { background: var(--accent); border-color: var(--accent); }
+  .todo-row.done span { color: var(--muted); text-decoration: line-through; }
+  .todo-bar { height: 5px; border-radius: 3px; background: var(--border); margin-top: 10px; overflow: hidden; }
+  .todo-bar i { display: block; height: 100%; width: 60%; background: var(--accent); }
+
+  .cal-row { display: flex; gap: 10px; align-items: flex-start; font-size: 0.82rem; padding: 5px 0; }
+  .cal-row b { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--accent-strong); flex: none; padding-top: 1px; }
+
+  .brief-text { font-size: 0.85rem; line-height: 1.55; color: var(--ink-soft); }
+  .brief-text .spark { color: var(--accent-strong); }
+
+  .mock-caption {
+    text-align: center;
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-top: 14px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ---------- Sections generic ---------- */
+  section { padding: 72px 0; border-top: 1px solid var(--border); }
+  .section-head { max-width: 62ch; margin-bottom: 40px; }
+  .section-head .eyebrow { margin-bottom: 16px; }
+  .section-head h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); margin: 0 0 14px; }
+  .section-head p { color: var(--ink-soft); font-size: 1rem; line-height: 1.6; margin: 0; }
+
+  /* ---------- Status board ---------- */
+  .status-board {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .status-row {
+    display: grid;
+    grid-template-columns: 30px 150px 1fr 90px;
+    gap: 16px;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .status-row:last-child { border-bottom: none; }
+  .status-row:hover { background: var(--surface-2); }
+  .status-idx { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); }
+  .status-name { font-family: 'Space Mono', monospace; font-size: 0.84rem; font-weight: 700; }
+  .status-desc { font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5; }
+  .status-pill {
+    justify-self: end;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+    padding: 4px 9px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .status-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  @media (max-width: 720px) {
+    .status-row { grid-template-columns: 22px 1fr; grid-template-areas: "idx name" "desc desc" "pill pill"; row-gap: 6px; }
+    .status-idx { grid-area: idx; }
+    .status-name { grid-area: name; }
+    .status-desc { grid-area: desc; }
+    .status-pill { grid-area: pill; justify-self: start; }
+  }
+
+  /* ---------- Why row ---------- */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .why-cell { background: var(--surface); padding: 26px 24px; }
+  .why-cell .wnum { font-family: 'Space Mono', monospace; font-size: 0.74rem; color: var(--accent-strong); margin-bottom: 10px; }
+  .why-cell h3 { font-size: 1.02rem; margin: 0 0 8px; }
+  .why-cell p { font-size: 0.88rem; color: var(--ink-soft); line-height: 1.55; margin: 0; }
+  @media (max-width: 780px) { .why-grid { grid-template-columns: 1fr; } }
+
+  /* ---------- Install ---------- */
+  .install-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .install-grid { grid-template-columns: 1fr; } }
+  .tabs { display: flex; gap: 2px; margin-bottom: 0; }
+  .tab {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    padding: 9px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--term-border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--term-bg); color: var(--term-accent); }
+  .install-terminal .terminal { border-radius: 0 10px 10px 10px; }
+  .copy-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: #9b9d81;
+    background: transparent;
+    border: 1px solid var(--term-border);
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-left: auto;
+    cursor: pointer;
+  }
+  .copy-btn:hover { color: var(--term-accent); border-color: var(--term-accent); }
+  .install-steps { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  .install-steps li { display: flex; gap: 12px; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.5; }
+  .install-steps b { font-family: 'Space Mono', monospace; color: var(--accent-strong); flex: none; }
+
+  .requirements { border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; background: var(--surface); }
+  .requirements h3 { font-size: 0.92rem; margin: 0 0 12px; font-family: 'Space Mono', monospace; }
+  .req-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 7px 0; border-top: 1px solid var(--border); }
+  .req-row:first-of-type { border-top: none; }
+  .req-row span:last-child { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.8rem; }
+
+  /* ---------- Footer ---------- */
+  footer { padding: 30px 0 40px; }
+  .foot-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .foot-inner a { text-decoration: none; color: var(--ink-soft); }
+  .foot-inner a:hover { color: var(--accent-strong); }
+  .foot-status { display: flex; align-items: center; gap: 7px; }
+  .foot-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark" aria-hidden="true"></span>
+      CoreDash
+    </a>
+    <div class="nav-links">
+      <a href="#status">Widgets</a>
+      <a href="#why">Why self-host</a>
+      <a href="#install">Install</a>
+      <a class="nav-cta" href="#install">Get&nbsp;started</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <span class="eyebrow"><span class="dot"></span>v0.1.2 &middot; self-hosted &middot; MIT</span>
+      <h1>Your whole day,<br>on <em>one screen you own</em>.</h1>
+      <p class="lede">CoreDash is a personal dashboard you run yourself &mdash; weather, calendar, portfolio, habits, inbox and price alerts on one always-on display, with no account, subscription, or cloud dependency in between.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#install">Run it in one command &rarr;</a>
+        <a class="btn btn-ghost" href="#status">See what it tracks</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><b>13</b><span>built-in widgets</span></div>
+        <div class="stat"><b>&lt;150MB</b><span>container image</span></div>
+        <div class="stat"><b>$0</b><span>ongoing cost</span></div>
+        <div class="stat"><b>1</b><span>docker run away</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="device">
+        <div class="device-bar">
+          <div class="dtitle"><span class="brand-mark" aria-hidden="true"></span>CoreDash</div>
+          <div class="device-clock">07:42:18</div>
+          <div class="device-live"><span class="dot"></span>ALL SYSTEMS UP</div>
+        </div>
+        <div class="grid-mock">
+          <div class="wcard w-weather">
+            <p class="wtitle">🌦️ Lisbon</p>
+            <div class="weather-temp">21°</div>
+            <div class="weather-sub">Feels 19&deg; &middot; light rain by 18:00</div>
+          </div>
+          <div class="wcard w-stocks">
+            <p class="wtitle">📊 Assets today</p>
+            <div class="stock-row"><span>AAPL</span><span class="up">+1.8%</span></div>
+            <div class="stock-row"><span>PETR4</span><span class="up">+0.6%</span></div>
+            <div class="stock-row"><span>BTC</span><span class="up">+3.1%</span></div>
+          </div>
+          <div class="wcard w-habit">
+            <p class="wtitle">🔥 Streak</p>
+            <div class="habit-flame">14 <span>days running</span></div>
+            <div class="habit-days">
+              <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i>
+            </div>
+          </div>
+          <div class="wcard w-todo">
+            <p class="wtitle">✅ Today</p>
+            <div class="todo-row done"><span class="box"></span><span>Water the plants</span></div>
+            <div class="todo-row done"><span class="box"></span><span>Push CoreDash update</span></div>
+            <div class="todo-row"><span class="box"></span><span>Call the vet</span></div>
+            <div class="todo-bar"><i></i></div>
+          </div>
+          <div class="wcard w-calendar">
+            <p class="wtitle">🚩 Next up</p>
+            <div class="cal-row"><b>12d</b><span>Trip to Porto</span></div>
+            <div class="cal-row"><b>29d</b><span>Mom&rsquo;s birthday</span></div>
+          </div>
+          <div class="wcard w-brief">
+            <p class="wtitle">✨ Daily brief</p>
+            <p class="brief-text"><span class="spark">&#10022;</span> Light rain rolls in this evening, your streak hits two weeks tomorrow, and PETR4 is closing in on your R$38 target &mdash; want an alert set?</p>
+          </div>
+        </div>
+      </div>
+      <p class="mock-caption">example dashboard &mdash; wired to your own accounts &amp; APIs</p>
+    </div>
+  </div>
+</main>
+
+<section id="status">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"><span class="dot"></span>Service registry</span>
+      <h2>Every widget is a service you can turn on or off.</h2>
+      <p>CoreDash ships as a grid of independent cards. Wire up the APIs you care about; the rest stay dark. Here's the full roster running on the reference build.</p>
+    </div>
+
+    <div class="status-board">
+      <div class="status-row">
+        <span class="status-idx">01</span>
+        <span class="status-name">WEATHER</span>
+        <span class="status-desc">Live conditions, feels-like, and an hourly strip &mdash; flags rain before you walk out the door.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">02</span>
+        <span class="status-name">CALENDAR</span>
+        <span class="status-desc">Counts down to the birthdays, trips, and deadlines you told it mattered.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">03</span>
+        <span class="status-name">STOCKS</span>
+        <span class="status-desc">Ticker-by-ticker price and change on every load, pulled straight from Yahoo Finance.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">04</span>
+        <span class="status-name">HABITS</span>
+        <span class="status-desc">One tap a day, a week view, and a streak counter that isn't shy about breaking it.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">05</span>
+        <span class="status-name">TODO</span>
+        <span class="status-desc">Fast add, fast check-off, a progress bar for the day &mdash; nothing to configure.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">06</span>
+        <span class="status-name">GOALS</span>
+        <span class="status-desc">The longer-range targets that sit above your daily list, always in view.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">07</span>
+        <span class="status-name">GMAIL</span>
+        <span class="status-desc">Unread previews and one-click mark-as-read, without opening another tab.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">08</span>
+        <span class="status-name">SPOTIFY</span>
+        <span class="status-desc">Search, queue, library, and device switching &mdash; full transport control on-screen.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">09</span>
+        <span class="status-name">NEWS</span>
+        <span class="status-desc">Curated headlines with a blur toggle, for when you're not ready for spoilers yet.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">10</span>
+        <span class="status-name">WISHLIST &amp; PRODUCTS</span>
+        <span class="status-desc">Watches your Amazon wishlist and any product URL you add, and surfaces price drops.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">11</span>
+        <span class="status-name">FLIGHTS</span>
+        <span class="status-desc">Tracks fares on the routes you save and flags when one is worth booking.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">12</span>
+        <span class="status-name">AI NARRATIVE</span>
+        <span class="status-desc">A short daily brief written from your own data, generated locally via Ollama or Gemini.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+      <div class="status-row">
+        <span class="status-idx">13</span>
+        <span class="status-name">ALERTS</span>
+        <span class="status-desc">One feed for every price drop, fare drop, and stock target the other widgets catch.</span>
+        <span class="status-pill"><span class="dot"></span>online</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"><span class="dot"></span>Design goals</span>
+      <h2>Built for a spare tablet, not a server room.</h2>
+      <p>CoreDash targets the kind of hardware already gathering dust in a drawer &mdash; an old Pi, a thin client, a NAS that's mostly idle.</p>
+    </div>
+    <div class="why-grid">
+      <div class="why-cell">
+        <div class="wnum">low-cost hardware</div>
+        <h3>Runs on what you already own</h3>
+        <p>No GPU, no rack. A Raspberry Pi or an old mini-PC on your home network is enough to keep it running 24/7.</p>
+      </div>
+      <div class="why-cell">
+        <div class="wnum">your data, your box</div>
+        <h3>Nothing leaves your network</h3>
+        <p>Credentials and API keys live in your own .env file. There's no CoreDash server collecting your habits or your inbox.</p>
+      </div>
+      <div class="why-cell">
+        <div class="wnum">open source</div>
+        <h3>Fork it, extend it</h3>
+        <p>Every widget is a plain Next.js card. Add your own API route and drop a new one into the grid.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"><span class="dot"></span>Getting started</span>
+      <h2>Up in about the time it takes to read this.</h2>
+      <p>Pull the image, point it at port 3000, and start filling in your API keys. No build step required to try it.</p>
+    </div>
+
+    <div class="install-grid">
+      <div class="install-terminal">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" aria-selected="true" data-tab="run">docker run</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="compose">docker-compose.yml</button>
+        </div>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <span class="tdot"></span><span class="tdot"></span><span class="tdot"></span>
+            <span class="tlabel">~/homelab</span>
+            <button class="copy-btn" id="copyBtn" type="button">copy</button>
+          </div>
+          <pre id="paneRun"><span class="prompt">$</span> docker run -d \
+  -p 3000:3000 \
+  --name coredash \
+  guilhermesalviano/coredash:latest
+<span class="comment"># CoreDash is now listening on :3000</span><span class="cursor"></span></pre>
+          <pre id="paneCompose" hidden><span class="comment"># docker-compose.yml</span>
+services:
+  coredash:
+    image: guilhermesalviano/coredash:latest
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+<span class="prompt">$</span> docker compose up -d<span class="cursor"></span></pre>
+        </div>
+
+        <ol class="install-steps">
+          <li><b>01</b> Point a browser (or your wall tablet) at <span class="mono">http://&lt;host-ip&gt;:3000</span>.</li>
+          <li><b>02</b> Copy <span class="mono">.env.example</span> to <span class="mono">.env</span> and add the API keys for the widgets you want live.</li>
+          <li><b>03</b> Leave the rest unset &mdash; unconfigured widgets simply stay off the grid.</li>
+        </ol>
+      </div>
+
+      <div class="requirements">
+        <h3>Local development</h3>
+        <div class="req-row"><span>Runtime</span><span>Node.js LTS</span></div>
+        <div class="req-row"><span>Frontend</span><span>cd coredash &amp;&amp; npm run dev</span></div>
+        <div class="req-row"><span>Mock APIs</span><span>docker compose up --build</span></div>
+        <div class="req-row"><span>Stack</span><span>Next.js 16 &middot; React 19</span></div>
+        <div class="req-row"><span>Storage</span><span>SQLite / TypeORM</span></div>
+        <div class="req-row"><span>License</span><span>MIT</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-inner">
+    <span>CoreDash &middot; self-hosted personal dashboard</span>
+    <div class="foot-status"><span class="dot"></span>reference build: all 13 widgets online</div>
+    <a href="https://github.com/guilhermesalviano/coredash">github.com/guilhermesalviano/coredash</a>
+  </div>
+</footer>
+
+<script>
+  (function() {
+    var tabs = document.querySelectorAll('.tab');
+    var panes = { run: document.getElementById('paneRun'), compose: document.getElementById('paneCompose') };
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        tab.setAttribute('aria-selected', 'true');
+        var key = tab.getAttribute('data-tab');
+        Object.keys(panes).forEach(function(k) { panes[k].hidden = (k !== key); });
+      });
+    });
+
+    var copyBtn = document.getElementById('copyBtn');
+    copyBtn.addEventListener('click', function() {
+      var activeTab = document.querySelector('.tab[aria-selected="true"]').getAttribute('data-tab');
+      var text = activeTab === 'run'
+        ? 'docker run -d -p 3000:3000 --name coredash guilhermesalviano/coredash:latest'
+        : 'services:\n  coredash:\n    image: guilhermesalviano/coredash:latest\n    ports:\n      - "3000:3000"\n    restart: unless-stopped';
+      try {
+        navigator.clipboard.writeText(text);
+        var old = copyBtn.textContent;
+        copyBtn.textContent = 'copied';
+        setTimeout(function() { copyBtn.textContent = old; }, 1400);
+      } catch (e) {}
+    });
+
+    var clockEl = document.querySelector('.device-clock');
+    function tick() {
+      var d = new Date();
+      var hh = String(d.getHours()).padStart(2, '0');
+      var mm = String(d.getMinutes()).padStart(2, '0');
+      var ss = String(d.getSeconds()).padStart(2, '0');
+      clockEl.textContent = hh + ':' + mm + ':' + ss;
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+</body>
+</html>
