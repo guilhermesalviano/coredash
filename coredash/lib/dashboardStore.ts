@@ -1,82 +1,67 @@
+import { fetchJson } from "@/lib/api-client";
+import type { DashboardSlice, DashboardStore } from "@/features/dashboard/types";
+
 const STALE_MS = 20 * 60 * 1000;
-
-type Status = "idle" | "loading" | "success" | "error";
-
-interface StoreSlice<T> {
-  data: T | null;
-  status: Status;
-  lastFetchedAt: number;
-}
-
-interface DashboardStore {
-  weather: StoreSlice<any>;
-  news:    StoreSlice<any>;
-  stocks:  StoreSlice<any>;
-}
-
+type DashboardKey = keyof DashboardStore;
 type Listener = () => void;
 
+const emptySlice = <T>(): DashboardSlice<T> => ({ data: null, status: "idle", lastFetchedAt: 0 });
+
 let store: DashboardStore = {
-  weather: { data: null, status: "idle", lastFetchedAt: 0 },
-  news:    { data: null, status: "idle", lastFetchedAt: 0 },
-  stocks:  { data: null, status: "idle", lastFetchedAt: 0 },
+  weather: emptySlice(),
+  news: emptySlice(),
+  stocks: emptySlice(),
 };
 
 const listeners = new Set<Listener>();
 
-function setSlice(key: keyof DashboardStore, patch: Partial<StoreSlice<any>>) {
+function setSlice<K extends DashboardKey>(key: K, patch: Partial<DashboardSlice<DashboardStore[K]["data"]>>) {
   store = { ...store, [key]: { ...store[key], ...patch } };
-  listeners.forEach((l) => l());
+  listeners.forEach((listener) => listener());
 }
 
-async function fetchSlice(key: keyof DashboardStore, endpoint: string) {
+async function fetchSlice<K extends DashboardKey>(key: K, endpoint: string) {
   setSlice(key, { status: "loading" });
   try {
-    const res = await fetch(endpoint);
-    if (!res.ok) throw new Error();
-    const { data } = await res.json();
+    const data = await fetchJson<DashboardStore[K]["data"]>(endpoint);
     setSlice(key, { data, status: "success", lastFetchedAt: Date.now() });
   } catch {
     setSlice(key, { status: "error" });
   }
 }
 
-const fetchers: Record<keyof DashboardStore, () => Promise<void>> = {
+const fetchers: Record<DashboardKey, () => Promise<void>> = {
   weather: () => fetchSlice("weather", "/api/weather?limit=6"),
-  news:    () => fetchSlice("news",    "/api/news"),
-  stocks:  () => fetchSlice("stocks",  "/api/stocks"),
+  news: () => fetchSlice("news", "/api/news"),
+  stocks: () => fetchSlice("stocks", "/api/stocks"),
 };
 
 export async function fetchAll() {
-  await Promise.all(Object.values(fetchers).map((f) => f()));
+  await Promise.all(Object.values(fetchers).map((fetcher) => fetcher()));
 }
 
 function handleVisibility() {
   if (document.visibilityState !== "visible") return;
-  const now = Date.now();
-
-  const stale = (Object.keys(fetchers) as (keyof DashboardStore)[])
-    .filter((key) => now - store[key].lastFetchedAt > STALE_MS);
-
-  if (stale.length) {
-    Promise.all(stale.map((key) => fetchers[key]()));
-  };
+  const stale = (Object.keys(fetchers) as DashboardKey[]).filter(
+    (key) => Date.now() - store[key].lastFetchedAt > STALE_MS,
+  );
+  if (stale.length) void Promise.all(stale.map((key) => fetchers[key]()));
 }
 
 let subscriberCount = 0;
 
 export function subscribe(listener: Listener): () => void {
   listeners.add(listener);
-  if (++subscriberCount === 1) {
-    fetchAll();
+  subscriberCount += 1;
+  if (subscriberCount === 1) {
+    void fetchAll();
     document.addEventListener("visibilitychange", handleVisibility);
   }
 
   return () => {
     listeners.delete(listener);
-    if (--subscriberCount === 0) {
-      document.removeEventListener("visibilitychange", handleVisibility);
-    }
+    subscriberCount -= 1;
+    if (subscriberCount === 0) document.removeEventListener("visibilitychange", handleVisibility);
   };
 }
 

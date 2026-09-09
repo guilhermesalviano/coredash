@@ -146,7 +146,7 @@ export default function AIAssistantButton() {
         content: m.content,
       }));
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -194,8 +194,8 @@ export default function AIAssistantButton() {
           m.id === assistantId ? { ...m, streaming: false } : m
         )
       );
-    } catch (err: any) {
-      if (err.name !== "AbortError") {
+    } catch (err: unknown) {
+      if (!(err instanceof Error) || err.name !== "AbortError") {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId

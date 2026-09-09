@@ -1,11 +1,10 @@
 import Card from "../card";
+import type { WeatherData } from "@/features/weather/types";
 
-const RAIN_CODES = new Set([51,53,55,56,57,61,63,65,66,67,80,81,82,85,86,95,96,99]);
-const isRaining = (code: number) => RAIN_CODES.has(code);
+const RAIN_CODES = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 85, 86, 95, 96, 99]);
 
-export default function WeatherCard({ data }: { data: any }) {
-  const raining = isRaining(data.code);
-
+export default function WeatherCard({ data }: { data: WeatherData }) {
+  const raining = RAIN_CODES.has(data.code);
   return (
     <Card className={raining ? "weather-card--raining" : "weather-card"}>
       <div className="weather-main">
@@ -18,11 +17,11 @@ export default function WeatherCard({ data }: { data: any }) {
         <div className="weather-icon-big">{data.icon}</div>
       </div>
       <div className="weather-hours">
-        {data.forecast.map((h: any) => (
-          <div key={h.time} className={`weather-hour ${isRaining(h.code) ? "weather-hour--raining" : ""}`}>
-            <span className="weather-hour-time">{h.time}</span>
-            <span>{h.icon}</span>
-            <span className="weather-hour-temp">{h.temp}°</span>
+        {data.forecast.map((hour) => (
+          <div key={hour.timestamp} className={`weather-hour ${RAIN_CODES.has(hour.code ?? -1) ? "weather-hour--raining" : ""}`}>
+            <span className="weather-hour-time">{hour.time}</span>
+            <span>{hour.icon}</span>
+            <span className="weather-hour-temp">{hour.temp}°</span>
           </div>
         ))}
       </div>
