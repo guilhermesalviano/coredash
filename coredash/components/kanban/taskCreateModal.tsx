@@ -7,26 +7,26 @@ import {
   Priority,
   priorityColor,
   priorityLabel,
-  TaskStatus,
+  KanbanStatus,
 } from "@/types/task";
 
 interface TaskCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (task: NewTaskForm) => Promise<void>;
-  defaultStatus?: TaskStatus;
+  defaultStatus?: KanbanStatus;
 }
 
 export default function TaskCreateModal({
   isOpen,
   onClose,
   onAdd,
-  defaultStatus = "todo",
+  defaultStatus = "backlog",
 }: TaskCreateModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
-  const [status, setStatus] = useState<TaskStatus>(defaultStatus);
+  const [status, setStatus] = useState<KanbanStatus>(defaultStatus);
   const [prevDefaultStatus, setPrevDefaultStatus] = useState(defaultStatus);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +132,7 @@ export default function TaskCreateModal({
               <label className="text-xs font-semibold uppercase tracking-wider text-muted">Coluna Inicial</label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                onChange={(e) => setStatus(e.target.value as KanbanStatus)}
                 className="w-full border border-gray-700/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                 style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
               >

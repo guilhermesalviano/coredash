@@ -1,11 +1,12 @@
 import type { ForecastItem, WeatherData } from "@/features/weather/types";
-import type { Priority } from "@/types/task";
+import type { Priority, TodoType } from "@/types/task";
 
 export interface FocusTodo {
   id: number;
   title: string;
   checked: number;
   priority: Priority;
+  type?: TodoType;
 }
 
 export interface FocusCalendarEvent {

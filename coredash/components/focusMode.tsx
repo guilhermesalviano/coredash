@@ -16,7 +16,7 @@ const PRIORITIES: Priority[] = ["high", "medium", "low"];
 
 function toTodoState(todo: TodoItem): TodoState {
   const priority = PRIORITIES.includes(todo.priority as Priority) ? todo.priority as Priority : "low";
-  return { id: todo.id, title: todo.title, checked: todo.checked, priority };
+  return { id: todo.id, title: todo.title, checked: todo.checked, priority, type: todo.type };
 }
 
 function formatEventTime(start: string, end: string): string {
@@ -56,7 +56,7 @@ export default function FocusMode() {
     reportStatus("todo", "loading");
     const [calendarResult, todoResult] = await Promise.allSettled([
       fetchJson<CalendarInternalAPIResponse>("/api/calendar"),
-      fetchJson<TodoItem[]>("/api/todo?onlyUnchecked=true"),
+      fetchJson<TodoItem[]>("/api/todo?onlyUnchecked=true&type=reminder"),
     ]);
 
     let hasError = false;
@@ -68,7 +68,11 @@ export default function FocusMode() {
       hasError = true;
     }
     if (todoResult.status === "fulfilled") {
-      setTodos(todoResult.value.map(toTodoState));
+      setTodos(
+        todoResult.value
+          .filter((t) => t.type === "reminder")
+          .map(toTodoState),
+      );
       reportStatus("todo", "success");
     } else {
       reportStatus("todo", "error");

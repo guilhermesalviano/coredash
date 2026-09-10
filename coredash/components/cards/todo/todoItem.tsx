@@ -2,7 +2,7 @@ import { priorityColor, TodoState } from "@/types/task";
 
 const statusLabel: Record<string, string> = {
   backlog: "Backlog",
-  todo: "A Fazer",
+  todo: "Backlog",
   in_progress: "Em Progresso",
   done: "Concluído",
 };
