@@ -8,6 +8,7 @@ export interface TodoItem {
   priority: string;
   sponsor: string;
   usualCompletionTime: string;
+  lastCheckedHour?: string;
   type: TodoType;
   status: TaskStatus;
   description?: string | null;
@@ -44,5 +45,6 @@ export interface GetTodosOptions {
   type?: TodoType | "all";
   status?: TaskStatus;
   onlyUnchecked?: boolean;
+  orderBy?: "lastCheckedHour" | "priority";
 }
 

@@ -69,3 +69,14 @@ test("selects rain only within the three-hour weather horizon", () => {
   const noAlert = selectWeatherAlert(weather, new Date("2026-09-09T19:00:00-03:00"));
   assert.equal(noAlert, null);
 });
+
+test("filters focused todos to shows only reminders", () => {
+  const mixedTodos: FocusTodo[] = [
+    { id: 10, title: "Persistent Task 1", checked: 0, priority: "high", type: "task" },
+    { id: 11, title: "Reminder 1", checked: 0, priority: "medium", type: "reminder" },
+    { id: 12, title: "Persistent Task 2", checked: 0, priority: "low", type: "task" },
+    { id: 13, title: "Reminder 2", checked: 0, priority: "low", type: "reminder" },
+  ];
+  const view = selectFocusView([], mixedTodos, weather, new Date("2026-09-09T09:00:00-03:00"));
+  assert.deepEqual(view.todos.map((todo) => todo.id), [11, 13]);
+});

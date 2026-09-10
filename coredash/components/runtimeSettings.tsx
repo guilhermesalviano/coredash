@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useCallback, useEffect, useState } from "react";
+import { CalendarDays, Check, Globe2, LoaderCircle, RefreshCw, RotateCcw, Save, Sparkles, Timer, TriangleAlert } from "lucide-react";
 import { fetchJson } from "@/lib/api-client";
 import type { RuntimeSettings, RuntimeSettingsResponse } from "@/features/settings/types";
+import styles from "./settings.module.css";
 
 interface RuntimeSettingsDraft {
   timezone: string;
@@ -14,27 +15,8 @@ interface RuntimeSettingsDraft {
   calendarIds: string;
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  marginTop: 5,
-  padding: "8px 9px",
-  border: "1px solid var(--border)",
-  borderRadius: 7,
-  background: "var(--surface2)",
-  color: "var(--foreground)",
-  fontSize: 12,
-};
-
 function toDraft(settings: RuntimeSettings): RuntimeSettingsDraft {
-  return {
-    timezone: settings.timezone,
-    latitude: settings.latitude,
-    longitude: settings.longitude,
-    cronSchedule: settings.cronSchedule,
-    aiModel: settings.aiModel,
-    calendarIds: settings.calendarIds.join("\n"),
-  };
+  return { ...settings, calendarIds: settings.calendarIds.join("\n") };
 }
 
 function calendarIdsFromText(value: string): string[] {
@@ -46,48 +28,33 @@ export default function RuntimeSettingsSection() {
   const [draft, setDraft] = useState<RuntimeSettingsDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const load = () => {
-    fetchJson<RuntimeSettingsResponse>("/api/settings")
-      .then((response) => {
-        setData(response);
-        setDraft(toDraft(response.settings));
-      })
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Não foi possível carregar as configurações."));
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const save = async () => {
-    if (!draft) return;
-    setSaving(true);
+  const load = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
     setError(null);
     setMessage(null);
     try {
-      const response = await fetchJson<RuntimeSettingsResponse>("/api/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          timezone: draft.timezone,
-          latitude: draft.latitude,
-          longitude: draft.longitude,
-          cronSchedule: draft.cronSchedule,
-          aiModel: draft.aiModel,
-          calendarIds: calendarIdsFromText(draft.calendarIds),
-        }),
-      });
+      const response = await fetchJson<RuntimeSettingsResponse>("/api/settings", { signal });
+      if (signal?.aborted) return;
       setData(response);
       setDraft(toDraft(response.settings));
-      setMessage("Configurações salvas.");
     } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : "Não foi possível salvar as configurações.");
+      if (!signal?.aborted) setError(reason instanceof Error ? reason.message : "Could not load your settings.");
     } finally {
-      setSaving(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, []);
 
-  const reset = async (key: keyof RuntimeSettings | "all") => {
+  useEffect(() => {
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
+
+  const persist = async (restoreDefaults = false) => {
+    if (!draft || saving || loading) return;
     setSaving(true);
     setError(null);
     setMessage(null);
@@ -95,89 +62,123 @@ export default function RuntimeSettingsSection() {
       const response = await fetchJson<RuntimeSettingsResponse>("/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(key === "all" ? {
-          timezone: null,
-          latitude: null,
-          longitude: null,
-          cronSchedule: null,
-          aiModel: null,
-          calendarIds: null,
-        } : { [key]: null }),
+        body: JSON.stringify(restoreDefaults ? {
+          timezone: null, latitude: null, longitude: null,
+          cronSchedule: null, aiModel: null, calendarIds: null,
+        } : { ...draft, calendarIds: calendarIdsFromText(draft.calendarIds) }),
       });
       setData(response);
       setDraft(toDraft(response.settings));
-      setMessage("Valor restaurado a partir do ambiente.");
+      setMessage(restoreDefaults ? "Default settings restored." : "Your settings have been saved.");
     } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : "Não foi possível restaurar o valor.");
+      setError(reason instanceof Error ? reason.message : "Could not save your settings. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
   if (!draft || !data) {
-    return <div style={{ color: "var(--muted)", fontSize: 12 }}>Carregando configurações do aplicativo...</div>;
+    return (
+      <div className={styles.runtimeEmpty} role={error ? "alert" : "status"}>
+        {error ? <TriangleAlert size={28} /> : <LoaderCircle size={28} className={styles.spinner} />}
+        <h2>{error ? "Settings couldn’t load" : "Getting things ready"}</h2>
+        <p>{error ?? "Loading your application preferences…"}</p>
+        {error && <button type="button" onClick={() => void load()} className={styles.secondaryButton}><RefreshCw size={15} /> Try again</button>}
+      </div>
+    );
   }
 
-  const field = (key: keyof RuntimeSettingsDraft, label: string, help: string, type = "text") => (
-    <label key={key} style={{ display: "block", color: "var(--foreground)", fontSize: 12 }}>
-      <span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-        <span>{label}</span>
-        <span style={{ color: "var(--muted)", fontSize: 10 }}>{data.sources[key] === "database" ? "app" : "env"}</span>
-      </span>
-      <input
-        type={type}
-        value={draft[key]}
-        onChange={(event) => setDraft((current) => current ? { ...current, [key]: event.target.value } : current)}
-        style={inputStyle}
-      />
-      <span style={{ display: "block", marginTop: 3, color: "var(--muted)", fontSize: 10 }}>{help}</span>
-    </label>
+  const busy = saving || loading;
+  const dirty = JSON.stringify(draft) !== JSON.stringify(toDraft(data.settings));
+  const source = (key: keyof RuntimeSettingsDraft) => (
+    <span className={styles.sourceBadge} data-custom={data.sources[key] === "database"}>
+      {data.sources[key] === "database" ? "Customized" : "Default"}
+    </span>
+  );
+
+  const field = (key: Exclude<keyof RuntimeSettingsDraft, "calendarIds">, label: string, help: string, placeholder?: string, numeric = false) => (
+    <div className={styles.field}>
+      <div className={styles.fieldLabel}><label htmlFor={`setting-${key}`}>{label}</label>{source(key)}</div>
+      <input id={`setting-${key}`} aria-describedby={`setting-${key}-help`}
+        type={numeric ? "number" : "text"} step={numeric ? "any" : undefined}
+        min={key === "latitude" ? -90 : key === "longitude" ? -180 : undefined}
+        max={key === "latitude" ? 90 : key === "longitude" ? 180 : undefined}
+        placeholder={placeholder} value={draft[key]} className={styles.input}
+        onChange={(event) => {
+          setDraft((current) => current ? { ...current, [key]: event.target.value } : current);
+          setMessage(null);
+        }} />
+      <p id={`setting-${key}-help`} className={styles.help}>{help}</p>
+    </div>
   );
 
   return (
-    <div>
-      <p style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 10 }}>
-        Runtime application
-      </p>
-      <p style={{ color: "var(--muted)", fontSize: 11, lineHeight: 1.45, margin: "0 0 12px" }}>
-        These values override the environment for the running application. Cron changes apply immediately.
-      </p>
-      <div style={{ display: "grid", gap: 12 }}>
-        {field("timezone", "Timezone", "IANA name, e.g. America/Sao_Paulo")}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {field("latitude", "Latitude", "-90 to 90", "number")}
-          {field("longitude", "Longitude", "-180 to 180", "number")}
+    <form className={styles.runtimeForm} aria-busy={busy} onSubmit={(event) => { event.preventDefault(); void persist(); }}>
+      <div className={styles.runtimeBody}>
+        <div className={styles.panelIntro}>
+          <span className={styles.eyebrow}>Behind your dashboard</span>
+          <h2>The details that matter.</h2>
+          <p>Fine-tune your location, connected services, and updates.</p>
         </div>
-        {field("cronSchedule", "Wishlist cron", "Five-field cron; leave blank to disable")}
-        {field("aiModel", "AI model", "Ollama model name")}
-        <label style={{ display: "block", color: "var(--foreground)", fontSize: 12 }}>
-          <span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-            <span>Google Calendar IDs</span>
-            <span style={{ color: "var(--muted)", fontSize: 10 }}>{data.sources.calendarIds === "database" ? "app" : "env"}</span>
-          </span>
-          <textarea
-            value={draft.calendarIds}
-            onChange={(event) => setDraft((current) => current ? { ...current, calendarIds: event.target.value } : current)}
-            rows={3}
-            placeholder="One calendar ID per line"
-            style={{ ...inputStyle, resize: "vertical" }}
-          />
-          <span style={{ display: "block", marginTop: 3, color: "var(--muted)", fontSize: 10 }}>Separate IDs with new lines or semicolons.</span>
-        </label>
+
+        <fieldset disabled={busy} className={styles.fieldGroups}>
+          <section className={styles.fieldGroup} aria-labelledby="location-settings-heading">
+            <div className={styles.groupHeading}><Globe2 size={18} aria-hidden="true" /><h3 id="location-settings-heading">Location & time</h3></div>
+            {field("timezone", "Timezone", "Used for your local dates and schedules.", "America/Sao_Paulo")}
+            <div className={styles.coordinates}>
+              {field("latitude", "Latitude", "Between −90 and 90.", "-23.5505", true)}
+              {field("longitude", "Longitude", "Between −180 and 180.", "-46.6333", true)}
+            </div>
+          </section>
+
+          <section className={styles.fieldGroup} aria-labelledby="connected-settings-heading">
+            <div className={styles.groupHeading}><Sparkles size={18} aria-hidden="true" /><h3 id="connected-settings-heading">Connected services</h3></div>
+            {field("aiModel", "AI model", "The Ollama model Rocky uses to help you.", "gemma4:e2b")}
+            <div className={styles.field}>
+              <div className={styles.fieldLabel}>
+                <label htmlFor="setting-calendarIds"><CalendarDays size={14} aria-hidden="true" /> Google Calendar IDs</label>
+                {source("calendarIds")}
+              </div>
+              <textarea id="setting-calendarIds" aria-describedby="setting-calendarIds-help" value={draft.calendarIds}
+                onChange={(event) => {
+                  setDraft((current) => current ? { ...current, calendarIds: event.target.value } : current);
+                  setMessage(null);
+                }}
+                rows={3} placeholder="One calendar ID per line" className={styles.input} />
+              <p id="setting-calendarIds-help" className={styles.help}>Add one ID per line, or separate them with semicolons.</p>
+            </div>
+          </section>
+
+          <section className={styles.fieldGroup} aria-labelledby="wishlist-settings-heading">
+            <div className={styles.groupHeading}><Timer size={18} aria-hidden="true" /><h3 id="wishlist-settings-heading">Wishlist updates</h3></div>
+            {field("cronSchedule", "Update schedule", "Five-field cron expression. Leave blank to turn off automatic updates.", "0 */6 * * *")}
+            <p className={styles.help}>Schedule changes take effect as soon as you save.</p>
+          </section>
+        </fieldset>
+
+        {error && <p role="alert" className={styles.errorMessage}><TriangleAlert size={16} aria-hidden="true" />{error}</p>}
+        {message && <p role="status" className={styles.successMessage}><Check size={16} aria-hidden="true" />{message}</p>}
+
+        <div className={styles.resetRow}>
+          <button type="button" onClick={() => void persist(true)} disabled={busy} className={styles.textButton}>
+            <RotateCcw size={14} aria-hidden="true" /> Restore defaults
+          </button>
+          <button type="button" onClick={() => void load()} disabled={busy} className={styles.textButton}>
+            <RefreshCw size={14} className={loading ? styles.spinner : undefined} aria-hidden="true" /> Reload
+          </button>
+        </div>
       </div>
-      {error && <p style={{ color: "#d96c6c", fontSize: 11, margin: "10px 0 0" }}>{error}</p>}
-      {message && <p style={{ color: "var(--accent, #5a6e0f)", fontSize: 11, margin: "10px 0 0" }}>{message}</p>}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-        <button type="button" onClick={save} disabled={saving} style={{ flex: 1, minWidth: 100, padding: "8px 10px", border: "none", borderRadius: 7, background: "var(--accent, #5a6e0f)", color: "white", cursor: saving ? "wait" : "pointer", fontSize: 12 }}>
-          {saving ? "Salvando..." : "Salvar"}
+
+      <footer className={styles.saveBar}>
+        <span className={styles.saveHint} data-dirty={dirty}>
+          {dirty ? <span className={styles.unsavedDot} /> : <Check size={14} aria-hidden="true" />}
+          {dirty ? "Unsaved changes" : "Up to date"}
+        </span>
+        <button type="submit" disabled={busy || !dirty} className={styles.primaryButton}>
+          {saving ? <LoaderCircle size={16} className={styles.spinner} aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
+          {saving ? "Saving…" : "Save changes"}
         </button>
-        <button type="button" onClick={() => reset("all")} disabled={saving} style={{ padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 7, background: "transparent", color: "var(--muted)", cursor: saving ? "wait" : "pointer", fontSize: 11 }}>
-          Restaurar defaults do env
-        </button>
-      </div>
-      <button type="button" onClick={() => { setData(null); setDraft(null); load(); }} style={{ marginTop: 8, border: "none", background: "none", color: "var(--muted)", cursor: "pointer", fontSize: 10 }}>
-        Recarregar
-      </button>
-    </div>
+      </footer>
+    </form>
   );
 }

@@ -10,7 +10,7 @@ import {
   NewTaskForm,
   priorityColor,
   priorityLabel,
-  TaskStatus,
+  KanbanStatus,
   TodoState,
 } from "@/types/task";
 import TaskCreateModal from "./taskCreateModal";
@@ -23,9 +23,9 @@ export default function KanbanMode() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalInitialStatus, setModalInitialStatus] = useState<TaskStatus>("todo");
+  const [modalInitialStatus, setModalInitialStatus] = useState<KanbanStatus>("backlog");
   const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<KanbanStatus | null>(null);
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
@@ -38,10 +38,12 @@ export default function KanbanMode() {
         checked: item.checked,
         priority: (item.priority as TodoState["priority"]) || "medium",
         type: item.type,
-        status: item.status || (item.checked ? "done" : "todo"),
+        status: item.status || (item.checked ? "done" : "backlog"),
         description: item.description,
         order: item.order,
         completedAt: item.completedAt,
+        usualCompletionTime: item.usualCompletionTime,
+        lastCheckedHour: item.lastCheckedHour,
       }));
       setTasks(mapped);
       reportStatus("todo", "success");
@@ -60,27 +62,21 @@ export default function KanbanMode() {
   }, [fetchTasks, reportStatus]);
 
   const addTask = async (form: NewTaskForm) => {
-    try {
-      const response = await fetch("/api/todo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          priority: form.priority,
-          type: "task",
-          status: form.status ?? "todo",
-          description: form.description,
-        }),
-      });
-      if (response.ok) {
-        await fetchTasks();
-      }
-    } catch (err) {
-      console.error("Failed to add kanban task", err);
-    }
+    await fetchJson<TodoItem>("/api/todo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: form.title,
+        priority: form.priority,
+        type: "task",
+        status: form.status ?? "backlog",
+        description: form.description,
+      }),
+    });
+    await fetchTasks();
   };
 
-  const moveTask = async (id: number, newStatus: TaskStatus) => {
+  const moveTask = async (id: number, newStatus: KanbanStatus) => {
     const originalTasks = [...tasks];
     const targetTask = tasks.find((t) => t.id === id);
     if (!targetTask) return;
@@ -131,22 +127,22 @@ export default function KanbanMode() {
 
   // Group tasks by column
   const tasksByColumn = useMemo(() => {
-    const grouped: Record<TaskStatus, TodoState[]> = {
+    const grouped: Record<KanbanStatus, TodoState[]> = {
       backlog: [],
-      todo: [],
       in_progress: [],
       done: [],
     };
 
     for (const t of tasks) {
-      const col = t.status && grouped[t.status] ? t.status : "todo";
+      // Keep tasks saved with the retired "todo" status visible in Backlog.
+      const col = t.status === "in_progress" || t.status === "done" ? t.status : "backlog";
       grouped[col].push(t);
     }
 
     return grouped;
   }, [tasks]);
 
-  const openAddModal = (status: TaskStatus = "todo") => {
+  const openAddModal = (status: KanbanStatus = "backlog") => {
     setModalInitialStatus(status);
     setIsModalOpen(true);
   };
@@ -156,7 +152,7 @@ export default function KanbanMode() {
     setDraggingTaskId(id);
   };
 
-  const handleDragOver = (e: React.DragEvent, colId: TaskStatus) => {
+  const handleDragOver = (e: React.DragEvent, colId: KanbanStatus) => {
     e.preventDefault();
     if (dragOverColumn !== colId) {
       setDragOverColumn(colId);
@@ -167,7 +163,7 @@ export default function KanbanMode() {
     setDragOverColumn(null);
   };
 
-  const handleDrop = (colId: TaskStatus) => {
+  const handleDrop = (colId: KanbanStatus) => {
     if (draggingTaskId !== null) {
       void moveTask(draggingTaskId, colId);
     }
@@ -187,14 +183,14 @@ export default function KanbanMode() {
       {/* Header */}
       <div className="kanban-header">
         <div>
-          <p className="focus-eyebrow">Kanban Focus</p>
-          <h1 className="kanban-title">Quadro de Tarefas</h1>
+          <p className="focus-eyebrow">Pipeline</p>
+          <h1 className="kanban-title">Pipeline Tasks</h1>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => openAddModal("todo")}
+            onClick={() => openAddModal("backlog")}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer"
           >
             <span className="text-base leading-none font-bold">+</span>
@@ -226,7 +222,7 @@ export default function KanbanMode() {
 
       {(isLoading || error) && (
         <p className="focus-status mb-3" role={error ? "alert" : undefined}>
-          {isLoading ? "Carregando tarefas do quadro…" : "Erro ao sincronizar tarefas do quadro."}
+          {isLoading ? "Carregando tarefas do pipeline…" : "Erro ao sincronizar tarefas do pipeline."}
         </p>
       )}
 
@@ -328,9 +324,7 @@ export default function KanbanMode() {
                                 const prevCol =
                                   col.id === "done"
                                     ? "in_progress"
-                                    : col.id === "in_progress"
-                                      ? "todo"
-                                      : "backlog";
+                                    : "backlog";
                                 void moveTask(task.id, prevCol);
                               }}
                               className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-muted hover:text-foreground transition-colors cursor-pointer text-[11px]"
@@ -345,10 +339,8 @@ export default function KanbanMode() {
                               onClick={() => {
                                 const nextCol =
                                   col.id === "backlog"
-                                    ? "todo"
-                                    : col.id === "todo"
-                                      ? "in_progress"
-                                      : "done";
+                                    ? "in_progress"
+                                    : "done";
                                 void moveTask(task.id, nextCol);
                               }}
                               className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-muted hover:text-foreground transition-colors cursor-pointer text-[11px]"

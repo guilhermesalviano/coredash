@@ -22,8 +22,12 @@ export async function GET(req: NextRequest) {
       ? rawStatus
       : undefined;
 
+  const rawOrderBy = req.nextUrl.searchParams.get("orderBy")?.toLowerCase();
+  const orderBy: "lastCheckedHour" | "priority" =
+    rawOrderBy === "priority" ? "priority" : "lastCheckedHour";
+
   try {
-    const data = await getTodos({ type, status, onlyUnchecked });
+    const data = await getTodos({ type, status, onlyUnchecked, orderBy });
     return formatResponse(req, { message: "Todos data retrieved successfully", data });
   } catch {
     return NextResponse.json({ error: "Failed to retrieve todos data" }, { status: 500 });

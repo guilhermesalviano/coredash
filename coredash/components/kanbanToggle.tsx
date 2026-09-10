@@ -11,11 +11,11 @@ export default function KanbanToggle() {
       type="button"
       onClick={toggleKanban}
       aria-pressed={isActive}
-      aria-label={isActive ? "Exit kanban board" : "Enter kanban board"}
+      aria-label={isActive ? "Exit pipeline tasks" : "Enter pipeline tasks"}
       className={`focus-toggle${isActive ? " focus-toggle--active" : ""}`}
     >
       <span aria-hidden="true">▦</span>
-      {isActive ? "Kanban on" : "Kanban"}
+      {isActive ? "Pipeline on" : "Pipeline"}
     </button>
   );
 }
