@@ -227,9 +227,13 @@ body {
 
 /* FOCUS MODE */
 .focus-shell {
-  width: min(100%, 1100px);
+  width: 100%;
+  max-width: none;
+  height: calc(100dvh - 84px);
+  min-height: 0;
+  overflow-y: auto;
   margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+  padding: clamp(1rem, 4vw, 2.5rem) clamp(1rem, 5vw, 4rem) 2rem;
 }
 
 .focus-heading {
@@ -274,6 +278,7 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.9fr);
   gap: 1rem;
+  width: 100%;
 }
 
 .focus-card {
