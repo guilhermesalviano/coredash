@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "node scripts/start-standalone.mjs",
     "lint": "eslint",
+    "test": "npm run test:focus && npm run test:todos && npm run test:wishlist",
     "test:focus": "tsx --test features/focus/select-focus.test.ts",
     "test:todos": "tsx --test features/todos/server/todo-service.test.ts",
     "test:wishlist": "tsx --test features/wishlist/server/*.test.ts features/settings/server/*.test.ts",
