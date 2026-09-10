@@ -1,4 +1,4 @@
-import type { WishlistConfiguration, WishlistPriceDrop } from "@/features/wishlist/types";
+import type { WishlistConfiguration, WishlistPriceDrop, WishlistUpdateStatus } from "@/features/wishlist/types";
 
 export interface WishlistInternalAPIResponse {
   name: string;
@@ -10,3 +10,4 @@ export interface WishlistInternalAPIResponse {
 
 export type WishlistPriceDropAPIResponse = WishlistPriceDrop;
 export type WishlistConfigurationAPIResponse = WishlistConfiguration;
+export type WishlistUpdateStatusAPIResponse = WishlistUpdateStatus;

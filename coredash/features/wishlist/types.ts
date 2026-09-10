@@ -16,6 +16,12 @@ export interface WishlistConfiguration {
   url: string | null;
 }
 
+export interface WishlistUpdateStatus {
+  lastUpdatedAt: string | null;
+  updatedToday: boolean;
+  timezone: string;
+}
+
 export interface WishlistPriceDrop {
   name: string;
   currentPrice: string;

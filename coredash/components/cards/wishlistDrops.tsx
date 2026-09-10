@@ -5,16 +5,43 @@ import { useCallback, useEffect, useState } from "react";
 
 import Card from "../card";
 import SectionTitle from "../sectionTitle";
+import { useVisibilityPolling } from "@/hooks/use-visibility-polling";
 import { fetchJson } from "@/lib/api-client";
-import type { WishlistConfigurationAPIResponse, WishlistPriceDropAPIResponse } from "@/types/wishlist-api";
+import type {
+  WishlistConfigurationAPIResponse,
+  WishlistPriceDropAPIResponse,
+  WishlistUpdateStatusAPIResponse,
+} from "@/types/wishlist-api";
+
+const REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
 
+function updateStatusLabel(status: WishlistUpdateStatusAPIResponse): string {
+  if (!status.lastUpdatedAt) return "Desatualizado · nenhuma atualização registrada";
+
+  const lastUpdatedAt = new Date(status.lastUpdatedAt);
+  const time = lastUpdatedAt.toLocaleTimeString("pt-BR", {
+    timeZone: status.timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  if (status.updatedToday) return `Atualizado hoje às ${time}`;
+
+  const date = lastUpdatedAt.toLocaleDateString("pt-BR", {
+    timeZone: status.timezone,
+    day: "2-digit",
+    month: "2-digit",
+  });
+  return `Desatualizado · última atualização em ${date} às ${time}`;
+}
+
 export default function WishlistDropsCard() {
   const [drops, setDrops] = useState<WishlistPriceDropAPIResponse[] | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<WishlistUpdateStatusAPIResponse | null>(null);
   const [configValue, setConfigValue] = useState("");
   const [configOpen, setConfigOpen] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
@@ -24,14 +51,18 @@ export default function WishlistDropsCard() {
     fetchJson<WishlistPriceDropAPIResponse[]>("/api/wishlist/drops")
       .then(setDrops)
       .catch(() => setDrops([]));
+    fetchJson<WishlistUpdateStatusAPIResponse>("/api/wishlist/status")
+      .then(setUpdateStatus)
+      .catch(() => setUpdateStatus(null));
   }, []);
 
+  useVisibilityPolling(loadDrops, REFRESH_INTERVAL_MS);
+
   useEffect(() => {
-    loadDrops();
     fetchJson<WishlistConfigurationAPIResponse>("/api/wishlist/config")
       .then((config) => setConfigValue(config.wishlistId ?? ""))
       .catch(() => undefined);
-  }, [loadDrops]);
+  }, []);
 
   const saveConfig = async () => {
     setSavingConfig(true);
@@ -60,6 +91,12 @@ export default function WishlistDropsCard() {
           ⚙️ Configurar
         </button>
       </div>
+      {updateStatus && (
+        <div className={`wishlist-status ${updateStatus.updatedToday ? "is-fresh" : "is-stale"}`} role="status">
+          <span className="wishlist-status-dot" aria-hidden="true" />
+          {updateStatusLabel(updateStatus)}
+        </div>
+      )}
       <div className="products-list">
         {drops?.length ? drops.map((drop) => (
           <Link key={`${drop.name}-${drop.link}`} href={drop.link} target="_blank" rel="noreferrer">
