@@ -83,6 +83,8 @@ export async function GET(req: NextRequest) {
           id: event.id,
           start: (event.start.dateTime ? format(event.start.dateTime, "HH:mm") : "All day"),
           end: (event.end.dateTime ? format(event.end.dateTime, "HH:mm") : ""),
+          startDateTime: event.start.dateTime,
+          endDateTime: event.end.dateTime,
           title: [formatCalendarName(event.calendarName ?? ""), event.summary || "Ocupado"].filter(Boolean).join(" - "),
           color: getCalendarColor(event.calendarName ?? ""),
           type: getEventType(event.summary)

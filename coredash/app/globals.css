@@ -199,6 +199,260 @@ body {
   border-color: var(--border-hover);
 }
 
+.focus-toggle {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.focus-toggle:hover,
+.focus-toggle--active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.focus-toggle--active {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* FOCUS MODE */
+.focus-shell {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.focus-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.focus-eyebrow,
+.focus-card-label {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.focus-heading h1 {
+  color: var(--foreground);
+  font-size: clamp(1.7rem, 4vw, 2.7rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  margin-top: 0.45rem;
+}
+
+.focus-date {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.focus-status {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: -0.5rem 0 1rem;
+}
+
+.focus-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.9fr);
+  gap: 1rem;
+}
+
+.focus-card {
+  min-width: 0;
+  max-width: none;
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.focus-card--primary {
+  min-height: 16rem;
+}
+
+.focus-card-label {
+  margin-bottom: 1rem;
+}
+
+.focus-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.focus-count {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.focus-event {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.focus-event-time {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+
+.focus-event h2,
+.focus-empty h2 {
+  color: var(--foreground);
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.focus-event p,
+.focus-empty p,
+.focus-muted,
+.focus-weather-feels {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.focus-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-top: 1.5rem;
+}
+
+.focus-empty--small {
+  padding-top: 0.5rem;
+}
+
+.focus-todos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.focus-todo {
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  color: var(--foreground);
+  cursor: pointer;
+  display: flex;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 0.75rem;
+  text-align: left;
+  transition: border-color 0.2s, opacity 0.2s;
+  width: 100%;
+}
+
+.focus-todo:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.focus-todo:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.focus-todo-check {
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  flex: 0 0 1.1rem;
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.focus-todo-title {
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.focus-priority {
+  border-radius: 50%;
+  flex: 0 0 0.55rem;
+  height: 0.55rem;
+}
+
+.focus-priority--high { background: #fca5a5; }
+.focus-priority--medium { background: #fde68a; }
+.focus-priority--low { background: #6ee7b7; }
+
+.focus-weather-card {
+  grid-column: 1 / -1;
+}
+
+.focus-weather-main {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.focus-weather-icon {
+  font-size: 2.7rem;
+}
+
+.focus-weather-main strong {
+  color: var(--accent);
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.focus-weather-main span:not(.focus-weather-icon) {
+  color: var(--foreground);
+  display: block;
+  font-size: 0.95rem;
+  margin-top: 0.35rem;
+}
+
+.focus-weather-feels {
+  margin-top: 0.8rem;
+}
+
+.focus-weather-alert {
+  background: color-mix(in srgb, #60a5fa 14%, transparent);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+  font-size: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.65rem 0.75rem;
+}
+
+@media (max-width: 700px) {
+  .focus-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .focus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .focus-weather-card {
+    grid-column: auto;
+  }
+}
+
 .section-title {
   font-size: 11px;
   text-transform: uppercase;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import storage from "@/lib/storage";
 import { CARD_REGISTRY, CardId, useActiveCards } from "@/hooks/useActiveCards";
+import { useFocusMode } from "@/hooks/useFocusMode";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,7 @@ const sectionLabel: React.CSSProperties = {
 
 function SettingsModal({ onClose }: { onClose: () => void }) {
   const { isActive, toggle } = useActiveCards();
+  const { enabled: focusEnabled, setEnabled: setFocusEnabled } = useFocusMode();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -144,6 +146,25 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
 
           {/* Theme */}
           <ThemeSection />
+
+          <div>
+            <p style={sectionLabel}>Focus</p>
+            <div
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "9px 12px", borderRadius: 8,
+                background: focusEnabled ? "var(--surface2)" : "none",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <span style={{ fontSize: 16 }}>◉</span>
+                <span style={{ fontSize: 13, color: focusEnabled ? "var(--foreground)" : "var(--muted)" }}>
+                  Focus Mode
+                </span>
+              </div>
+              <Toggle checked={focusEnabled} onChange={() => setFocusEnabled(!focusEnabled)} />
+            </div>
+          </div>
 
           {/* Cards */}
           <div>

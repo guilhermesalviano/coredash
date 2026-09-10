@@ -47,6 +47,8 @@ export interface CalendarInternalAPIResponse {
     id: string;
     start: string;
     end: string;
+    startDateTime?: string;
+    endDateTime?: string;
     title: string;
     type?: string;
     color?: string;

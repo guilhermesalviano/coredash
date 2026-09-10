@@ -1,3 +1,5 @@
+"use client";
+
 import Loading from "@/components/loading";
 import ActionLoader from "@/components/actionLoader";
 import Clock from "@/components/clock";
@@ -6,8 +8,12 @@ import ActiveCards from "@/components/activeCards";
 import Logo from "@/components/logo";
 import Settings from "@/components/settings";
 import StoreStatusBridge from "@/components/storeStatusBridge";
+import FocusMode from "@/components/focusMode";
+import FocusModeToggle from "@/components/focusModeToggle";
+import { useFocusMode } from "@/hooks/useFocusMode";
 
 export default function Page() {
+  const { enabled, mounted } = useFocusMode();
 
   return (
     <>
@@ -25,10 +31,11 @@ export default function Page() {
 
         <div className="header-status flex items-center justify-end gap-4">
           <SystemsStatus />
+          <FocusModeToggle />
           <Settings />
         </div>
       </div>
-      <ActiveCards />
+      {mounted && enabled ? <FocusMode /> : <ActiveCards />}
     </>
   );
 }
