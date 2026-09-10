@@ -4,6 +4,7 @@ import { AMAZON_WISHLIST, LOCATION } from "@/config/config";
 import logger from "@/lib/logger";
 import { scrapeAmazonWishlist } from "@/features/wishlist/server/amazon-wishlist-scraper";
 import { insertWishlistSnapshots } from "@/features/wishlist/server/amazon-wishlist-snapshot";
+import { getWishlistConfiguration } from "@/features/wishlist/server/wishlist-config";
 
 type SchedulerGlobal = typeof globalThis & {
   __coreDashAmazonWishlistTask?: ScheduledTask;
@@ -15,12 +16,16 @@ function errorDetails(error: unknown): { error: string; stack?: string } {
 }
 
 export async function runAmazonWishlistCrawl(): Promise<void> {
-  if (!AMAZON_WISHLIST.id) throw new Error("WISHLIST_ID is not configured");
+  const { wishlistId } = await getWishlistConfiguration();
+  if (!wishlistId) {
+    logger.warn("Amazon wishlist crawl skipped: no wishlist is configured");
+    return;
+  }
 
-  const items = await scrapeAmazonWishlist(AMAZON_WISHLIST.id);
+  const items = await scrapeAmazonWishlist(wishlistId);
   const result = await insertWishlistSnapshots(items);
   logger.info("Amazon wishlist snapshot completed", {
-    wishlistId: AMAZON_WISHLIST.id,
+    wishlistId,
     ...result,
   });
 }
@@ -31,8 +36,8 @@ export function startAmazonWishlistCron(): ScheduledTask | null {
     return schedulerGlobal.__coreDashAmazonWishlistTask;
   }
 
-  if (!AMAZON_WISHLIST.id || !AMAZON_WISHLIST.cronSchedule) {
-    logger.warn("Amazon wishlist cron is disabled: WISHLIST_ID and CRON_SCHEDULE are required");
+  if (!AMAZON_WISHLIST.cronSchedule) {
+    logger.warn("Amazon wishlist cron is disabled: CRON_SCHEDULE is required");
     return null;
   }
 

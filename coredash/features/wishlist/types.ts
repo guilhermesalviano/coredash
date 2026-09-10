@@ -10,6 +10,12 @@ export interface WishlistSnapshotResult {
   failed: number;
 }
 
+export interface WishlistConfiguration {
+  wishlistId: string | null;
+  source: "database" | "environment" | null;
+  url: string | null;
+}
+
 export interface WishlistPriceDrop {
   name: string;
   currentPrice: string;
