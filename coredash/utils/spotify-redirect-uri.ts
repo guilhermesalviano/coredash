@@ -1,9 +1,7 @@
-import { CONFIG } from "@/config/config";
-
 /**
- * Returns the Spotify OAuth redirect URI derived from BASE_URL.
+ * Returns the Spotify OAuth redirect URI for the current request origin.
  * Register this exact value in your Spotify Developer Dashboard.
  */
-export function getSpotifyRedirectUri(): string {
-  return `${CONFIG.baseUrl.replace(/\/$/, "")}/api/spotify/callback`;
+export function getSpotifyRedirectUri(origin: string): string {
+  return `${origin.replace(/\/$/, "")}/api/spotify/callback`;
 }

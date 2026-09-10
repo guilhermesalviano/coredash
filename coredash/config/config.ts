@@ -71,5 +71,4 @@ export const AI = {
 export const CONFIG = {
   isDev,
   logLevel: optional("LOG_LEVEL", isDev ? "debug" : "info"),
-  baseUrl: optional("BASE_URL", "http://localhost:3000"),
 } as const;

@@ -4,8 +4,7 @@
  *
  * Prerequisites:
  *   - SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET set in .env
- *   - BASE_URL set in .env (e.g. http://127.0.0.1:3001)
- *   - {host-from-BASE_URL}:3001/callback added as Redirect URI in Spotify Developer Dashboard
+ *   - http://localhost:3001/callback added as Redirect URI in Spotify Developer Dashboard
  */
 
 import http from "http";
@@ -17,10 +16,8 @@ dotenv.config({ path: ".env" });
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID!;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET!;
 
-// Derive host from BASE_URL, listener runs on port 3001 (separate from Next.js)
 const LISTEN_PORT = 3001;
-const baseUrl = new URL(process.env.BASE_URL ?? "http://localhost:3001");
-const REDIRECT_URI = `${baseUrl.protocol}//${baseUrl.hostname}:${LISTEN_PORT}/callback`;
+const REDIRECT_URI = `http://localhost:${LISTEN_PORT}/callback`;
 
 const SCOPES = [
   "user-read-playback-state",

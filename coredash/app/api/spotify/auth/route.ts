@@ -11,7 +11,7 @@ const SCOPES = [
   "user-read-recently-played",
 ].join(" ");
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   if (!SPOTIFY.clientId || !SPOTIFY.clientSecret) {
     return NextResponse.json(
       { error: "Spotify credentials not configured. Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET." },
@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest) {
     );
   }
 
-  const redirectUri = getSpotifyRedirectUri();
+  const redirectUri = getSpotifyRedirectUri(req.nextUrl.origin);
 
   const url =
     "https://accounts.spotify.com/authorize?" +

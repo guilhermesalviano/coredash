@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SPOTIFY, CONFIG } from "@/config/config";
+import { SPOTIFY } from "@/config/config";
 import { writeSpotifyRefreshToken } from "@/utils/spotify-token-store";
 import { getSpotifyRedirectUri } from "@/utils/spotify-redirect-uri";
 import logger from "@/lib/logger";
@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
 
   if (error || !code) {
     logger.warn("Spotify OAuth cancelled or errored:", error);
-    return NextResponse.redirect(`${CONFIG.baseUrl}/?spotify=cancelled`);
+    return NextResponse.redirect(new URL("/?spotify=cancelled", req.nextUrl.origin));
   }
 
-  const base = CONFIG.baseUrl.replace(/\/$/, "");
-  const redirectUri = getSpotifyRedirectUri();
+  const origin = req.nextUrl.origin;
+  const redirectUri = getSpotifyRedirectUri(origin);
 
   try {
     logger.info(`[spotify/callback] exchanging code, redirect_uri=${redirectUri}`);
@@ -39,7 +39,8 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) {
       logger.error(`[spotify/callback] Spotify error: ${JSON.stringify(tokens)}`);
-      return NextResponse.redirect(`${CONFIG.baseUrl}/?spotify=error&reason=${encodeURIComponent(tokens.error_description ?? tokens.error ?? "unknown")}`);
+      const reason = encodeURIComponent(tokens.error_description ?? tokens.error ?? "unknown");
+      return NextResponse.redirect(new URL(`/?spotify=error&reason=${reason}`, origin));
     }
 
     if (!tokens.refresh_token) {
@@ -50,9 +51,10 @@ export async function GET(req: NextRequest) {
     writeSpotifyRefreshToken(tokens.refresh_token);
     logger.info("Spotify refresh token saved successfully.");
 
-    return NextResponse.redirect(`${CONFIG.baseUrl}/?spotify=connected`);
+    return NextResponse.redirect(new URL("/?spotify=connected", origin));
   } catch (err: any) {
     logger.error("Spotify OAuth callback error:", err);
-    return NextResponse.redirect(`${CONFIG.baseUrl}/?spotify=error&reason=${encodeURIComponent(err.message)}`);
+    const reason = encodeURIComponent(err.message);
+    return NextResponse.redirect(new URL(`/?spotify=error&reason=${reason}`, origin));
   }
 }

@@ -6,12 +6,11 @@ import { getSpotifyRedirectUri } from "@/utils/spotify-redirect-uri";
 export async function GET(req: NextRequest) {
   if (!CONFIG.isDev) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const resolvedRedirectUri = getSpotifyRedirectUri();
+  const resolvedRedirectUri = getSpotifyRedirectUri(req.nextUrl.origin);
   return formatResponse(req, {
     resolvedRedirectUri,
     registerThisInSpotifyDashboard: resolvedRedirectUri,
     requestOrigin: req.nextUrl.origin,
-    configBaseUrl: CONFIG.baseUrl,
     spotifyClientIdSet: !!SPOTIFY.clientId,
     spotifyClientSecretSet: !!SPOTIFY.clientSecret,
     spotifyRefreshTokenSet: !!SPOTIFY.refreshToken,

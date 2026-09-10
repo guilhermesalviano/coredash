@@ -11,11 +11,12 @@ export const maxDuration = 300;
 export async function POST(req: NextRequest) {
     try {
         const today = format(new Date(), "yyyy-MM-dd");
+        const origin = req.nextUrl.origin;
 
         const [todo, calendar, habits] = await Promise.all([
-            fetch(`${CONFIG.baseUrl}/api/todo`).then(r => r.json()),
-            fetch(`${CONFIG.baseUrl}/api/calendar`).then(r => r.json()),
-            fetch(`${CONFIG.baseUrl}/api/habits`).then(r => r.json()),
+            fetch(new URL("/api/todo", origin)).then(r => r.json()),
+            fetch(new URL("/api/calendar", origin)).then(r => r.json()),
+            fetch(new URL("/api/habits", origin)).then(r => r.json()),
         ]);
 
         const todoSummary = todo.data.filter((t: any) => t.checked === 0).map((t: any) => {
