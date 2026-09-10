@@ -83,10 +83,10 @@ export default function TodoCard({
                 <button
                   type="button"
                   onClick={onOpenKanban}
-                  title="Abrir quadro Kanban em tela cheia"
+                  title="Abrir Pipeline de Tarefas em tela cheia"
                   className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 text-muted hover:text-foreground text-xs font-mono transition-colors cursor-pointer"
                 >
-                  Kanban ↗
+                  Pipeline ↗
                 </button>
               )}
               <button
@@ -126,7 +126,7 @@ export default function TodoCard({
                   onClick={onOpenKanban}
                   className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 font-mono underline cursor-pointer"
                 >
-                  Abrir Kanban para criar e organizar tarefas →
+                  Abrir Pipeline para criar e organizar tarefas →
                 </button>
               )}
             </div>

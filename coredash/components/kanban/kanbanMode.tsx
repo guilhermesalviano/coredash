@@ -183,8 +183,8 @@ export default function KanbanMode() {
       {/* Header */}
       <div className="kanban-header">
         <div>
-          <p className="focus-eyebrow">Kanban Focus</p>
-          <h1 className="kanban-title">Quadro de Tarefas</h1>
+          <p className="focus-eyebrow">Pipeline</p>
+          <h1 className="kanban-title">Pipeline Tasks</h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ export default function KanbanMode() {
 
       {(isLoading || error) && (
         <p className="focus-status mb-3" role={error ? "alert" : undefined}>
-          {isLoading ? "Carregando tarefas do quadro…" : "Erro ao sincronizar tarefas do quadro."}
+          {isLoading ? "Carregando tarefas do pipeline…" : "Erro ao sincronizar tarefas do pipeline."}
         </p>
       )}
 

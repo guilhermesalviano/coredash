@@ -88,8 +88,8 @@ export default function TaskCreateModal({
       >
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-muted">Kanban</span>
-            <h2 className="text-lg font-semibold">Nova Tarefa Persistente</h2>
+            <span className="text-xs font-mono uppercase tracking-widest text-muted">Pipeline Tasks</span>
+            <h2 className="text-lg font-semibold">Nova Tarefa</h2>
           </div>
           <button
             type="button"

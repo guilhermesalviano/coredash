@@ -40,11 +40,15 @@ export interface KanbanColumnDef {
   badgeColor: string;
 }
 
+export type PipelineColumnDef = KanbanColumnDef;
+
 export const KANBAN_COLUMNS: KanbanColumnDef[] = [
   { id: "backlog", title: "Backlog", icon: "📥", badgeColor: "#94A3B8" },
   { id: "in_progress", title: "Em Progresso", icon: "⏳", badgeColor: "#FBBF24" },
   { id: "done", title: "Concluído", icon: "✅", badgeColor: "#34D399" },
 ];
+
+export const PIPELINE_COLUMNS = KANBAN_COLUMNS;
 
 export const priorityColor: Record<Priority, string> = {
   high: "#FCA5A5",
