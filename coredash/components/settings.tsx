@@ -49,17 +49,12 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
 
 type ThemeMode = "light" | "dark";
 
-function getThemeByTime(): ThemeMode {
-  const hour = new Date().getHours();
-  return hour >= 6 && hour < 20 ? "light" : "dark";
-}
-
 function ThemeSection() {
-  const [mode, setMode] = useState<ThemeMode>("light");
+  const [mode, setMode] = useState<ThemeMode>("dark");
 
   useEffect(() => {
     const stored = storage.get("theme") as ThemeMode | null;
-    const initial = (stored === "light" || stored === "dark") ? stored : getThemeByTime();
+    const initial = (stored === "light" || stored === "dark") ? stored : "dark";
     setMode(initial);
   }, []);
 
