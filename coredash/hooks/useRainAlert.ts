@@ -49,7 +49,7 @@ export function useRainAlert() {
       console.log("Rain alert: playing sound. code is: ", weatherCode);
 
       played = true;
-      const audio = new Audio("audios/olha-a-chuva.mp3");
+      const audio = new Audio("/audios/olha-a-chuva.mp3");
       audio.volume = 0.7;
       audio.play()
         .then(() => markPlayed())

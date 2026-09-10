@@ -31,6 +31,8 @@ export default function ActiveCards() {
 
   const autoSuccessStatuses = [
     ...(isWeekend ? ["stocks"] : []),
+    ...(!active.includes("calendar") ? ["calendar"] : []),
+    ...(!active.includes("todo") ? ["todo"] : []),
   ];
 
   if (!mounted) return null;

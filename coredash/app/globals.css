@@ -295,7 +295,7 @@ body[data-focus="on"] .header {
 
 .focus-grid {
   display: grid;
-  grid-template-rows: minmax(0, 0.8fr) minmax(0, 0.55fr);
+  grid-template-rows: minmax(0, 0.5fr) minmax(0, 0.55fr);
   grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.9fr);
   gap: 1rem;
   width: 100%;

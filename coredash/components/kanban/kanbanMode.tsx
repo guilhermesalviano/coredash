@@ -55,8 +55,9 @@ export default function KanbanMode() {
   }, [reportStatus]);
 
   useEffect(() => {
+    reportStatus("calendar", "success");
     void fetchTasks();
-  }, [fetchTasks]);
+  }, [fetchTasks, reportStatus]);
 
   const addTask = async (form: NewTaskForm) => {
     try {
