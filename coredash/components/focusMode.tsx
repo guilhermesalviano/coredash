@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDayChange } from "@/hooks/useDayChange";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useStatus } from "@/contexts/statusContext";
 import { fetchJson } from "@/lib/api-client";
 import type { TodoItem } from "@/features/todos/types";
 import type { CalendarInternalAPIResponse } from "@/types/calendar";
@@ -41,6 +42,7 @@ function FocusTodo({ todo, disabled, onToggle }: { todo: TodoState; disabled: bo
 
 export default function FocusMode() {
   const { weather } = useDashboard();
+  const { reportStatus } = useStatus();
   const [calendar, setCalendar] = useState<CalendarInternalAPIResponse | null>(null);
   const [todos, setTodos] = useState<TodoState[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,20 +52,32 @@ export default function FocusMode() {
 
   const fetchFocusData = useCallback(async () => {
     setIsLoading(true);
+    reportStatus("calendar", "loading");
+    reportStatus("todo", "loading");
     const [calendarResult, todoResult] = await Promise.allSettled([
       fetchJson<CalendarInternalAPIResponse>("/api/calendar"),
       fetchJson<TodoItem[]>("/api/todo?onlyUnchecked=true"),
     ]);
 
     let hasError = false;
-    if (calendarResult.status === "fulfilled") setCalendar(calendarResult.value);
-    else hasError = true;
-    if (todoResult.status === "fulfilled") setTodos(todoResult.value.map(toTodoState));
-    else hasError = true;
+    if (calendarResult.status === "fulfilled") {
+      setCalendar(calendarResult.value);
+      reportStatus("calendar", "success");
+    } else {
+      reportStatus("calendar", "error");
+      hasError = true;
+    }
+    if (todoResult.status === "fulfilled") {
+      setTodos(todoResult.value.map(toTodoState));
+      reportStatus("todo", "success");
+    } else {
+      reportStatus("todo", "error");
+      hasError = true;
+    }
 
     setError(hasError);
     setIsLoading(false);
-  }, []);
+  }, [reportStatus]);
 
   useEffect(() => {
     void fetchFocusData();

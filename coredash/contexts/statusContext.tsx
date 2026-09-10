@@ -24,9 +24,9 @@ export const StatusProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [actions, setActions] = useState<Set<string>>(new Set());
 
-  const reportStatus = (name: string, status: ServiceStatus) => {
+  const reportStatus = useCallback((name: string, status: ServiceStatus) => {
     setSystems(prev => ({ ...prev, [name]: status }));
-  };
+  }, []);
 
   const startAction = useCallback((id: string) => {
     setActions(prev => new Set([...prev, id]));
