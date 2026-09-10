@@ -1,10 +1,12 @@
 import { GOOGLE } from '@/config/config';
+import { getRuntimeSettings } from '@/features/settings/server/runtime-settings';
 import { CalendarEventsResponse } from '@/types/services';
 import { addDays } from 'date-fns';
 import { google } from 'googleapis';
 import logger from '@/lib/logger';
 
 export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> {
+ const { settings } = await getRuntimeSettings();
  const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: GOOGLE.clientEmail,
@@ -20,9 +22,9 @@ export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> 
   const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
   const endOfDay = new Date(addDays(now, 7)).toISOString();
 
-  const calendarsIds = GOOGLE.calendarIds;
+  const calendarsIds = settings.calendarIds;
 
-  if (!calendarsIds || calendarsIds.length === 0) throw new Error("Env 'GOOGLE_CALENDAR_IDS' not defined.");
+  if (!calendarsIds || calendarsIds.length === 0) throw new Error("No Google Calendar IDs configured.");
 
   const allEvents: CalendarEventsResponse = [];
 
@@ -34,6 +36,7 @@ export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> 
           calendarId: calendarId,
           timeMin: startOfDay,
           timeMax: endOfDay,
+          timeZone: settings.timezone,
           singleEvents: true,
           orderBy: 'startTime',
         }),

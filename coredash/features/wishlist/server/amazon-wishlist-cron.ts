@@ -1,13 +1,16 @@
 import cron, { type ScheduledTask } from "node-cron";
 
-import { AMAZON_WISHLIST, LOCATION } from "@/config/config";
 import logger from "@/lib/logger";
+import { getRuntimeSettings } from "@/features/settings/server/runtime-settings";
+import type { RuntimeSettings } from "@/features/settings/types";
 import { scrapeAmazonWishlist } from "@/features/wishlist/server/amazon-wishlist-scraper";
 import { insertWishlistSnapshots } from "@/features/wishlist/server/amazon-wishlist-snapshot";
 import { getWishlistConfiguration } from "@/features/wishlist/server/wishlist-config";
 
 type SchedulerGlobal = typeof globalThis & {
   __coreDashAmazonWishlistTask?: ScheduledTask;
+  __coreDashAmazonWishlistScheduleKey?: string;
+  __coreDashAmazonWishlistRunning?: boolean;
 };
 
 function errorDetails(error: unknown): { error: string; stack?: string } {
@@ -30,40 +33,72 @@ export async function runAmazonWishlistCrawl(): Promise<void> {
   });
 }
 
-export function startAmazonWishlistCron(): ScheduledTask | null {
+function validTimezone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function refreshAmazonWishlistCron(settings?: RuntimeSettings): Promise<ScheduledTask | null> {
   const schedulerGlobal = globalThis as SchedulerGlobal;
-  if (schedulerGlobal.__coreDashAmazonWishlistTask) {
-    return schedulerGlobal.__coreDashAmazonWishlistTask;
-  }
+  const effectiveSettings = settings ?? (await getRuntimeSettings()).settings;
+  const { cronSchedule, timezone } = effectiveSettings;
 
-  if (!AMAZON_WISHLIST.cronSchedule) {
-    logger.warn("Amazon wishlist cron is disabled: CRON_SCHEDULE is required");
+  if (!cronSchedule) {
+    schedulerGlobal.__coreDashAmazonWishlistTask?.stop();
+    delete schedulerGlobal.__coreDashAmazonWishlistTask;
+    delete schedulerGlobal.__coreDashAmazonWishlistScheduleKey;
+    logger.warn("Amazon wishlist cron is disabled: no schedule is configured");
     return null;
   }
 
-  if (!cron.validate(AMAZON_WISHLIST.cronSchedule)) {
-    logger.error("Amazon wishlist cron is disabled: CRON_SCHEDULE is invalid", {
-      schedule: AMAZON_WISHLIST.cronSchedule,
+  if (!cron.validate(cronSchedule) || cronSchedule.split(/\s+/).length !== 5 || !validTimezone(timezone)) {
+    logger.error("Amazon wishlist cron was not updated: schedule or timezone is invalid", {
+      schedule: cronSchedule,
+      timezone,
     });
-    return null;
+    return schedulerGlobal.__coreDashAmazonWishlistTask ?? null;
+  }
+
+  const scheduleKey = `${cronSchedule}|${timezone}`;
+  if (schedulerGlobal.__coreDashAmazonWishlistScheduleKey === scheduleKey) {
+    return schedulerGlobal.__coreDashAmazonWishlistTask ?? null;
   }
 
   const task = cron.schedule(
-    AMAZON_WISHLIST.cronSchedule,
+    cronSchedule,
     async () => {
+      if (schedulerGlobal.__coreDashAmazonWishlistRunning) {
+        logger.warn("Amazon wishlist crawl skipped because a previous crawl is still running");
+        return;
+      }
+      schedulerGlobal.__coreDashAmazonWishlistRunning = true;
       try {
         await runAmazonWishlistCrawl();
       } catch (error) {
         logger.error("Amazon wishlist crawl failed; no snapshots were written", errorDetails(error));
+      } finally {
+        schedulerGlobal.__coreDashAmazonWishlistRunning = false;
       }
     },
-    { timezone: LOCATION.timezone },
+    { timezone },
   );
 
+  schedulerGlobal.__coreDashAmazonWishlistTask?.stop();
   schedulerGlobal.__coreDashAmazonWishlistTask = task;
+  schedulerGlobal.__coreDashAmazonWishlistScheduleKey = scheduleKey;
   logger.info("Amazon wishlist cron scheduled", {
-    schedule: AMAZON_WISHLIST.cronSchedule,
-    timezone: LOCATION.timezone,
+    schedule: cronSchedule,
+    timezone,
   });
   return task;
+}
+
+export function startAmazonWishlistCron(): void {
+  void refreshAmazonWishlistCron().catch((error) => {
+    logger.error("Amazon wishlist cron could not be initialized", errorDetails(error));
+  });
 }

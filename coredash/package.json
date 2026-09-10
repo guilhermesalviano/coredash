@@ -8,7 +8,7 @@
     "start": "node scripts/start-standalone.mjs",
     "lint": "eslint",
     "test:focus": "tsx --test features/focus/select-focus.test.ts",
-    "test:wishlist": "tsx --test features/wishlist/server/*.test.ts",
+    "test:wishlist": "tsx --test features/wishlist/server/*.test.ts features/settings/server/*.test.ts",
     "mcp": "tsx mcp/stdio.ts"
   },
   "dependencies": {

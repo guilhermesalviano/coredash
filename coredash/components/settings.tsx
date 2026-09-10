@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import storage from "@/lib/storage";
 import { CARD_REGISTRY, CardId, useActiveCards } from "@/hooks/useActiveCards";
 import { useFocusMode } from "@/hooks/useFocusMode";
+import RuntimeSettingsSection from "@/components/runtimeSettings";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 16, width: "100%", maxWidth: 380,
+          borderRadius: 16, width: "100%", maxWidth: 520,
           boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
         }}
       >
@@ -137,10 +138,12 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Body */}
-        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 24, maxHeight: "calc(100vh - 110px)", overflowY: "auto" }}>
 
           {/* Theme */}
           <ThemeSection />
+
+          <RuntimeSettingsSection />
 
           <div>
             <p style={sectionLabel}>Focus</p>

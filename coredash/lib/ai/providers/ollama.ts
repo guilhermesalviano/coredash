@@ -1,4 +1,5 @@
-import { AI, EXTERNAL_SERVICES } from "@/config/config";
+import { EXTERNAL_SERVICES } from "@/config/config";
+import { getRuntimeSettings } from "@/features/settings/server/runtime-settings";
 import { Ollama } from "ollama";
 
 interface OllamaProviderProps {
@@ -18,8 +19,9 @@ export default async function OllamaProvider({
   error?: string;
 }> {
   try {
+    const { settings } = await getRuntimeSettings();
     const stream = await ollama.chat({
-      model: AI.model,
+      model: settings.aiModel,
       messages: [
         ...(systemInstruction ? [{ role: "system" as const, content: systemInstruction }] : []),
         ...history,
