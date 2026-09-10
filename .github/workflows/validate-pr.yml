@@ -1,0 +1,62 @@
+name: Validate PR
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  validate-app:
+    name: Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: coredash/package-lock.json
+
+      - name: Install dependencies
+        working-directory: coredash
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        working-directory: coredash
+        run: npx tsc --noEmit
+
+      - name: Run unit tests
+        working-directory: coredash
+        run: npm test
+
+      - name: Build Next.js application
+        working-directory: coredash
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  validate-docker:
+    name: Validate Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (dry run)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./coredash
+          push: false

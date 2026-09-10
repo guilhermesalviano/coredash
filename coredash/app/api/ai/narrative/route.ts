@@ -11,20 +11,29 @@ export const maxDuration = 300;
 export async function POST(req: NextRequest) {
     try {
         const today = format(new Date(), "yyyy-MM-dd");
-        const origin = req.nextUrl.origin;
+        const internalBase = `http://127.0.0.1:${process.env.PORT || 3000}`;
+        const fetchInternal = async (path: string) => {
+            try {
+                const r = await fetch(new URL(path, internalBase), { signal: AbortSignal.timeout(5000) });
+                if (r.ok) return await r.json();
+            } catch {}
+            return { data: [] };
+        };
 
         const [todo, calendar, habits] = await Promise.all([
-            fetch(new URL("/api/todo", origin)).then(r => r.json()),
-            fetch(new URL("/api/calendar", origin)).then(r => r.json()),
-            fetch(new URL("/api/habits", origin)).then(r => r.json()),
+            fetchInternal("/api/todo"),
+            fetchInternal("/api/calendar"),
+            fetchInternal("/api/habits"),
         ]);
 
-        const todoSummary = todo.data.filter((t: any) => t.checked === 0).map((t: any) => {
+        const todoItems = Array.isArray(todo?.data) ? todo.data : [];
+        const todoSummary = todoItems.filter((t: any) => t.checked === 0).map((t: any) => {
             return t.title + (t.sponsor ? `, resp: ${t.sponsor}` : "") +
                 (t.usualCompletionTime ? `, usual time: ${t.usualCompletionTime.replace(":", "h")}` : "")
         }).join(", ");
 
-        const calendarSummary = calendar.data?.todayEvents.map((c: any) => c.title + " at " + c.start).join(", ");
+        const calendarEvents = Array.isArray(calendar?.data?.todayEvents) ? calendar.data.todayEvents : [];
+        const calendarSummary = calendarEvents.map((c: any) => c.title + " at " + c.start).join(", ");
 
         const body = await req.text();
         if (!body) return NextResponse.json({ error: "Empty request body" }, { status: 400 });
@@ -37,12 +46,13 @@ export async function POST(req: NextRequest) {
             .map((h: any) => /chuva|tempestade|rain|drizzle|shower|storm|trovoada/i.test(h.condition))
             .some((r: boolean) => r);
         const userLocation = await getUserCity();
-        const todoCount = todo.data.filter((t: any) => t.checked === 0).length;
+        const todoCount = todoItems.filter((t: any) => t.checked === 0).length;
         const isMorning = hour >= 6 && hour <= 12;
 
         const HABITSINSTRUCTION = "instructions: waking up early, studying, exercising.";
 
-        const entries = Object.entries(habits.data) as [string, any][];
+        const habitsData = habits?.data && typeof habits.data === "object" ? habits.data : {};
+        const entries = Object.entries(habitsData) as [string, any][];
         const habitsSummary = HABITSINSTRUCTION + " " + (entries.length > 0 
             ? entries[0][0] === today 
                 ? `Completed habits for ${today}: ${entries[0][1].join(", ")}` 

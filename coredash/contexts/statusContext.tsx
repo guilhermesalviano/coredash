@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 type ServiceStatus = "loading" | "success" | "error";
 
@@ -26,6 +26,24 @@ export const StatusProvider = ({ children }: { children: React.ReactNode }) => {
 
   const reportStatus = useCallback((name: string, status: ServiceStatus) => {
     setSystems(prev => ({ ...prev, [name]: status }));
+  }, []);
+
+  // Failsafe: if a system never reports (e.g. unmounted card, network timeout, reverse proxy error), mark as error after 4s
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSystems((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const [key, status] of Object.entries(next)) {
+          if (status === "loading") {
+            next[key] = "error";
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 4000);
+    return () => clearTimeout(timer);
   }, []);
 
   const startAction = useCallback((id: string) => {

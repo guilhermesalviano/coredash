@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useStatus } from "@/contexts/statusContext";
 import { useDayChange } from "@/hooks/useDayChange";
+import { fetchJson } from "@/lib/api-client";
+import type { CalendarInternalAPIResponse } from "@/types/calendar";
 import CalendarCard from "../calendar";
 
 export default function CalendarCardClient() {
@@ -11,14 +13,13 @@ export default function CalendarCardClient() {
 
   const fetchCalendar = useCallback(async () => {
     try {
-      const res = await fetch("/api/calendar");
-      const data = await res.json();
-      setCalendar(data.data);
+      const data = await fetchJson<CalendarInternalAPIResponse>("/api/calendar");
+      setCalendar(data);
       reportStatus("calendar", "success");
     } catch {
       reportStatus("calendar", "error");
     }
-  }, []);
+  }, [reportStatus]);
 
   useDayChange(() => fetchCalendar());
 

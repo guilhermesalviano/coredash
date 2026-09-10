@@ -19,6 +19,7 @@ const PHRASES = [
 
 const FADE_DURATION = 400;
 const MIN_DISPLAY = 1500;
+const MAX_DISPLAY = 4500;
 
 export default function Loading() {
   const { anyLoading } = useStatus();
@@ -28,10 +29,27 @@ export default function Loading() {
   const [phrase, setPhrase] = useState<string>("");
 
   useEffect(() => {
-    setPhrase(PHRASES[Math.floor(Math.random() * PHRASES.length)]);
+    const phraseFrame = requestAnimationFrame(() => {
+      setPhrase(PHRASES[Math.floor(Math.random() * PHRASES.length)]);
+    });
     fetch("/api/gifs")
       .then((r) => r.json())
-      .then((gifs: string[]) => setGif(gifs[Math.floor(Math.random() * gifs.length)]));
+      .then((gifs: string[]) => {
+        if (Array.isArray(gifs) && gifs.length > 0) {
+          setGif(gifs[Math.floor(Math.random() * gifs.length)]);
+        }
+      })
+      .catch(() => {});
+    return () => cancelAnimationFrame(phraseFrame);
+  }, []);
+
+  // Failsafe: dismiss loading screen after MAX_DISPLAY even if a service or network request is pending
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      setExiting(true);
+      setTimeout(() => setVisible(false), FADE_DURATION);
+    }, MAX_DISPLAY);
+    return () => clearTimeout(safetyTimer);
   }, []);
 
   useEffect(() => {

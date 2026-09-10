@@ -6,6 +6,7 @@ import handleFireConfetti from "@/components/confetti";
 import { useStatus } from "@/contexts/statusContext";
 import { useViewMode } from "@/hooks/useViewMode";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
+import { fetchJson } from "@/lib/api-client";
 import { useDayChange } from "@/hooks/useDayChange";
 import TodoCard from "../todo";
 
@@ -21,9 +22,8 @@ export default function TodoCardClient() {
 
   const fetchTodos = useCallback(async () => {
     try {
-      const res = await fetch("/api/todo");
-      const data = await res.json();
-      setTodos(data.data ?? []);
+      const data = await fetchJson<TodoState[]>("/api/todo");
+      setTodos(data ?? []);
       reportStatus("todo", "success");
     } catch {
       reportStatus("todo", "error");
