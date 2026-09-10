@@ -1,3 +1,5 @@
+import type { WishlistPriceDrop } from "@/features/wishlist/types";
+
 export interface WishlistInternalAPIResponse {
   name: string;
   price: string;
@@ -5,3 +7,5 @@ export interface WishlistInternalAPIResponse {
   store: string;
   alert: boolean;
 }
+
+export type WishlistPriceDropAPIResponse = WishlistPriceDrop;

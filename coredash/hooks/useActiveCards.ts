@@ -12,6 +12,7 @@ export const CARD_REGISTRY = [
   { id: "stocks",    label: "Stocks",           emoji: "📈" },
   { id: "todo",      label: "To-Do",            emoji: "✅" },
   { id: "news",      label: "News",             emoji: "📰" },
+  { id: "wishlistDrops", label: "Wishlist Drops", emoji: "📉" },
 ] as const;
 
 export type CardId = (typeof CARD_REGISTRY)[number]["id"];
@@ -20,7 +21,7 @@ const STORAGE_KEY = "active_cards";
 const SYNC_EVENT = "active-cards-changed";
 
 const DEFAULT_ACTIVE: CardId[] = [
-  "weather", "narrative", "calendar", "gmail", "spotify", "todo",
+  "weather", "narrative", "calendar", "gmail", "spotify", "todo", "wishlistDrops",
 ];
 
 function load(): CardId[] {

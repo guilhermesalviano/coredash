@@ -9,3 +9,13 @@ export interface WishlistSnapshotResult {
   inserted: number;
   failed: number;
 }
+
+export interface WishlistPriceDrop {
+  name: string;
+  currentPrice: string;
+  previousPrice: string;
+  savings: number;
+  percentage: number;
+  link: string;
+  store: "Amazon";
+}

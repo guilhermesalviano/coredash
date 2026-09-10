@@ -884,6 +884,19 @@ body[data-focus="on"] .header {
   margin-top: 3px;
 }
 
+.product-drop {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #34d399;
+  margin-top: 3px;
+}
+
+.product-empty {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 10px 0;
+}
+
 /* GOALS */
 .goals-list {
   display: flex;
