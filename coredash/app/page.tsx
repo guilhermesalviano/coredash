@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Loading from "@/components/loading";
 import ActionLoader from "@/components/actionLoader";
 import Clock from "@/components/clock";
@@ -14,6 +15,16 @@ import { useFocusMode } from "@/hooks/useFocusMode";
 
 export default function Page() {
   const { enabled, mounted } = useFocusMode();
+
+  // Lets the stylesheet size the focus shell against the real header height
+  // instead of a hardcoded viewport offset.
+  useEffect(() => {
+    if (!mounted || !enabled) return;
+    document.body.dataset.focus = "on";
+    return () => {
+      delete document.body.dataset.focus;
+    };
+  }, [enabled, mounted]);
 
   return (
     <>

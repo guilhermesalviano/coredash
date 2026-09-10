@@ -114,7 +114,21 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
-  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Focus mode owns the viewport: the header keeps its natural height and the
+   shell takes exactly what is left, whatever the header actually measures. */
+body[data-focus="on"] {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body[data-focus="on"] .header {
+  flex: 0 0 auto;
 }
 
 .header {
@@ -229,7 +243,7 @@ body {
 .focus-shell {
   width: 100%;
   max-width: none;
-  height: calc(100dvh - 84px);
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   display: flex;
@@ -452,9 +466,16 @@ body {
 }
 
 @media (max-width: 700px) {
-  .focus-shell {
+  body[data-focus="on"] {
+    display: block;
     height: auto;
-    min-height: calc(100dvh - 84px);
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .focus-shell {
+    flex: none;
+    height: auto;
     overflow-y: visible;
   }
 
