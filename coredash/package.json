@@ -8,6 +8,7 @@
     "start": "node scripts/start-standalone.mjs",
     "lint": "eslint",
     "test:focus": "tsx --test features/focus/select-focus.test.ts",
+    "test:wishlist": "tsx --test features/wishlist/server/*.test.ts",
     "mcp": "tsx mcp/stdio.ts"
   },
   "dependencies": {
@@ -15,11 +16,13 @@
     "@modelcontextprotocol/server": "^2.0.0",
     "@toon-format/toon": "^4.1.1",
     "canvas-confetti": "^1.9.4",
+    "cheerio": "^1.0.0",
     "date-fns": "^4.1.0",
     "googleapis": "^171.4.0",
     "lucide-react": "^0.577.0",
     "mysql2": "^3.18.2",
     "next": "16.1.6",
+    "node-cron": "^4.2.1",
     "ollama": "^0.6.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
