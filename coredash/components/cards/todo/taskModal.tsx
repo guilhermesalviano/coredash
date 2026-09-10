@@ -1,6 +1,6 @@
 "use client";
 
-import { NewTaskForm, Priority, priorityColor, priorityLabel } from "@/types/task";
+import { NewTaskForm, Priority, priorityColor, priorityLabel, TaskRecurrenceForm } from "@/types/task";
 import { useEffect, useState } from "react";
 
 const WEEK_DAYS = [
@@ -13,6 +13,13 @@ const WEEK_DAYS = [
   { label: "Sáb", value: 6 },
 ];
 
+const DEFAULT_RECURRENCE: TaskRecurrenceForm = {
+  repeat: false,
+  weeklyInterval: 1,
+  weeklyDays: [0],
+  weeklyEnd: null,
+};
+
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,12 +27,20 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
-  const [form, setForm] = useState<NewTaskForm>({ title: "", priority: "medium", recurrence: {repeat: false, weeklyInterval: 1, weeklyDays: [0], weeklyEnd: null}});
+  const [form, setForm] = useState<NewTaskForm>({
+    title: "",
+    priority: "medium",
+    recurrence: { ...DEFAULT_RECURRENCE },
+  });
 
   const handleSubmit = () => {
     if (!form.title.trim()) return;
     onAdd(form);
-    setForm({ title: "", priority: "medium", recurrence: {repeat: false, weeklyInterval: 1, weeklyDays: [0], weeklyEnd: null}});
+    setForm({
+      title: "",
+      priority: "medium",
+      recurrence: { ...DEFAULT_RECURRENCE },
+    });
     onClose();
   };
 
@@ -46,7 +61,7 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="rounded-2xl shadow-2xl w-full max-w-md mx-4! p-6! flex flex-col gap-5"
+        className="rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-5"
         style={{
           backgroundColor: "var(--background)",
           color: "var(--foreground)"
@@ -66,7 +81,7 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
           <label className="text-sm font-medium">Descrição</label>
           <input
             autoFocus
-            className="w-full border border-gray-200 rounded-lg px-3! py-2.5! text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
             style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
             placeholder="Descreva a tarefa..."
             value={form.title}
@@ -82,7 +97,7 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
               <button
                 key={p}
                 onClick={() => setForm((f) => ({ ...f, priority: p }))}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2! rounded-lg text-sm font-medium border transition-all cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium border transition-all cursor-pointer ${
                   form.priority === p
                     ? "border-transparent shadow-sm scale-105"
                     : "border-gray-200 text-gray-500 hover:border-gray-300"
@@ -109,12 +124,15 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
           <button
             type="button"
             onClick={() =>
-              setForm((f) => ({
-                ...f,
-                recurrence: { ...f.recurrence, repeat: !f.recurrence?.repeat },
-              }))
+              setForm((f) => {
+                const currentRec = f.recurrence ?? DEFAULT_RECURRENCE;
+                return {
+                  ...f,
+                  recurrence: { ...currentRec, repeat: !currentRec.repeat },
+                };
+              })
             }
-            className={`flex items-center cursor-pointer gap-2 w-fit px-3! py-2! rounded-lg border text-sm font-medium transition-all ${
+            className={`flex items-center cursor-pointer gap-2 w-fit px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
               form.recurrence?.repeat
                 ? "bg-indigo-50 border-indigo-400 text-indigo-700"
                 : "border-gray-200 text-gray-500 hover:border-gray-300"
@@ -131,7 +149,7 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
           </button>
 
           {form.recurrence?.repeat && (
-            <div className="flex flex-col gap-3 pl-3! border-l-2 border-indigo-100">
+            <div className="flex flex-col gap-3 pl-3 border-l-2 border-indigo-100">
 
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs">Dias da semana</span>
@@ -142,18 +160,19 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
                       <button
                         key={day.value}
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          const currentRec = form.recurrence ?? DEFAULT_RECURRENCE;
                           setForm((f) => ({
                             ...f,
                             recurrence: {
-                              ...f.recurrence,
+                              ...currentRec,
                               weeklyDays: selected
-                                ? f.recurrence.weeklyDays?.filter((d) => d !== day.value)
-                                : [...(f.recurrence?.weeklyDays || []), day.value],
+                                ? currentRec.weeklyDays?.filter((d) => d !== day.value)
+                                : [...(currentRec.weeklyDays || []), day.value],
                             },
-                          }))
-                        }
-                        className={`w-10 py-1.5! cursor-pointer rounded-lg text-xs font-medium border transition-all ${
+                          }));
+                        }}
+                        className={`w-10 py-1.5 cursor-pointer rounded-lg text-xs font-medium border transition-all ${
                           selected
                             ? "bg-indigo-500 border-indigo-500 text-white shadow-sm"
                             : "border-gray-200 hover:border-indigo-300"
@@ -173,16 +192,17 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
                   min={1}
                   max={52}
                   value={form.recurrence?.weeklyInterval ?? 1}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const currentRec = form.recurrence ?? DEFAULT_RECURRENCE;
                     setForm((f) => ({
                       ...f,
                       recurrence: {
-                        ...f.recurrence,
+                        ...currentRec,
                         weeklyInterval: Math.max(1, Number(e.target.value)),
                       },
-                    }))
-                  }
-                  className="w-16 cursor-pointer border border-gray-200 rounded-lg px-2! py-1.5! text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    }));
+                  }}
+                  className="w-16 cursor-pointer border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                 />
                 <span className="text-xs">semana(s)</span>
               </div>
@@ -192,32 +212,34 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
                 <input
                   type="date"
                   value={
-                    form.recurrence.weeklyEnd
+                    form.recurrence?.weeklyEnd
                       ? new Date(form.recurrence.weeklyEnd).toISOString().split("T")[0]
                       : ""
                   }
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const currentRec = form.recurrence ?? DEFAULT_RECURRENCE;
                     setForm((f) => ({
                       ...f,
                       recurrence: {
-                        ...f.recurrence,
+                        ...currentRec,
                         weeklyEnd: e.target.value
                           ? new Date(e.target.value).getTime()
                           : null,
                       },
-                    }))
-                  }
-                  className="w-full border border-gray-200 rounded-lg px-3! py-2! text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    }));
+                  }}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                 />
-                {form.recurrence.weeklyEnd && (
+                {form.recurrence?.weeklyEnd && (
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const currentRec = form.recurrence ?? DEFAULT_RECURRENCE;
                       setForm((f) => ({
                         ...f,
-                        recurrence: { ...f.recurrence, weeklyEnd: null },
-                      }))
-                    }
+                        recurrence: { ...currentRec, weeklyEnd: null },
+                      }));
+                    }}
                     className="text-xs hover:text-red-400 transition-colors w-fit cursor-pointer"
                   >
                     Remover data de término
@@ -229,17 +251,17 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
           )}
         </div>
 
-        <div className="flex gap-2 pt-1!">
+        <div className="flex gap-2 pt-1">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5! rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={!form.title.trim()}
-            className="flex-1 py-2.5! rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors"
+            className="flex-1 py-2.5 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors"
           >
             Adicionar
           </button>

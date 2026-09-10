@@ -8,6 +8,7 @@
     "start": "node scripts/start-standalone.mjs",
     "lint": "eslint",
     "test:focus": "tsx --test features/focus/select-focus.test.ts",
+    "test:todos": "tsx --test features/todos/server/todo-service.test.ts",
     "test:wishlist": "tsx --test features/wishlist/server/*.test.ts features/settings/server/*.test.ts",
     "mcp": "tsx mcp/stdio.ts"
   },
@@ -46,6 +47,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "domhandler": "^6.0.1",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",

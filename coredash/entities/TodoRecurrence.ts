@@ -8,7 +8,7 @@ export class TodoRecurrence {
   @Column({ type: "tinyint", width: 1, default: 0 })
   repeat!: number;
 
-  @Column()
+  @Column({ type: "int", default: 1 })
   weeklyInterval!: number;
 
   @Column("simple-array", { nullable: true })

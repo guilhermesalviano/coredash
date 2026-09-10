@@ -3,13 +3,13 @@ import { Todo } from "./Todo";
 
 @Entity("todo_checks")
 export class TodoCheck {
-  @PrimaryColumn()
+  @PrimaryColumn({ type: "varchar" })
   id!: string;
 
-  @PrimaryColumn()
+  @PrimaryColumn({ type: "varchar" })
   timestamp!: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   hour!: string;
 
   @Column({ type: "tinyint", width: 1, default: 0 })
