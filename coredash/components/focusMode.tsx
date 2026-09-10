@@ -9,6 +9,7 @@ import type { TodoItem } from "@/features/todos/types";
 import type { CalendarInternalAPIResponse } from "@/types/calendar";
 import type { TodoState, Priority } from "@/types/task";
 import { selectFocusView } from "@/features/focus/select-focus";
+import { FOCUS_HEADLINES } from "@/features/focus/headlines";
 import type { FocusCalendarEvent } from "@/features/focus/types";
 import Card from "@/components/card";
 
@@ -135,13 +136,14 @@ export default function FocusMode() {
   };
 
   const weatherUnavailable = weather.status === "error" || !weather.data;
+  const headline = FOCUS_HEADLINES[Math.floor(now.getTime() / 60_000) % FOCUS_HEADLINES.length];
 
   return (
     <main className="focus-shell">
       <div className="focus-heading">
         <div>
           <p className="focus-eyebrow">Focus mode</p>
-          <h1>Just what matters now.</h1>
+          <h1>{headline}</h1>
         </div>
         <div className="focus-date">
           {now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
