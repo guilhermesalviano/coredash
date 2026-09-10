@@ -115,3 +115,7 @@ CoreDash is designed for Docker-based deployment on low-cost or home-lab hardwar
 2. Configure `.env` using `coredash/.env.example`.
 3. Provide database credentials and any optional provider credentials.
 4. Deploy and access the dashboard through the configured host and port.
+
+The optional Amazon wishlist worker starts with the Node.js Next.js server. Set `WISHLIST_ID` and a standard five-field `CRON_SCHEDULE`, for example `0 8 * * 6` for Saturdays at 08:00. The schedule uses `TZ` (default `America/Sao_Paulo`) and waits for the first scheduled time after startup.
+
+Each successful run appends one row per titled wishlist item to `wishlist_amazon`. Scrape failures prevent all inserts for that run; individual database insert failures are logged while the remaining items continue.

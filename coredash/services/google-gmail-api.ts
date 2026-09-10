@@ -1,4 +1,5 @@
-import { GOOGLE, LOCATION } from '@/config/config';
+import { GOOGLE } from '@/config/config';
+import { getRuntimeSettings } from '@/features/settings/server/runtime-settings';
 import { GmailMessage } from '@/types/gmail';
 import { google } from 'googleapis';
 
@@ -6,11 +7,11 @@ function getHeader(headers: { name: string; value: string }[], name: string): st
   return headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? '';
 }
 
-function normalizeDate(raw: string): string {
+function normalizeDate(raw: string, timezone: string): string {
   const date = new Date(raw);
   if (isNaN(date.getTime())) return raw;
   return new Intl.DateTimeFormat('sv-SE', {
-    timeZone: LOCATION.timezone,
+    timeZone: timezone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -84,6 +85,7 @@ export async function resolveRecentGmailMessageId(positionOrId: string): Promise
 }
 
 export async function fetchGmailMessage(id: string): Promise<GmailMessage> {
+  const { settings } = await getRuntimeSettings();
   const auth = new google.auth.OAuth2(
     GOOGLE.gmailClientId,
     GOOGLE.gmailClientSecret,
@@ -108,13 +110,14 @@ export async function fetchGmailMessage(id: string): Promise<GmailMessage> {
     snippet: detail.data.snippet ?? '',
     from: getHeader(headers, 'From').replace('\u003C', '- ').replace('\u003E', '').trim(),
     subject: getHeader(headers, 'Subject'),
-    date: normalizeDate(getHeader(headers, 'Date')),
+    date: normalizeDate(getHeader(headers, 'Date'), settings.timezone),
     isUnread: labelIds.includes('UNREAD'),
     body: detail.data.payload ? extractHtmlBody(detail.data.payload) : '',
   };
 }
 
 export async function fetchGoogleGmailAPI(options: { pageToken?: string } = {}): Promise<{ emails: GmailMessage[]; nextPageToken?: string }> {
+  const { settings } = await getRuntimeSettings();
   const auth = new google.auth.OAuth2(
     GOOGLE.gmailClientId,
     GOOGLE.gmailClientSecret,
@@ -152,7 +155,7 @@ export async function fetchGoogleGmailAPI(options: { pageToken?: string } = {}):
         snippet: detail.data.snippet ?? '',
         from: getHeader(headers, 'From').replace("\u003C", '- ').replace("\u003E", '').trim(),
         subject: getHeader(headers, 'Subject'),
-        date: normalizeDate(getHeader(headers, 'Date')),
+        date: normalizeDate(getHeader(headers, 'Date'), settings.timezone),
         isUnread: labelIds.includes('UNREAD'),
       };
     }),

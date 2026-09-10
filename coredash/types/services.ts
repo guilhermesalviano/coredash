@@ -192,6 +192,7 @@ export interface OpenMeteoProps {
   latitude: string;
   longitude: string;
   limit: number;
+  timezone?: string;
 }
 
 export interface WeatherResponse {

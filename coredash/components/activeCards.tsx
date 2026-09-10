@@ -10,6 +10,7 @@ import SpotifyCard from "./cards/spotify";
 import GmailCard from "./cards/gmail";
 import { CardId, useActiveCards } from "@/hooks/useActiveCards";
 import NewsCard from "./cards/news";
+import WishlistDropsCard from "./cards/wishlistDrops";
 
 const isWeekend = [0, 6].includes(new Date().getDay());
 
@@ -22,6 +23,7 @@ const CARD_MAP: Record<CardId, React.ComponentType | null> = {
   spotify:   SpotifyCard,
   stocks:    isWeekend ? null : StocksCardClient,
   news:     NewsCard,
+  wishlistDrops: WishlistDropsCard,
 };
 
 export default function ActiveCards() {
