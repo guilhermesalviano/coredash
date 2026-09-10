@@ -11,20 +11,22 @@ import Settings from "@/components/settings";
 import StoreStatusBridge from "@/components/storeStatusBridge";
 import FocusMode from "@/components/focusMode";
 import FocusModeToggle from "@/components/focusModeToggle";
-import { useFocusMode } from "@/hooks/useFocusMode";
+import KanbanMode from "@/components/kanban/kanbanMode";
+import KanbanToggle from "@/components/kanbanToggle";
+import { useViewMode } from "@/hooks/useViewMode";
 
 export default function Page() {
-  const { enabled, mounted } = useFocusMode();
+  const { mode, mounted } = useViewMode();
 
   // Lets the stylesheet size the focus shell against the real header height
   // instead of a hardcoded viewport offset.
   useEffect(() => {
-    if (!mounted || !enabled) return;
+    if (!mounted || (mode !== "focus" && mode !== "kanban")) return;
     document.body.dataset.focus = "on";
     return () => {
       delete document.body.dataset.focus;
     };
-  }, [enabled, mounted]);
+  }, [mode, mounted]);
 
   return (
     <>
@@ -42,11 +44,18 @@ export default function Page() {
 
         <div className="header-status flex items-center justify-end gap-4">
           <SystemsStatus />
+          <KanbanToggle />
           <FocusModeToggle />
           <Settings />
         </div>
       </div>
-      {mounted && enabled ? <FocusMode /> : <ActiveCards />}
+      {mounted && mode === "kanban" ? (
+        <KanbanMode />
+      ) : mounted && mode === "focus" ? (
+        <FocusMode />
+      ) : (
+        <ActiveCards />
+      )}
     </>
   );
 }

@@ -1,22 +1,48 @@
 export type Priority = "high" | "medium" | "low";
+export type TodoType = "reminder" | "task";
+export type TaskStatus = "backlog" | "todo" | "in_progress" | "done";
 
 export interface TodoState {
   id: number;
   title: string;
   checked: number;
   priority: Priority;
+  type?: TodoType;
+  status?: TaskStatus;
+  description?: string | null;
+  order?: number;
+  completedAt?: string | null;
+}
+
+export interface TaskRecurrenceForm {
+  repeat: boolean;
+  weeklyInterval: number;
+  weeklyDays?: number[] | null;
+  weeklyEnd?: number | null;
 }
 
 export interface NewTaskForm {
   title: string;
   priority: Priority;
-  recurrence: {
-    repeat: boolean;
-    weeklyInterval: number;
-    weeklyDays?: number[] | null;
-    weeklyEnd?: number | null;
-  };
+  type?: TodoType;
+  status?: TaskStatus;
+  description?: string | null;
+  recurrence?: TaskRecurrenceForm;
 }
+
+export interface KanbanColumnDef {
+  id: TaskStatus;
+  title: string;
+  icon: string;
+  badgeColor: string;
+}
+
+export const KANBAN_COLUMNS: KanbanColumnDef[] = [
+  { id: "backlog", title: "Backlog", icon: "📥", badgeColor: "#94A3B8" },
+  { id: "todo", title: "A Fazer", icon: "📋", badgeColor: "#60A5FA" },
+  { id: "in_progress", title: "Em Progresso", icon: "⏳", badgeColor: "#FBBF24" },
+  { id: "done", title: "Concluído", icon: "✅", badgeColor: "#34D399" },
+];
 
 export const priorityColor: Record<Priority, string> = {
   high: "#FCA5A5",
