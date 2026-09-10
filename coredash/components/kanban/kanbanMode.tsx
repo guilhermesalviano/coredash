@@ -42,6 +42,8 @@ export default function KanbanMode() {
         description: item.description,
         order: item.order,
         completedAt: item.completedAt,
+        usualCompletionTime: item.usualCompletionTime,
+        lastCheckedHour: item.lastCheckedHour,
       }));
       setTasks(mapped);
       reportStatus("todo", "success");
@@ -60,24 +62,18 @@ export default function KanbanMode() {
   }, [fetchTasks, reportStatus]);
 
   const addTask = async (form: NewTaskForm) => {
-    try {
-      const response = await fetch("/api/todo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          priority: form.priority,
-          type: "task",
-          status: form.status ?? "todo",
-          description: form.description,
-        }),
-      });
-      if (response.ok) {
-        await fetchTasks();
-      }
-    } catch (err) {
-      console.error("Failed to add kanban task", err);
-    }
+    await fetchJson<TodoItem>("/api/todo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: form.title,
+        priority: form.priority,
+        type: "task",
+        status: form.status ?? "todo",
+        description: form.description,
+      }),
+    });
+    await fetchTasks();
   };
 
   const moveTask = async (id: number, newStatus: TaskStatus) => {

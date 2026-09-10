@@ -12,6 +12,8 @@ export interface TodoState {
   description?: string | null;
   order?: number;
   completedAt?: string | null;
+  usualCompletionTime?: string;
+  lastCheckedHour?: string;
 }
 
 export interface TaskRecurrenceForm {
