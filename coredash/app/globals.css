@@ -18,18 +18,19 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --surface: #ffffff;
-  --surface2: #f1f3f5;
-  --border: #e9ecef;
-  --border-hover: #3a3a3a;
-  --muted: #555;
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --surface: #1a1a1a;
+  --surface2: #2a2a2a;
+  --border: #3a3a3a;
+  --border-hover: #e9ecef;
+  --muted: #aaaaaa;
   --accent: #5a6e0f;
   --font-mono: 'Space Mono', monospace;
   --font-body: 'DM Sans', sans-serif;
-  --gradient-start: #f5f5f4;
-  --gradient-end: #eef5db;
+  --gradient-start: #2a2a2a;
+  --gradient-end: #1a1a1a;
+  --gradient-start-raining: #7796b6;
 }
 
 @theme inline {

@@ -8,16 +8,11 @@ type ThemeMode = "light" | "dark";
 
 const STORAGE_KEY = "theme";
 
-function getThemeByTime(): ThemeMode {
-  const hour = new Date().getHours();
-  return hour >= 6 && hour < 20 ? "light" : "dark";
-}
-
 function getInitialTheme(): ThemeMode {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   const stored = storage.get(STORAGE_KEY) as ThemeMode | null;
   if (stored === "light" || stored === "dark") return stored;
-  return getThemeByTime();
+  return "dark";
 }
 
 function applyTheme(mode: ThemeMode) {
@@ -26,7 +21,7 @@ function applyTheme(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>("light");
+  const [mode, setMode] = useState<ThemeMode>("dark");
 
   useEffect(() => {
     const initial = getInitialTheme();
