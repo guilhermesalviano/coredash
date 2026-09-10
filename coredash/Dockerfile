@@ -23,8 +23,11 @@ RUN apk add --no-cache tzdata \
   && chown coredash:coredash /data
 
 WORKDIR /app
+# Docker sets HOSTNAME to the container ID, and the Next.js standalone server
+# binds to it; 0.0.0.0 keeps localhost reachable for the healthcheck and MCP tools.
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME=0.0.0.0 \
     PORT=3000 \
     SQLITE_PATH=/data/database.db
 
