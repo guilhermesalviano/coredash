@@ -31,7 +31,7 @@ function FocusTodo({ todo, disabled, onToggle }: { todo: TodoState; disabled: bo
       className="focus-todo"
       onClick={() => onToggle(todo.id)}
       disabled={disabled}
-      aria-label={`Complete task: ${todo.title}`}
+      aria-label={`Complete reminder: ${todo.title}`}
     >
       <span className="focus-todo-check" aria-hidden="true" />
       <span className="focus-todo-title">{todo.title}</span>
@@ -175,7 +175,7 @@ export default function FocusMode() {
 
         <Card className="focus-card">
           <div className="focus-card-header">
-            <p className="focus-card-label">Next tasks</p>
+            <p className="focus-card-label">Next reminders</p>
             <span className="focus-count">{todos.length}</span>
           </div>
           {view.todos.length > 0 ? (
@@ -187,7 +187,7 @@ export default function FocusMode() {
           ) : (
             <div className="focus-empty focus-empty--small">
               <h2>All clear</h2>
-              <p>No unfinished tasks for today.</p>
+              <p>No unfinished reminders for today.</p>
             </div>
           )}
         </Card>
