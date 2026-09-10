@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "docker compose up -d && next dev",
     "build": "next build",
-    "start": "node scripts/start-standalone.mjs",
+    "start": "node .next/standalone/server.js",
     "lint": "eslint",
     "test:focus": "tsx --test features/focus/select-focus.test.ts",
     "mcp": "tsx mcp/stdio.ts"
