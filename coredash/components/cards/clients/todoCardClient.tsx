@@ -12,7 +12,6 @@ import TodoCard from "../todo";
 
 export default function TodoCardClient() {
   const [todos, setTodos] = useState<TodoState[]>([]);
-  const [activeTab, setActiveTab] = useState<"reminders" | "tasks">("reminders");
   const [modalOpen, setModalOpen] = useState(false);
   const [isBusy, setIsBusy] = useState(true);
   const { reportStatus } = useStatus();
@@ -22,7 +21,7 @@ export default function TodoCardClient() {
 
   const fetchTodos = useCallback(async () => {
     try {
-      const data = await fetchJson<TodoState[]>("/api/todo");
+      const data = await fetchJson<TodoState[]>("/api/todo?type=reminder");
       setTodos(data ?? []);
       reportStatus("todo", "success");
     } catch {
@@ -41,17 +40,14 @@ export default function TodoCardClient() {
   }, [fetchTodos]);
 
   const add = async (form: NewTaskForm) => {
-    const isTask = activeTab === "tasks" || form.type === "task";
     const payload: Record<string, unknown> = {
       title: form.title.trim(),
       priority: form.priority,
-      type: isTask ? "task" : "reminder",
-      status: form.status ?? (isTask ? "todo" : undefined),
-      description: form.description ?? null,
+      type: "reminder",
       checked: 0,
     };
 
-    if (!isTask && form.recurrence) {
+    if (form.recurrence) {
       payload.repeat = form.recurrence.repeat;
       payload.weeklyInterval = form.recurrence.weeklyInterval;
       payload.weeklyDays = form.recurrence.weeklyDays;
@@ -73,8 +69,8 @@ export default function TodoCardClient() {
           title: form.title.trim(),
           checked: 0,
           priority: form.priority,
-          type: isTask ? "task" : "reminder",
-          status: form.status ?? "todo",
+          type: "reminder",
+          status: "todo",
           description: form.description,
         },
       ]);
@@ -88,10 +84,6 @@ export default function TodoCardClient() {
     setIsBusy(true);
 
     const newStatus = currentStatus === 0 ? 1 : 0;
-    const target = todos.find((t) => t.id === id);
-    const newStatusStr = target?.type === "task"
-      ? (newStatus === 1 ? "done" : "todo")
-      : undefined;
 
     Promise.all([
       new Promise<void>((resolve) => {
@@ -102,7 +94,7 @@ export default function TodoCardClient() {
                 ? {
                     ...t,
                     checked: newStatus,
-                    status: newStatusStr ? (newStatusStr as TodoState["status"]) : t.status,
+                    status: newStatus === 1 ? "done" : "todo",
                   }
                 : t,
             ),
@@ -117,7 +109,6 @@ export default function TodoCardClient() {
         body: JSON.stringify({
           id,
           checked: newStatus,
-          status: newStatusStr,
         }),
       }),
     ])
@@ -131,24 +122,18 @@ export default function TodoCardClient() {
       .finally(() => setIsBusy(false));
   };
 
-  const currentTabItems = useMemo(() => {
-    return todos.filter((t) =>
-      activeTab === "reminders" ? t.type === "reminder" : t.type === "task",
-    );
-  }, [todos, activeTab]);
-
   const { pending, completed, checkedCount } = useMemo(() => {
     const pending: TodoState[] = [];
     const completed: TodoState[] = [];
-    for (const t of currentTabItems) {
+    for (const t of todos) {
       (t.checked === 0 ? pending : completed).push(t);
     }
     return { pending, completed, checkedCount: completed.length };
-  }, [currentTabItems]);
+  }, [todos]);
 
   const progress =
-    currentTabItems.length > 0
-      ? Math.round((checkedCount / currentTabItems.length) * 100)
+    todos.length > 0
+      ? Math.round((checkedCount / todos.length) * 100)
       : 0;
 
   useEffect(() => {
@@ -156,10 +141,10 @@ export default function TodoCardClient() {
       isFirstRender.current = false;
       return;
     }
-    if (currentTabItems.length > 0 && checkedCount === currentTabItems.length) {
+    if (todos.length > 0 && checkedCount === todos.length) {
       handleFireConfetti();
     }
-  }, [checkedCount, currentTabItems.length]);
+  }, [checkedCount, todos.length]);
 
   return (
     <TodoCard
@@ -170,11 +155,8 @@ export default function TodoCardClient() {
       pending={pending}
       completed={completed}
       checkedCount={checkedCount}
-      todos={currentTabItems}
-      allTodos={todos}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      onOpenKanban={() => setViewMode("kanban")}
+      todos={todos}
+      onOpenPipeline={() => setViewMode("kanban")}
       isBusy={isBusy}
       progress={progress}
     />

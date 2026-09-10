@@ -68,7 +68,7 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
         }}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold px-4 py-2">Nova Tarefa</h2>
+          <h2 className="text-lg font-semibold px-4 py-2">Novo Lembrete</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors text-xl leading-none cursor-pointer"
@@ -263,7 +263,7 @@ export default function TaskModal({ isOpen, onClose, onAdd }: TaskModalProps) {
             disabled={!form.title.trim()}
             className="flex-1 py-2.5 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors"
           >
-            Adicionar
+            Adicionar Lembrete
           </button>
         </div>
       </div>
