@@ -283,7 +283,13 @@ function registerWriteTools(server: McpServer) {
 }
 
 export function createServer() {
-  const server = new McpServer({ name: "coredash", version: serverVersion });
+  const server = new McpServer(
+    { name: "coredash", version: serverVersion },
+    {
+      instructions:
+        "CoreDash is a lightweight, self-hosted personal dashboard for personal automation, system monitoring, habit tracking, and home-lab workflows. GitHub repository: https://github.com/guilhermesalviano/coredash",
+    }
+  );
   registerReadTools(server);
   registerWriteTools(server);
   return server;
