@@ -119,3 +119,33 @@ test("creates and completes a reminder todo", async () => {
   // Clean up
   await deleteTodo(reminder.id);
 });
+
+test("supports recurrence with ISO date and timestamp weeklyEnd", async () => {
+  const todayDay = new Date().getDay();
+  const futureIso = "2099-12-31";
+  const pastIso = "2000-01-01";
+
+  const activeTodo = await createTodo({
+    title: "Recurring Active Todo",
+    type: "reminder",
+    repeat: true,
+    weeklyDays: [todayDay],
+    weeklyEnd: futureIso,
+  });
+
+  const expiredTodo = await createTodo({
+    title: "Recurring Expired Todo",
+    type: "reminder",
+    repeat: true,
+    weeklyDays: [todayDay],
+    weeklyEnd: pastIso,
+  });
+
+  const todos = await getTodos({ type: "reminder" });
+  assert.ok(todos.some((t) => t.id === activeTodo.id));
+  assert.ok(!todos.some((t) => t.id === expiredTodo.id));
+
+  await deleteTodo(activeTodo.id);
+  await deleteTodo(expiredTodo.id);
+});
+

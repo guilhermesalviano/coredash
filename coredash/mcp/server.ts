@@ -72,23 +72,6 @@ function jsonBody(body: unknown): RequestInit {
   };
 }
 
-function extractSseText(raw: string): string {
-  return raw
-    .split("\n\n")
-    .map((event) => event.split("\n").find((line) => line.startsWith("data: "))?.slice(6))
-    .filter((data): data is string => Boolean(data) && data !== "[DONE]")
-    .map((data) => {
-      try {
-        const parsed: unknown = JSON.parse(data);
-        const delta = isRecord(parsed) && isRecord(parsed.delta) ? parsed.delta : null;
-        return delta && typeof delta.text === "string" ? delta.text : "";
-      } catch {
-        return "";
-      }
-    })
-    .join("");
-}
-
 function registerReadTools(server: McpServer) {
   server.registerTool("coredash_health", {
     title: "CoreDash health",
@@ -118,33 +101,21 @@ function registerReadTools(server: McpServer) {
     inputSchema: z.object({ includeFutureEvents: z.boolean().optional() }),
   }, ({ includeFutureEvents }) => run(() => callApi("/api/calendar", undefined, { includeFutureEvents })));
 
-  server.registerTool("get_goals", {
-    title: "Get goals",
-    description: "Get the goals currently displayed by CoreDash.",
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({}),
-  }, () => run(() => callApi("/api/goals")));
-
   server.registerTool("list_todos", {
     title: "List todos",
-    description: "List today's todos, optionally filtering to unchecked items.",
+    description: "List today's todos and checklist items displayed on the CoreDash dashboard.",
     annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({ onlyUnchecked: z.boolean().optional() }),
-  }, ({ onlyUnchecked }) => run(() => callApi("/api/todo", undefined, { onlyUnchecked })));
-
-  server.registerTool("get_habits", {
-    title: "Get habits",
-    description: "Get habit completion history for the dashboard.",
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({}),
-  }, () => run(() => callApi("/api/habits")));
-
-  server.registerTool("get_habit_streak", {
-    title: "Get habit streak",
-    description: "Get the current wake-up habit streak.",
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({}),
-  }, () => run(() => callApi("/api/habit")));
+    inputSchema: z.object({
+      onlyUnchecked: z
+        .boolean()
+        .optional()
+        .describe("When true, returns only open/unchecked items. Defaults to false (returns both open and completed items)."),
+      type: z
+        .enum(["reminder", "task", "all"])
+        .optional()
+        .describe('Filter todos by type: "reminder" (daily checklist items), "task" (Kanban tasks), or "all" (default: "all").'),
+    }),
+  }, ({ onlyUnchecked, type }) => run(() => callApi("/api/todo", undefined, { onlyUnchecked, type })));
 
   server.registerTool("get_stocks", {
     title: "Get stocks",
@@ -159,13 +130,6 @@ function registerReadTools(server: McpServer) {
     annotations: { readOnlyHint: true, idempotentHint: true },
     inputSchema: z.object({}),
   }, () => run(() => callApi("/api/products")));
-
-  server.registerTool("get_flights", {
-    title: "Get flights",
-    description: "Get the latest crawled flight prices.",
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({}),
-  }, () => run(() => callApi("/api/flights")));
 
   server.registerTool("get_wishlist", {
     title: "Get wishlist",
@@ -187,35 +151,63 @@ function registerReadTools(server: McpServer) {
     annotations: { readOnlyHint: true, idempotentHint: true },
     inputSchema: z.object({ id: z.string().min(1) }),
   }, ({ id }) => run(() => callApi(`/api/emails/${encodeURIComponent(id)}`)));
-
-  server.registerTool("get_spotify_now_playing", {
-    title: "Get Spotify playback",
-    description: "Get the current Spotify track and available playback devices.",
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({}),
-  }, () => run(() => callApi("/api/spotify")));
-
-  server.registerTool("search_spotify", {
-    title: "Search Spotify",
-    description: "Search Spotify for tracks, albums, and playlists.",
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({ query: z.string().min(1).max(200) }),
-  }, ({ query }) => run(() => callApi("/api/spotify/search", undefined, { q: query })));
 }
 
 function registerWriteTools(server: McpServer) {
   server.registerTool("create_todo", {
     title: "Create todo",
-    description: "Create a todo in CoreDash. The new todo starts unchecked by default.",
+    description:
+      "Add an item to the user's CoreDash todo list (shown on the dashboard). " +
+      "This does NOT send notifications, push alerts, or remind the user at a specific time. " +
+      "Use it only when the user explicitly asks to add a task or todo to their list or to CoreDash. " +
+      "For 'remind me…' ('me lembra de…') requests or timed reminders, use the calling agent's own reminder, alarm, or scheduling tool instead.",
     annotations: { destructiveHint: false, idempotentHint: false },
     inputSchema: z.object({
-      title: z.string().trim().min(1).max(200),
-      checked: z.number().int().min(0).max(1).default(0),
-      priority: z.string().trim().max(30).optional(),
-      repeat: z.boolean().optional(),
-      weeklyInterval: z.number().int().positive().optional(),
-      weeklyDays: z.array(z.number().int().min(0).max(6)).optional(),
-      weeklyEnd: z.union([z.string(), z.number()]).nullable().optional(),
+      title: z
+        .string()
+        .trim()
+        .min(1)
+        .max(200)
+        .describe("The title or text description of the todo item."),
+      checked: z
+        .number()
+        .int()
+        .min(0)
+        .max(1)
+        .default(0)
+        .describe("Initial completion state: 0 for open/unchecked (default), 1 for done/checked."),
+      priority: z
+        .string()
+        .trim()
+        .max(30)
+        .optional()
+        .describe('Priority level. Accepted values used by CoreDash: "low", "medium", or "high" (default: "medium").'),
+      type: z
+        .enum(["reminder", "task"])
+        .optional()
+        .default("reminder")
+        .describe(
+          'The category/tab in CoreDash: "reminder" (daily checklist item on the dashboard Reminders tab) or "task" (persistent Kanban task on the Tasks tab). Defaults to "reminder". Note: "reminder" is only a dashboard checklist category name and does NOT trigger notifications or alarms.'
+        ),
+      repeat: z
+        .boolean()
+        .optional()
+        .describe("Whether the todo repeats weekly (applies to recurring reminder items). Defaults to false."),
+      weeklyInterval: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Recurrence interval in weeks (e.g. 1 repeats every week, 2 repeats every 2 weeks). Must be greater than 0."),
+      weeklyDays: z
+        .array(z.number().int().min(0).max(6))
+        .optional()
+        .describe("Days of the week for recurrence as an array of numbers, where 0 is Sunday (0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday)."),
+      weeklyEnd: z
+        .union([z.string(), z.number()])
+        .nullable()
+        .optional()
+        .describe("End date for weekly recurrence as an ISO date string (e.g. '2026-12-31') or millisecond timestamp (e.g. 1767225600000). Pass null or omit for no end date."),
     }),
   }, (input) => run(() => callApi("/api/todo", jsonBody(input))));
 
@@ -223,15 +215,20 @@ function registerWriteTools(server: McpServer) {
     title: "Update todo",
     description: "Mark a CoreDash todo as checked or unchecked.",
     annotations: { destructiveHint: false, idempotentHint: true },
-    inputSchema: z.object({ id: z.number().int().positive(), checked: z.number().int().min(0).max(1) }),
+    inputSchema: z.object({
+      id: z
+        .number()
+        .int()
+        .positive()
+        .describe("The ID of the todo item to update (obtained from list_todos)."),
+      checked: z
+        .number()
+        .int()
+        .min(0)
+        .max(1)
+        .describe("The completion state to set: 0 for open/unchecked, 1 for done/checked."),
+    }),
   }, (input) => run(() => callApi("/api/todo", { ...jsonBody(input), method: "PUT" })));
-
-  server.registerTool("record_habit", {
-    title: "Record habit",
-    description: "Record a completed habit for today. Common habits are wakedup, gym, and study.",
-    annotations: { destructiveHint: false, idempotentHint: false },
-    inputSchema: z.object({ habit: z.string().trim().min(1).max(100) }),
-  }, ({ habit }) => run(() => callApi("/api/habit", jsonBody({ habit }))));
 
   server.registerTool("mark_email_read", {
     title: "Mark email read",
@@ -239,47 +236,6 @@ function registerWriteTools(server: McpServer) {
     annotations: { destructiveHint: false, idempotentHint: true },
     inputSchema: z.object({ id: z.string().min(1) }),
   }, ({ id }) => run(() => callApi("/api/emails/mark-read", jsonBody({ id }))));
-
-  server.registerTool("control_spotify", {
-    title: "Control Spotify",
-    description: "Control playback on Spotify, transfer devices, or play a Spotify URI.",
-    annotations: { destructiveHint: false, idempotentHint: false },
-    inputSchema: z.discriminatedUnion("action", [
-      z.object({ action: z.literal("play") }),
-      z.object({ action: z.literal("pause") }),
-      z.object({ action: z.literal("next") }),
-      z.object({ action: z.literal("prev") }),
-      z.object({ action: z.literal("transfer"), deviceId: z.string().min(1) }),
-      z.object({ action: z.literal("play_uri"), uri: z.string().min(1), deviceId: z.string().optional() }),
-    ]),
-  }, (input) => run(() => callApi("/api/spotify/control", jsonBody(input))));
-
-  server.registerTool("ask_coredash_ai", {
-    title: "Ask CoreDash AI",
-    description: "Ask the configured CoreDash AI assistant. Requests are routed through /api/ai/chat.",
-    annotations: { destructiveHint: false, idempotentHint: false },
-    inputSchema: z.object({
-      prompt: z.string().trim().min(1).max(4000),
-      history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1) })).max(50).optional(),
-    }),
-  }, async ({ prompt, history }) => run(async () => {
-    const response = await fetch(apiUrl("/api/ai/chat"), {
-      ...jsonBody({ messages: [...(history ?? []), { role: "user", content: prompt }] }),
-      headers: { Accept: "text/event-stream", "Content-Type": "application/json" },
-    });
-    const rawBody = await response.text();
-    if (!response.ok) {
-      let message = response.statusText || "AI request failed";
-      try {
-        const body: unknown = JSON.parse(rawBody);
-        if (isRecord(body) && typeof body.error === "string") message = body.error;
-      } catch {
-        // Keep the HTTP status message when the API response is not JSON.
-      }
-      throw new Error(`CoreDash API ${response.status}: ${message}`);
-    }
-    return { response: extractSseText(rawBody) };
-  }));
 }
 
 export function createServer() {

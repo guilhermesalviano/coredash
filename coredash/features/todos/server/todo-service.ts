@@ -72,7 +72,9 @@ export async function getTodos(
       if (end === null || end === undefined) return true;
       const endOfToday = new Date(today);
       endOfToday.setHours(0, 0, 0, 0);
-      return Number(end) >= endOfToday.getTime();
+      const parsedEnd = Number(end);
+      const endMs = !Number.isNaN(parsedEnd) ? parsedEnd : new Date(end).getTime();
+      return !Number.isNaN(endMs) && endMs >= endOfToday.getTime();
     });
 
     const reminderIds = activeReminders.map((t) => t.id);
