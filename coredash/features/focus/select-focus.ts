@@ -66,7 +66,7 @@ export function selectFocusView(
 ): { calendar: FocusCalendarSelection; todos: FocusTodo[]; weather: WeatherData | null; weatherAlert: ForecastItem | null } {
   return {
     calendar: selectFocusCalendarEvent(events, now),
-    todos: todos.slice(0, 3),
+    todos: todos.filter((todo) => !todo.type || todo.type === "reminder").slice(0, 3),
     weather,
     weatherAlert: selectWeatherAlert(weather, now),
   };

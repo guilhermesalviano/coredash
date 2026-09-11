@@ -1250,11 +1250,11 @@ body[data-focus="on"] .header {
   max-width: none;
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 3rem);
+  padding: clamp(1rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2.5rem);
 }
 
 .kanban-header {
@@ -1278,8 +1278,10 @@ body[data-focus="on"] .header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
 }
 
 .kanban-stat-chip {
@@ -1300,25 +1302,34 @@ body[data-focus="on"] .header {
 }
 
 .kanban-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(17rem, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: row;
+  gap: 1.25rem;
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
-  align-items: start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.75rem;
+  align-items: stretch;
+  -webkit-overflow-scrolling: touch;
 }
 
-@media (max-width: 1100px) {
-  .kanban-grid {
-    grid-template-columns: repeat(2, minmax(16rem, 1fr));
-  }
+.kanban-grid::-webkit-scrollbar {
+  height: 8px;
 }
 
-@media (max-width: 640px) {
-  .kanban-grid {
-    grid-template-columns: 1fr;
-  }
+.kanban-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-grid::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.kanban-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover, #555);
 }
 
 .kanban-column {
@@ -1327,8 +1338,11 @@ body[data-focus="on"] .header {
   border-radius: 14px;
   display: flex;
   flex-direction: column;
-  min-height: 28rem;
-  max-height: calc(100vh - 14rem);
+  flex: 1 0 18rem;
+  min-width: 17rem;
+  max-width: 24rem;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   transition: border-color 0.2s, background-color 0.2s;
 }
@@ -1365,7 +1379,8 @@ body[data-focus="on"] .header {
   gap: 0.75rem;
   padding: 0.85rem;
   overflow-y: auto;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .kanban-empty-column {

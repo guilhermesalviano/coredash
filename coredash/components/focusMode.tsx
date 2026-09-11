@@ -9,6 +9,7 @@ import type { TodoItem } from "@/features/todos/types";
 import type { CalendarInternalAPIResponse } from "@/types/calendar";
 import type { TodoState, Priority } from "@/types/task";
 import { selectFocusView } from "@/features/focus/select-focus";
+import { FOCUS_HEADLINES } from "@/features/focus/headlines";
 import type { FocusCalendarEvent } from "@/features/focus/types";
 import Card from "@/components/card";
 
@@ -16,7 +17,7 @@ const PRIORITIES: Priority[] = ["high", "medium", "low"];
 
 function toTodoState(todo: TodoItem): TodoState {
   const priority = PRIORITIES.includes(todo.priority as Priority) ? todo.priority as Priority : "low";
-  return { id: todo.id, title: todo.title, checked: todo.checked, priority };
+  return { id: todo.id, title: todo.title, checked: todo.checked, priority, type: todo.type };
 }
 
 function formatEventTime(start: string, end: string): string {
@@ -31,7 +32,7 @@ function FocusTodo({ todo, disabled, onToggle }: { todo: TodoState; disabled: bo
       className="focus-todo"
       onClick={() => onToggle(todo.id)}
       disabled={disabled}
-      aria-label={`Complete task: ${todo.title}`}
+      aria-label={`Complete reminder: ${todo.title}`}
     >
       <span className="focus-todo-check" aria-hidden="true" />
       <span className="focus-todo-title">{todo.title}</span>
@@ -56,7 +57,7 @@ export default function FocusMode() {
     reportStatus("todo", "loading");
     const [calendarResult, todoResult] = await Promise.allSettled([
       fetchJson<CalendarInternalAPIResponse>("/api/calendar"),
-      fetchJson<TodoItem[]>("/api/todo?onlyUnchecked=true"),
+      fetchJson<TodoItem[]>("/api/todo?onlyUnchecked=true&type=reminder"),
     ]);
 
     let hasError = false;
@@ -68,7 +69,11 @@ export default function FocusMode() {
       hasError = true;
     }
     if (todoResult.status === "fulfilled") {
-      setTodos(todoResult.value.map(toTodoState));
+      setTodos(
+        todoResult.value
+          .filter((t) => t.type === "reminder")
+          .map(toTodoState),
+      );
       reportStatus("todo", "success");
     } else {
       reportStatus("todo", "error");
@@ -131,13 +136,14 @@ export default function FocusMode() {
   };
 
   const weatherUnavailable = weather.status === "error" || !weather.data;
+  const headline = FOCUS_HEADLINES[Math.floor(now.getTime() / 60_000) % FOCUS_HEADLINES.length];
 
   return (
     <main className="focus-shell">
       <div className="focus-heading">
         <div>
           <p className="focus-eyebrow">Focus mode</p>
-          <h1>Just what matters now.</h1>
+          <h1>{headline}</h1>
         </div>
         <div className="focus-date">
           {now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
@@ -171,7 +177,7 @@ export default function FocusMode() {
 
         <Card className="focus-card">
           <div className="focus-card-header">
-            <p className="focus-card-label">Next tasks</p>
+            <p className="focus-card-label">Next reminders</p>
             <span className="focus-count">{todos.length}</span>
           </div>
           {view.todos.length > 0 ? (
@@ -183,7 +189,7 @@ export default function FocusMode() {
           ) : (
             <div className="focus-empty focus-empty--small">
               <h2>All clear</h2>
-              <p>No unfinished tasks for today.</p>
+              <p>No unfinished reminders for today.</p>
             </div>
           )}
         </Card>

@@ -12,9 +12,7 @@ interface TodoProps {
   completed: TodoState[];
   checkedCount: number;
   todos?: TodoState[];
-  allTodos?: TodoState[];
-  activeTab?: "reminders" | "tasks";
-  setActiveTab?: (tab: "reminders" | "tasks") => void;
+  onOpenPipeline?: () => void;
   onOpenKanban?: () => void;
   isBusy: boolean;
   progress: number;
@@ -29,15 +27,12 @@ export default function TodoCard({
   completed,
   checkedCount,
   todos,
-  allTodos = [],
-  activeTab = "reminders",
-  setActiveTab,
+  onOpenPipeline,
   onOpenKanban,
   isBusy,
   progress,
 }: TodoProps) {
-  const reminderCount = allTodos.filter((t) => t.type === "reminder").length;
-  const taskCount = allTodos.filter((t) => t.type === "task").length;
+  const handleOpenPipeline = onOpenPipeline || onOpenKanban;
 
   return (
     <>
@@ -48,45 +43,27 @@ export default function TodoCard({
       />
 
       <Card>
-        {/* Header with Tabs and Actions */}
+        {/* Header with Title and Actions */}
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center justify-between">
-            {/* Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-white/5 rounded-xl border border-white/5">
-              <button
-                type="button"
-                onClick={() => setActiveTab?.("reminders")}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  activeTab === "reminders"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                ⏰ Lembretes {reminderCount > 0 && <span className="opacity-75">({reminderCount})</span>}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab?.("tasks")}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  activeTab === "tasks"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                📋 Tarefas {taskCount > 0 && <span className="opacity-75">({taskCount})</span>}
-              </button>
+            {/* Title */}
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm text-foreground">⏰ Lembretes</span>
+              {todos && todos.length > 0 && (
+                <span className="text-xs font-mono text-muted">({todos.length})</span>
+              )}
             </div>
 
             {/* Quick Actions */}
             <div className="flex items-center gap-2">
-              {onOpenKanban && (
+              {handleOpenPipeline && (
                 <button
                   type="button"
-                  onClick={onOpenKanban}
-                  title="Abrir quadro Kanban em tela cheia"
+                  onClick={handleOpenPipeline}
+                  title="Abrir Pipeline de Tarefas em tela cheia"
                   className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 text-muted hover:text-foreground text-xs font-mono transition-colors cursor-pointer"
                 >
-                  Kanban ↗
+                  Pipeline ↗
                 </button>
               )}
               <button
@@ -95,7 +72,7 @@ export default function TodoCard({
                 className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
               >
                 <span className="text-sm leading-none">+</span>
-                {activeTab === "reminders" ? "Lembrete" : "Tarefa"}
+                Lembrete
               </button>
             </div>
           </div>
@@ -116,19 +93,8 @@ export default function TodoCard({
           {todos?.length === 0 || !todos ? (
             <div className="py-6 text-center">
               <p className="text-sm text-gray-400">
-                {activeTab === "reminders"
-                  ? "Nenhum lembrete programado para hoje."
-                  : "Nenhuma tarefa persistente cadastrada."}
+                Nenhum lembrete programado para hoje.
               </p>
-              {activeTab === "tasks" && onOpenKanban && (
-                <button
-                  type="button"
-                  onClick={onOpenKanban}
-                  className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 font-mono underline cursor-pointer"
-                >
-                  Abrir Kanban para criar e organizar tarefas →
-                </button>
-              )}
             </div>
           ) : (
             <>

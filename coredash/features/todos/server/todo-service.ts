@@ -1,4 +1,4 @@
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { In, IsNull, Like, type DataSource } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { ONE_MINUTE_IN_MS } from "@/constants";
@@ -41,9 +41,10 @@ export async function getTodos(
           type: options?.type ?? "all",
           status: options?.status,
           onlyUnchecked: options?.onlyUnchecked ?? false,
+          orderBy: options?.orderBy ?? "lastCheckedHour",
         };
 
-  const cacheKey = `${normalizedOptions.type}:${normalizedOptions.status ?? ""}:${normalizedOptions.onlyUnchecked ? "1" : "0"}`;
+  const cacheKey = `${normalizedOptions.type}:${normalizedOptions.status ?? ""}:${normalizedOptions.onlyUnchecked ? "1" : "0"}:${normalizedOptions.orderBy ?? "lastCheckedHour"}`;
   const cached = todoCache.get(cacheKey);
   if (cached) return cached;
 
@@ -53,9 +54,8 @@ export async function getTodos(
   const todoRepository = db.getRepository(Todo);
   const checkRepository = db.getRepository(TodoCheck);
 
-  const items: TodoItem[] = [];
-
   // 1. Fetch Reminders (if type === "reminder" or type === "all")
+  let activeReminders: Todo[] = [];
   if (normalizedOptions.type === "reminder" || normalizedOptions.type === "all") {
     const reminderTodos = await todoRepository.find({
       where: [
@@ -67,7 +67,7 @@ export async function getTodos(
       relations: ["recurrence"],
     });
 
-    const activeReminders = reminderTodos.filter((todo) => {
+    activeReminders = reminderTodos.filter((todo) => {
       const end = todo.recurrence?.weeklyEnd;
       if (end === null || end === undefined) return true;
       const endOfToday = new Date(today);
@@ -76,77 +76,124 @@ export async function getTodos(
       const endMs = !Number.isNaN(parsedEnd) ? parsedEnd : new Date(end).getTime();
       return !Number.isNaN(endMs) && endMs >= endOfToday.getTime();
     });
-
-    const reminderIds = activeReminders.map((t) => t.id);
-    const [todayChecks, historyChecks] = reminderIds.length > 0
-      ? await Promise.all([
-          checkRepository.find({
-            where: { todo: In(reminderIds), timestamp: Like(`${todayString}%`) },
-            relations: ["todo"],
-          }),
-          checkRepository.find({
-            where: { todo: In(reminderIds), timestamp: Like(`${format(subDays(today, 1), "yyyy-MM-dd")}%`) },
-            relations: ["todo"],
-          }),
-        ])
-      : [[], []];
-
-    for (const todo of activeReminders) {
-      const checked = todayChecks.find((c) => c.todo?.id === todo.id)?.checked ?? 0;
-      if (normalizedOptions.onlyUnchecked && checked === 1) continue;
-      if (normalizedOptions.status && (checked === 1 ? "done" : "todo") !== normalizedOptions.status) continue;
-
-      items.push({
-        id: todo.id,
-        title: todo.title,
-        checked,
-        priority: todo.priority ?? "medium",
-        sponsor: todo.sponsor ?? "",
-        usualCompletionTime: historyChecks.find((c) => c.todo?.id === todo.id)?.hour ?? "",
-        type: "reminder",
-        status: checked === 1 ? "done" : "todo",
-        description: todo.description ?? null,
-        order: todo.order ?? 0,
-        createdAt: todo.createdAt ? format(new Date(todo.createdAt), "yyyy-MM-dd") : todayString,
-        completedAt: todo.completedAt ? format(new Date(todo.completedAt), "yyyy-MM-dd HH:mm") : null,
-      });
-    }
   }
 
   // 2. Fetch Persistent Tasks (if type === "task" or type === "all")
+  let tasks: Todo[] = [];
   if (normalizedOptions.type === "task" || normalizedOptions.type === "all") {
     const taskWhere: Record<string, unknown> = { type: "task" };
     if (normalizedOptions.status) {
       taskWhere.status = normalizedOptions.status;
     }
 
-    const tasks = await todoRepository.find({
+    tasks = await todoRepository.find({
       where: taskWhere,
     });
+  }
 
-    for (const task of tasks) {
-      const isDone = task.status === "done";
-      if (normalizedOptions.onlyUnchecked && isDone) continue;
+  const reminderIds = activeReminders.map((t) => t.id);
+  const allTodoIds = [...reminderIds, ...tasks.map((t) => t.id)];
 
-      items.push({
-        id: task.id,
-        title: task.title,
-        checked: isDone ? 1 : 0,
-        priority: task.priority ?? "medium",
-        sponsor: task.sponsor ?? "",
-        usualCompletionTime: "",
-        type: "task",
-        status: (task.status as TaskStatus) || "todo",
-        description: task.description ?? null,
-        order: task.order ?? 0,
-        createdAt: task.createdAt ? format(new Date(task.createdAt), "yyyy-MM-dd") : todayString,
-        completedAt: task.completedAt ? format(new Date(task.completedAt), "yyyy-MM-dd HH:mm") : null,
-      });
+  const [todayChecks, completionChecks] = await Promise.all([
+    reminderIds.length > 0
+      ? checkRepository.find({
+          where: { todo: In(reminderIds), timestamp: Like(`${todayString}%`) },
+          relations: ["todo"],
+        })
+      : Promise.resolve([]),
+    allTodoIds.length > 0
+      ? checkRepository.find({
+          where: { todo: In(allTodoIds), checked: 1 },
+          order: { timestamp: "DESC", hour: "DESC" },
+          relations: ["todo"],
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const lastCheckedHourMap = new Map<number, string>();
+  for (const check of completionChecks) {
+    if (check.todo?.id && !lastCheckedHourMap.has(check.todo.id) && check.hour) {
+      lastCheckedHourMap.set(check.todo.id, check.hour);
     }
   }
 
-  // Sort: tasks/reminders by priority then title / order
+  const items: TodoItem[] = [];
+
+  for (const todo of activeReminders) {
+    const checked = todayChecks.find((c) => c.todo?.id === todo.id)?.checked ?? 0;
+    if (normalizedOptions.onlyUnchecked && checked === 1) continue;
+    if (normalizedOptions.status && (checked === 1 ? "done" : "todo") !== normalizedOptions.status) continue;
+
+    const checkedHour = lastCheckedHourMap.get(todo.id) ?? "";
+
+    items.push({
+      id: todo.id,
+      title: todo.title,
+      checked,
+      priority: todo.priority ?? "medium",
+      sponsor: todo.sponsor ?? "",
+      usualCompletionTime: checkedHour,
+      lastCheckedHour: checkedHour,
+      type: "reminder",
+      status: checked === 1 ? "done" : "todo",
+      description: todo.description ?? null,
+      order: todo.order ?? 0,
+      createdAt: todo.createdAt ? format(new Date(todo.createdAt), "yyyy-MM-dd") : todayString,
+      completedAt: todo.completedAt ? format(new Date(todo.completedAt), "yyyy-MM-dd HH:mm") : null,
+    });
+  }
+
+  for (const task of tasks) {
+    const isDone = task.status === "done";
+    if (normalizedOptions.onlyUnchecked && isDone) continue;
+
+    let checkedHour = lastCheckedHourMap.get(task.id) ?? "";
+    if (!checkedHour && task.completedAt) {
+      try {
+        checkedHour = format(new Date(task.completedAt), "HH:mm");
+      } catch {
+        // Ignore parsing error
+      }
+    }
+
+    items.push({
+      id: task.id,
+      title: task.title,
+      checked: isDone ? 1 : 0,
+      priority: task.priority ?? "medium",
+      sponsor: task.sponsor ?? "",
+      usualCompletionTime: checkedHour,
+      lastCheckedHour: checkedHour,
+      type: "task",
+      status: (task.status as TaskStatus) || "todo",
+      description: task.description ?? null,
+      order: task.order ?? 0,
+      createdAt: task.createdAt ? format(new Date(task.createdAt), "yyyy-MM-dd") : todayString,
+      completedAt: task.completedAt ? format(new Date(task.completedAt), "yyyy-MM-dd HH:mm") : null,
+    });
+  }
+
+  const orderBy = normalizedOptions.orderBy ?? "lastCheckedHour";
+
+  // Sort: unchecked first, then by lastCheckedHour (if requested), then priority / order / title
   const sorted = [...items].sort((a, b) => {
+    if (a.checked !== b.checked) {
+      return a.checked - b.checked;
+    }
+
+    if (orderBy === "lastCheckedHour") {
+      const hourA = a.lastCheckedHour || a.usualCompletionTime || "";
+      const hourB = b.lastCheckedHour || b.usualCompletionTime || "";
+
+      if (hourA && hourB) {
+        if (hourA !== hourB) return hourA.localeCompare(hourB);
+      } else if (hourA && !hourB) {
+        return -1;
+      } else if (!hourA && hourB) {
+        return 1;
+      }
+    }
+
     if (a.type === "task" && b.type === "task" && a.status === b.status) {
       if (a.order !== b.order) return a.order - b.order;
     }
@@ -245,8 +292,8 @@ export async function updateTodo(input: UpdateTodoInput): Promise<void> {
     await todoRepository.update({ id: input.id }, updates);
   }
 
-  // Update TodoCheck for reminders or when checked is explicitly provided
-  if (todo.type === "reminder" || input.checked !== undefined) {
+  // Update TodoCheck for reminders or when checked/status is explicitly provided
+  if (todo.type === "reminder" || input.checked !== undefined || input.status !== undefined) {
     const checkedVal =
       input.checked !== undefined
         ? input.checked
