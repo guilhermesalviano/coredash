@@ -12,6 +12,8 @@ import { selectFocusView } from "@/features/focus/select-focus";
 import { FOCUS_HEADLINES } from "@/features/focus/headlines";
 import type { FocusCalendarEvent } from "@/features/focus/types";
 import Card from "@/components/card";
+import { fireTaskRewardConfetti, getRandomRewardMessage, playTaskCompletionChime, ALL_CLEAR_MESSAGE } from "@/features/focus/rewards";
+import handleFireConfetti from "@/components/confetti";
 
 const PRIORITIES: Priority[] = ["high", "medium", "low"];
 
@@ -25,17 +27,31 @@ function formatEventTime(start: string, end: string): string {
   return end ? `${start} – ${end}` : start;
 }
 
-function FocusTodo({ todo, disabled, onToggle }: { todo: TodoState; disabled: boolean; onToggle: (id: number) => void }) {
+function FocusTodo({
+  todo,
+  disabled,
+  isCompleting,
+  onToggle,
+}: {
+  todo: TodoState;
+  disabled: boolean;
+  isCompleting: boolean;
+  onToggle: (id: number, e: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
   return (
     <button
       type="button"
-      className="focus-todo"
-      onClick={() => onToggle(todo.id)}
+      className={`focus-todo ${isCompleting ? "focus-todo--completed" : ""}`}
+      onClick={(e) => onToggle(todo.id, e)}
       disabled={disabled}
       aria-label={`Complete reminder: ${todo.title}`}
     >
-      <span className="focus-todo-check" aria-hidden="true" />
-      <span className="focus-todo-title">{todo.title}</span>
+      <span className={`focus-todo-check ${isCompleting ? "focus-todo-check--checked" : ""}`} aria-hidden="true">
+        {isCompleting && "✓"}
+      </span>
+      <span className={`focus-todo-title ${isCompleting ? "focus-todo-title--completed" : ""}`}>
+        {todo.title}
+      </span>
       <span className={`focus-priority focus-priority--${todo.priority}`} aria-label={`${todo.priority} priority`} />
     </button>
   );
@@ -49,6 +65,9 @@ export default function FocusMode() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busyTodo, setBusyTodo] = useState<number | null>(null);
+  const [completingId, setCompletingId] = useState<number | null>(null);
+  const [rewardMessage, setRewardMessage] = useState<string | null>(null);
+  const [completedStreak, setCompletedStreak] = useState(0);
   const [now, setNow] = useState(() => new Date());
 
   const fetchFocusData = useCallback(async () => {
@@ -116,11 +135,40 @@ export default function FocusMode() {
     now,
   ), [calendar, todos, weather.data, now]);
 
-  const toggleTodo = async (id: number) => {
-    if (busyTodo !== null) return;
-    const previous = todos;
+  const toggleTodo = async (id: number, e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (busyTodo !== null || completingId !== null) return;
+
+    // Immediate sensory dopamine reward
+    playTaskCompletionChime();
+
+    let origin: { x: number; y: number } | undefined;
+    if (e && typeof window !== "undefined") {
+      origin = {
+        x: e.clientX / window.innerWidth,
+        y: e.clientY / window.innerHeight,
+      };
+    }
+
+    const isLastTask = todos.length === 1;
+
+    if (isLastTask) {
+      handleFireConfetti();
+      setRewardMessage(ALL_CLEAR_MESSAGE);
+    } else {
+      fireTaskRewardConfetti(origin);
+      setRewardMessage(getRandomRewardMessage());
+    }
+
+    setCompletingId(id);
+    setCompletedStreak((prev) => prev + 1);
     setBusyTodo(id);
+
+    // Give user 300ms to enjoy the visual checkmark pop and sound
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const previous = todos;
     setTodos((current) => current.filter((todo) => todo.id !== id));
+    setCompletingId(null);
 
     try {
       await fetchJson<null>("/api/todo", {
@@ -131,6 +179,7 @@ export default function FocusMode() {
     } catch {
       setTodos(previous);
       setError(true);
+      setCompletedStreak((prev) => Math.max(0, prev - 1));
     } finally {
       setBusyTodo(null);
     }
@@ -212,13 +261,33 @@ export default function FocusMode() {
 
         <Card className="focus-card">
           <div className="focus-card-header">
-            <p className="focus-card-label">Next reminders</p>
+            <div className="flex items-center gap-2">
+              <p className="focus-card-label">Next reminders</p>
+              {completedStreak > 0 && (
+                <span className="focus-reward-streak" title={`${completedStreak} reminders completed this session`}>
+                  🔥 {completedStreak} done!
+                </span>
+              )}
+            </div>
             <span className="focus-count">{todos.length}</span>
           </div>
+
+          {rewardMessage && (
+            <div className="focus-reward-banner" role="status" aria-live="polite">
+              <span>{rewardMessage}</span>
+            </div>
+          )}
+
           {view.todos.length > 0 ? (
             <div className="focus-todos">
               {view.todos.map((todo) => (
-                <FocusTodo key={todo.id} todo={todo} disabled={busyTodo !== null} onToggle={toggleTodo} />
+                <FocusTodo
+                  key={todo.id}
+                  todo={todo}
+                  disabled={busyTodo !== null || completingId !== null}
+                  isCompleting={completingId === todo.id}
+                  onToggle={toggleTodo}
+                />
               ))}
             </div>
           ) : (
