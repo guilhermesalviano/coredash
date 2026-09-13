@@ -70,7 +70,7 @@ export const AI = {
 
 export const AMAZON_WISHLIST = {
   id: optional("WISHLIST_ID"),
-  cronSchedule: optional("CRON_SCHEDULE"),
+  cronSchedule: optional("CRON_SCHEDULE", "0 11 * * *"),
 } as const;
 
 export const CONFIG = {

@@ -13,6 +13,7 @@ import FocusMode from "@/components/focusMode";
 import FocusModeToggle from "@/components/focusModeToggle";
 import KanbanMode from "@/components/kanban/kanbanMode";
 import KanbanToggle from "@/components/kanbanToggle";
+import ProjectQrButton from "@/components/projectQrButton";
 import { useViewMode } from "@/hooks/useViewMode";
 
 export default function Page() {
@@ -56,6 +57,7 @@ export default function Page() {
       ) : (
         <ActiveCards />
       )}
+      <ProjectQrButton />
     </>
   );
 }

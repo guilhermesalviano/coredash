@@ -1105,40 +1105,6 @@ body[data-focus="on"] .header {
   margin-top: 4px;
   font-family: var(--font-mono);
 }
-
-/* ALERTS */
-.alerts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.alert-item {
-  display: flex;
-  gap: 12px;
-  padding: 10px;
-  background: var(--surface2);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.alert-icon {
-  font-size: 18px;
-}
-
-.alert-msg {
-  font-size: 13px;
-  color: var(--foreground);
-  line-height: 1.4;
-}
-
-.alert-time {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 3px;
-  font-family: var(--font-mono);
-}
-
 /* TODO */
 .todo-input {
   flex: 1;

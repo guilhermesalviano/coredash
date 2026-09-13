@@ -33,6 +33,32 @@ export async function runAmazonWishlistCrawl(): Promise<void> {
   });
 }
 
+export type GuardedCrawlOutcome =
+  | { status: "completed" }
+  | { status: "skipped" }
+  | { status: "failed"; error: string };
+
+export async function runGuardedAmazonWishlistCrawl(): Promise<GuardedCrawlOutcome> {
+  const schedulerGlobal = globalThis as SchedulerGlobal;
+
+  if (schedulerGlobal.__coreDashAmazonWishlistRunning) {
+    logger.warn("Amazon wishlist crawl skipped because a previous crawl is still running");
+    return { status: "skipped" };
+  }
+
+  schedulerGlobal.__coreDashAmazonWishlistRunning = true;
+  try {
+    await runAmazonWishlistCrawl();
+    return { status: "completed" };
+  } catch (error) {
+    const details = errorDetails(error);
+    logger.error("Amazon wishlist crawl failed; no snapshots were written", details);
+    return { status: "failed", error: details.error };
+  } finally {
+    schedulerGlobal.__coreDashAmazonWishlistRunning = false;
+  }
+}
+
 function validTimezone(value: string): boolean {
   try {
     new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
@@ -51,7 +77,7 @@ export async function refreshAmazonWishlistCron(settings?: RuntimeSettings): Pro
     schedulerGlobal.__coreDashAmazonWishlistTask?.stop();
     delete schedulerGlobal.__coreDashAmazonWishlistTask;
     delete schedulerGlobal.__coreDashAmazonWishlistScheduleKey;
-    logger.warn("Amazon wishlist cron is disabled: no schedule is configured");
+    logger.error("Amazon wishlist cron is disabled: no schedule is configured");
     return null;
   }
 
@@ -71,18 +97,7 @@ export async function refreshAmazonWishlistCron(settings?: RuntimeSettings): Pro
   const task = cron.schedule(
     cronSchedule,
     async () => {
-      if (schedulerGlobal.__coreDashAmazonWishlistRunning) {
-        logger.warn("Amazon wishlist crawl skipped because a previous crawl is still running");
-        return;
-      }
-      schedulerGlobal.__coreDashAmazonWishlistRunning = true;
-      try {
-        await runAmazonWishlistCrawl();
-      } catch (error) {
-        logger.error("Amazon wishlist crawl failed; no snapshots were written", errorDetails(error));
-      } finally {
-        schedulerGlobal.__coreDashAmazonWishlistRunning = false;
-      }
+      await runGuardedAmazonWishlistCrawl();
     },
     { timezone },
   );

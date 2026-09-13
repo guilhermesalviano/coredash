@@ -10,7 +10,6 @@ import { TodoCheck } from "@/entities/TodoCheck";
 import { FlightCrawled } from "@/entities/FlightCrawled";
 import { WishlistAmazon } from "@/entities/WishlistAmazon";
 import { HabitTracker } from "@/entities/HabitTracker";
-import { Notification } from "@/entities/Notification";
 import { CONFIG, DB } from "@/config/config";
 
 const entities = [
@@ -23,7 +22,6 @@ const entities = [
   HabitTracker,
   Weather,
   WeatherHour,
-  Notification,
 ];
 
 const sqliteOptions: DataSourceOptions = {
