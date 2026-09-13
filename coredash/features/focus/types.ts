@@ -23,6 +23,8 @@ export interface FocusCalendarEvent {
 export interface FocusCalendarSelection {
   event: FocusCalendarEvent | null;
   isCurrent: boolean;
+  isTomorrow: boolean;
+  tomorrowEvents: FocusCalendarEvent[];
 }
 
 export interface FocusViewModel {

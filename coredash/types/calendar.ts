@@ -42,17 +42,20 @@ export interface GoogleCalendarEvent {
   eventType: string;
 }
 
+export interface CalendarEventItem {
+  id: string;
+  start: string;
+  end: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  title: string;
+  type?: string;
+  color?: string;
+}
+
 export interface CalendarInternalAPIResponse {
-  todayEvents: {
-    id: string;
-    start: string;
-    end: string;
-    startDateTime?: string;
-    endDateTime?: string;
-    title: string;
-    type?: string;
-    color?: string;
-  }[],
+  todayEvents: CalendarEventItem[];
+  nextDayEvents?: CalendarEventItem[];
   importantEvents: {
     id: string;
     start: string;
@@ -60,7 +63,7 @@ export interface CalendarInternalAPIResponse {
     title: string;
     type?: string;
     color?: string;
-  }[],
+  }[];
   futureEvents?: {
     id: string;
     start: string;
@@ -68,5 +71,5 @@ export interface CalendarInternalAPIResponse {
     title: string;
     type?: string;
     color?: string;
-  }[]
+  }[];
 }

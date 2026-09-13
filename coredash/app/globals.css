@@ -534,7 +534,8 @@ body[data-focus="on"] .header {
     font-size: 1.35rem;
   }
 
-  .focus-todo {
+  .focus-todo,
+  .focus-calendar-item {
     min-height: 2.5rem;
     padding: 0.5rem 0.65rem;
   }

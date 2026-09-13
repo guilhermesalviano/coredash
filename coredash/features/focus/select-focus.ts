@@ -1,5 +1,5 @@
 import type { ForecastItem, WeatherData } from "@/features/weather/types";
-import type { FocusCalendarEvent, FocusCalendarSelection, FocusTodo } from "./types";
+import type { FocusCalendarEvent, FocusCalendarSelection, FocusTodo, FocusViewModel } from "./types";
 
 const RAIN_CODES = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 85, 86, 95, 96, 99]);
 
@@ -31,7 +31,19 @@ function eventEnd(event: FocusCalendarEvent, now: Date, start: number): number {
 export function selectFocusCalendarEvent(
   events: FocusCalendarEvent[],
   now: Date,
+  nextDayEvents: FocusCalendarEvent[] = [],
 ): FocusCalendarSelection {
+  const isAfter6Pm = now.getHours() >= 18;
+
+  if (isAfter6Pm) {
+    return {
+      event: nextDayEvents[0] ?? null,
+      isCurrent: false,
+      isTomorrow: true,
+      tomorrowEvents: nextDayEvents,
+    };
+  }
+
   const timedEvents = events
     .map((event) => ({ event, start: eventStart(event, now) }))
     .filter((item): item is { event: FocusCalendarEvent; start: number } => item.start !== null)
@@ -39,13 +51,13 @@ export function selectFocusCalendarEvent(
 
   const currentTime = now.getTime();
   const current = timedEvents.find(({ event, start }) => currentTime >= start && currentTime <= eventEnd(event, now, start));
-  if (current) return { event: current.event, isCurrent: true };
+  if (current) return { event: current.event, isCurrent: true, isTomorrow: false, tomorrowEvents: [] };
 
   const next = timedEvents.find(({ start }) => start > currentTime);
-  if (next) return { event: next.event, isCurrent: false };
+  if (next) return { event: next.event, isCurrent: false, isTomorrow: false, tomorrowEvents: [] };
 
   const allDay = events.find((event) => event.start === "All day");
-  return { event: allDay ?? null, isCurrent: Boolean(allDay) };
+  return { event: allDay ?? null, isCurrent: Boolean(allDay), isTomorrow: false, tomorrowEvents: [] };
 }
 
 export function selectWeatherAlert(weather: WeatherData | null, now: Date): ForecastItem | null {
@@ -60,12 +72,43 @@ export function selectWeatherAlert(weather: WeatherData | null, now: Date): Fore
 
 export function selectFocusView(
   events: FocusCalendarEvent[],
+  nextDayEvents: FocusCalendarEvent[],
   todos: FocusTodo[],
   weather: WeatherData | null,
   now: Date,
-): { calendar: FocusCalendarSelection; todos: FocusTodo[]; weather: WeatherData | null; weatherAlert: ForecastItem | null } {
+): FocusViewModel;
+export function selectFocusView(
+  events: FocusCalendarEvent[],
+  todos: FocusTodo[],
+  weather: WeatherData | null,
+  now: Date,
+): FocusViewModel;
+export function selectFocusView(
+  events: FocusCalendarEvent[],
+  arg2: FocusCalendarEvent[] | FocusTodo[],
+  arg3?: FocusTodo[] | WeatherData | null,
+  arg4?: WeatherData | null | Date,
+  arg5?: Date,
+): FocusViewModel {
+  let nextDayEvents: FocusCalendarEvent[] = [];
+  let todos: FocusTodo[] = [];
+  let weather: WeatherData | null = null;
+  let now = new Date();
+
+  if (Array.isArray(arg3)) {
+    nextDayEvents = arg2 as FocusCalendarEvent[];
+    todos = arg3 as FocusTodo[];
+    weather = (arg4 as WeatherData | null) ?? null;
+    now = (arg5 as Date) ?? new Date();
+  } else {
+    nextDayEvents = [];
+    todos = (arg2 as FocusTodo[]) ?? [];
+    weather = (arg3 as WeatherData | null) ?? null;
+    now = (arg4 as Date) ?? new Date();
+  }
+
   return {
-    calendar: selectFocusCalendarEvent(events, now),
+    calendar: selectFocusCalendarEvent(events, now, nextDayEvents),
     todos: todos.filter((todo) => !todo.type || todo.type === "reminder").slice(0, 3),
     weather,
     weatherAlert: selectWeatherAlert(weather, now),

@@ -80,3 +80,72 @@ test("filters focused todos to shows only reminders", () => {
   const view = selectFocusView([], mixedTodos, weather, new Date("2026-09-09T09:00:00-03:00"));
   assert.deepEqual(view.todos.map((todo) => todo.id), [11, 13]);
 });
+
+test("switches to tomorrow's events at or after 6 PM (18:00)", () => {
+  const tomorrowEvents: FocusCalendarEvent[] = [
+    {
+      id: "tomorrow-1",
+      start: "09:00",
+      end: "10:00",
+      startDateTime: "2026-09-10T09:00:00-03:00",
+      endDateTime: "2026-09-10T10:00:00-03:00",
+      title: "Tomorrow standup",
+    },
+    {
+      id: "tomorrow-2",
+      start: "14:00",
+      end: "15:00",
+      startDateTime: "2026-09-10T14:00:00-03:00",
+      endDateTime: "2026-09-10T15:00:00-03:00",
+      title: "Tomorrow review",
+    },
+  ];
+
+  const selection = selectFocusCalendarEvent(
+    events,
+    new Date("2026-09-09T18:00:00-03:00"),
+    tomorrowEvents,
+  );
+
+  assert.equal(selection.isTomorrow, true);
+  assert.equal(selection.isCurrent, false);
+  assert.equal(selection.event?.id, "tomorrow-1");
+  assert.deepEqual(selection.tomorrowEvents, tomorrowEvents);
+});
+
+test("handles after 6 PM with no tomorrow events", () => {
+  const selection = selectFocusCalendarEvent(
+    events,
+    new Date("2026-09-09T20:30:00-03:00"),
+    [],
+  );
+
+  assert.equal(selection.isTomorrow, true);
+  assert.equal(selection.isCurrent, false);
+  assert.equal(selection.event, null);
+  assert.deepEqual(selection.tomorrowEvents, []);
+});
+
+test("selectFocusView supplies nextDayEvents and switches after 6 PM", () => {
+  const tomorrowEvents: FocusCalendarEvent[] = [
+    {
+      id: "tomorrow-1",
+      start: "10:00",
+      end: "11:00",
+      title: "Morning workshop",
+    },
+  ];
+
+  const view = selectFocusView(
+    events,
+    tomorrowEvents,
+    todos,
+    weather,
+    new Date("2026-09-09T19:00:00-03:00"),
+  );
+
+  assert.equal(view.calendar.isTomorrow, true);
+  assert.equal(view.calendar.tomorrowEvents.length, 1);
+  assert.equal(view.calendar.tomorrowEvents[0].title, "Morning workshop");
+});
+
