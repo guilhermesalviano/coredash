@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectFocusCalendarEvent, selectFocusView, selectWeatherAlert } from "./select-focus";
+import { selectFocusCalendarEvent, selectFocusForecast, selectFocusView, selectWeatherAlert } from "./select-focus";
 import type { FocusCalendarEvent, FocusTodo } from "./types";
 import type { WeatherData } from "@/features/weather/types";
 
@@ -147,5 +147,24 @@ test("selectFocusView supplies nextDayEvents and switches after 6 PM", () => {
   assert.equal(view.calendar.isTomorrow, true);
   assert.equal(view.calendar.tomorrowEvents.length, 1);
   assert.equal(view.calendar.tomorrowEvents[0].title, "Morning workshop");
+  assert.equal(view.forecast.length, 2);
 });
+
+test("selects the next 3 hours of weather forecast", () => {
+  const extendedWeather: WeatherData = {
+    ...weather,
+    forecast: [
+      { timestamp: "2026-09-09T10:00:00-03:00", time: "10h", temp: 20, condition: "Sol", icon: "☀️", code: 0 },
+      { timestamp: "2026-09-09T11:00:00-03:00", time: "11h", temp: 21, condition: "Sol", icon: "☀️", code: 0 },
+      { timestamp: "2026-09-09T12:00:00-03:00", time: "12h", temp: 23, condition: "Nublado", icon: "☁️", code: 3 },
+      { timestamp: "2026-09-09T13:00:00-03:00", time: "13h", temp: 24, condition: "Chuva", icon: "🌧️", code: 61 },
+      { timestamp: "2026-09-09T14:00:00-03:00", time: "14h", temp: 22, condition: "Chuva", icon: "🌧️", code: 61 },
+    ],
+  };
+
+  const forecast = selectFocusForecast(extendedWeather, new Date("2026-09-09T11:15:00-03:00"));
+  assert.equal(forecast.length, 3);
+  assert.deepEqual(forecast.map((f) => f.time), ["11h", "12h", "13h"]);
+});
+
 

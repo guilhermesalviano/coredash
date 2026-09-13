@@ -32,4 +32,5 @@ export interface FocusViewModel {
   todos: FocusTodo[];
   weather: WeatherData | null;
   weatherAlert: ForecastItem | null;
+  forecast: ForecastItem[];
 }

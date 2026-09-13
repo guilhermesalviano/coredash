@@ -70,6 +70,18 @@ export function selectWeatherAlert(weather: WeatherData | null, now: Date): Fore
   }) ?? null;
 }
 
+export function selectFocusForecast(weather: WeatherData | null, now: Date, limit = 3): ForecastItem[] {
+  if (!weather || !Array.isArray(weather.forecast)) return [];
+
+  const currentTime = now.getTime();
+  const upcoming = weather.forecast.filter((item) => {
+    const timestamp = Date.parse(item.timestamp);
+    return !Number.isNaN(timestamp) && timestamp >= currentTime - 30 * 60 * 1000;
+  });
+
+  return (upcoming.length > 0 ? upcoming : weather.forecast).slice(0, limit);
+}
+
 export function selectFocusView(
   events: FocusCalendarEvent[],
   nextDayEvents: FocusCalendarEvent[],
@@ -112,5 +124,6 @@ export function selectFocusView(
     todos: todos.filter((todo) => !todo.type || todo.type === "reminder").slice(0, 3),
     weather,
     weatherAlert: selectWeatherAlert(weather, now),
+    forecast: selectFocusForecast(weather, now, 3),
   };
 }

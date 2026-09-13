@@ -110,6 +110,7 @@ export default function FocusMode() {
 
   const view = useMemo(() => selectFocusView(
     (calendar?.todayEvents ?? []) as FocusCalendarEvent[],
+    (calendar?.nextDayEvents ?? []) as FocusCalendarEvent[],
     todos,
     weather.data,
     now,
@@ -158,20 +159,54 @@ export default function FocusMode() {
 
       <div className="focus-grid">
         <Card className="focus-card focus-card--primary">
-          <p className="focus-card-label">{view.calendar.isCurrent ? "Right now" : "Up next"}</p>
-          {view.calendar.event ? (
-            <div className="focus-event">
-              <span className="focus-event-time">
-                {formatEventTime(view.calendar.event.start, view.calendar.event.end)}
-              </span>
-              <h2>{view.calendar.event.title}</h2>
-              <p>{view.calendar.isCurrent ? "You are in this time block." : "This is the next thing on your calendar."}</p>
-            </div>
+          {view.calendar.isTomorrow ? (
+            <>
+              <div className="focus-card-header">
+                <p className="focus-card-label">Tomorrow</p>
+                {view.calendar.tomorrowEvents.length > 0 && (
+                  <span className="focus-count">{view.calendar.tomorrowEvents.length}</span>
+                )}
+              </div>
+              {view.calendar.tomorrowEvents.length > 0 ? (
+                <div className="focus-calendar-list">
+                  {view.calendar.tomorrowEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="focus-calendar-item"
+                      style={{ borderLeftColor: event.color || "var(--accent)" }}
+                    >
+                      <span className="focus-calendar-item-time">
+                        {formatEventTime(event.start, event.end)}
+                      </span>
+                      <span className="focus-calendar-item-title">{event.title}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="focus-empty">
+                  <h2>No events tomorrow</h2>
+                  <p>Your calendar is clear for tomorrow.</p>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="focus-empty">
-              <h2>No upcoming events</h2>
-              <p>You have room to choose what matters next.</p>
-            </div>
+            <>
+              <p className="focus-card-label">{view.calendar.isCurrent ? "Right now" : "Up next"}</p>
+              {view.calendar.event ? (
+                <div className="focus-event">
+                  <span className="focus-event-time">
+                    {formatEventTime(view.calendar.event.start, view.calendar.event.end)}
+                  </span>
+                  <h2>{view.calendar.event.title}</h2>
+                  <p>{view.calendar.isCurrent ? "You are in this time block." : "This is the next thing on your calendar."}</p>
+                </div>
+              ) : (
+                <div className="focus-empty">
+                  <h2>No upcoming events</h2>
+                  <p>You have room to choose what matters next.</p>
+                </div>
+              )}
+            </>
           )}
         </Card>
 
@@ -199,19 +234,33 @@ export default function FocusMode() {
           {weatherUnavailable ? (
             <p className="focus-muted">Weather is unavailable right now.</p>
           ) : (
-            <>
-              <div className="focus-weather-main">
-                <span className="focus-weather-icon" aria-hidden="true">{view.weather?.icon}</span>
-                <div>
-                  <strong>{view.weather?.temp}°</strong>
-                  <span>{view.weather?.condition}</span>
+            <div className="focus-weather-body">
+              <div className="focus-weather-overview">
+                <div className="focus-weather-main">
+                  <span className="focus-weather-icon" aria-hidden="true">{view.weather?.icon}</span>
+                  <div>
+                    <strong>{view.weather?.temp}°</strong>
+                    <span>{view.weather?.condition}</span>
+                  </div>
                 </div>
+                <p className="focus-weather-feels">Feels like {view.weather?.feels}° in {view.weather?.city}</p>
+                {view.weatherAlert && (
+                  <p className="focus-weather-alert">🌧️ Rain expected around {view.weatherAlert.time}</p>
+                )}
               </div>
-              <p className="focus-weather-feels">Feels like {view.weather?.feels}° in {view.weather?.city}</p>
-              {view.weatherAlert && (
-                <p className="focus-weather-alert">🌧️ Rain expected around {view.weatherAlert.time}</p>
+
+              {view.forecast.length > 0 && (
+                <div className="focus-weather-hours">
+                  {view.forecast.map((hour) => (
+                    <div key={hour.timestamp} className="focus-weather-hour">
+                      <span className="focus-weather-hour-time">{hour.time}</span>
+                      <span className="focus-weather-hour-icon">{hour.icon}</span>
+                      <span className="focus-weather-hour-temp">{hour.temp}°</span>
+                    </div>
+                  ))}
+                </div>
               )}
-            </>
+            </div>
           )}
         </Card>
       </div>
