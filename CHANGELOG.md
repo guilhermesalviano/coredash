@@ -9,6 +9,22 @@ the next stable version; 0.1.2, 0.1.3 and 0.1.8 never had a stable release.
 
 ## [Unreleased]
 
+## [0.1.16] - 2026-09-13
+
+### Added
+
+- Focus Mode ADHD reward system: Web Audio ascending sparkle chime, localized canvas-confetti bursts on reminder completion, tactile checkmark animation, dopamine affirmation banners, session streak counter, and full-screen celebration on clearing all reminders.
+- Focus Mode automatically transitions after 6:00 PM to display tomorrow's scheduled events and overview in the primary card.
+- Focus Mode hourly weather forecast widget displaying the next 3 hours of weather conditions and temperatures.
+- Calendar API (`GET /api/calendar`) returns `nextDayEvents` formatted with timestamps, color, and summary in the configured timezone.
+- Persistent Kanban tasks and Pipeline task board UI with ordering by date.
+- Default language configuration for Google News feed.
+
+### Changed
+
+- Dedicated the main dashboard todo card to daily reminders with a direct link to the Pipeline task board.
+- Redesigned the settings modal UI.
+
 ## [0.1.15] - 2026-09-10
 
 ### Added
@@ -155,7 +171,8 @@ First release: a self-hosted dashboard for older hardware, with cards for
 weather, calendar, todo, habits, goals, stocks, news, flights, products and the
 Amazon wishlist, plus an AI assistant that summarizes the day.
 
-[Unreleased]: https://github.com/guilhermesalviano/coredash/compare/v0.1.15...HEAD
+[Unreleased]: https://github.com/guilhermesalviano/coredash/compare/v0.1.16...HEAD
+[0.1.16]: https://github.com/guilhermesalviano/coredash/compare/v0.1.15...v0.1.16
 [0.1.15]: https://github.com/guilhermesalviano/coredash/compare/v0.1.14...v0.1.15
 [0.1.14]: https://github.com/guilhermesalviano/coredash/compare/v0.1.13...v0.1.14
 [0.1.13]: https://github.com/guilhermesalviano/coredash/compare/v0.1.12...v0.1.13
