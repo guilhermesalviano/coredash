@@ -8,14 +8,12 @@ import { Weather } from "@/entities/Weather";
 import { WeatherHour } from "@/entities/WeatherHour";
 import { TodoCheck } from "@/entities/TodoCheck";
 import { FlightCrawled } from "@/entities/FlightCrawled";
-import { WishlistAmazon } from "@/entities/WishlistAmazon";
 import { HabitTracker } from "@/entities/HabitTracker";
 import { CONFIG, DB } from "@/config/config";
 
 const entities = [
   Todo,
   TodoRecurrence,
-  WishlistAmazon,
   TodoCheck,
   FlightCrawled,
   User,

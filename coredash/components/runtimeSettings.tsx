@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, Check, Globe2, LoaderCircle, RefreshCw, RotateCcw, Save, Sparkles, Timer, TriangleAlert } from "lucide-react";
+import { CalendarDays, Check, Globe2, LoaderCircle, RefreshCw, RotateCcw, Save, Sparkles, TriangleAlert } from "lucide-react";
 import { fetchJson } from "@/lib/api-client";
 import type { RuntimeSettings, RuntimeSettingsResponse } from "@/features/settings/types";
 import styles from "./settings.module.css";
@@ -10,7 +10,6 @@ interface RuntimeSettingsDraft {
   timezone: string;
   latitude: string;
   longitude: string;
-  cronSchedule: string;
   aiModel: string;
   calendarIds: string;
 }
@@ -64,7 +63,7 @@ export default function RuntimeSettingsSection() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(restoreDefaults ? {
           timezone: null, latitude: null, longitude: null,
-          cronSchedule: null, aiModel: null, calendarIds: null,
+          aiModel: null, calendarIds: null,
         } : { ...draft, calendarIds: calendarIdsFromText(draft.calendarIds) }),
       });
       setData(response);
@@ -118,7 +117,7 @@ export default function RuntimeSettingsSection() {
         <div className={styles.panelIntro}>
           <span className={styles.eyebrow}>Behind your dashboard</span>
           <h2>The details that matter.</h2>
-          <p>Fine-tune your location, connected services, and updates.</p>
+          <p>Fine-tune your location and connected services.</p>
         </div>
 
         <fieldset disabled={busy} className={styles.fieldGroups}>
@@ -147,12 +146,6 @@ export default function RuntimeSettingsSection() {
                 rows={3} placeholder="One calendar ID per line" className={styles.input} />
               <p id="setting-calendarIds-help" className={styles.help}>Add one ID per line, or separate them with semicolons.</p>
             </div>
-          </section>
-
-          <section className={styles.fieldGroup} aria-labelledby="wishlist-settings-heading">
-            <div className={styles.groupHeading}><Timer size={18} aria-hidden="true" /><h3 id="wishlist-settings-heading">Wishlist updates</h3></div>
-            {field("cronSchedule", "Update schedule", "Five-field cron expression. Leave blank to turn off automatic updates.", "0 */6 * * *")}
-            <p className={styles.help}>Schedule changes take effect as soon as you save.</p>
           </section>
         </fieldset>
 

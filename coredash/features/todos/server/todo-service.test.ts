@@ -34,7 +34,7 @@ after(async () => {
   setTodoDatabaseConnection(null);
 });
 
-test("creates and retrieves a persistent kanban task", async () => {
+test("creates and retrieves a persistent task", async () => {
   const task = await createTodo({
     title: "Implement Kanban Board",
     type: "task",

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import {
   Check, ChevronRight, CloudSun, Focus, LayoutGrid, Mail, Moon, Music2,
-  Newspaper, Palette, CalendarDays, Settings2, ShoppingBag, SlidersHorizontal,
+  Newspaper, Palette, CalendarDays, Settings2, SlidersHorizontal,
   Sparkles, Sun, TrendingUp, ListChecks, X, type LucideIcon,
 } from "lucide-react";
 import storage from "@/lib/storage";
@@ -30,7 +30,6 @@ const CARD_DETAILS: Record<CardId, { icon: LucideIcon; description: string }> = 
   stocks: { icon: TrendingUp, description: "Follow the market" },
   todo: { icon: ListChecks, description: "Your daily reminders" },
   news: { icon: Newspaper, description: "Catch up on the headlines" },
-  wishlistDrops: { icon: ShoppingBag, description: "Keep an eye on price drops" },
 };
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {

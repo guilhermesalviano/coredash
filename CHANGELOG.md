@@ -9,6 +9,11 @@ the next stable version; 0.1.2, 0.1.3 and 0.1.8 never had a stable release.
 
 ## [Unreleased]
 
+### Removed
+
+- Kanban view mode and the Pipeline task board. Dashboard and Focus modes remain.
+- Amazon wishlist scraping, scheduled price snapshots, the price-drop card, and the crawl schedule. Price drops and update status were computed only from scraped snapshots, so the wishlist feature was removed with the scraper.
+
 ## [0.1.16] - 2026-09-13
 
 ### Added

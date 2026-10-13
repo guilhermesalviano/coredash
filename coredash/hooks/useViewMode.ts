@@ -2,7 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 
-export type ViewMode = "dashboard" | "focus" | "kanban";
+export type ViewMode = "dashboard" | "focus";
 
 const STORAGE_KEY = "coredash_view_mode";
 const LEGACY_FOCUS_KEY = "focus_mode_enabled";
@@ -11,7 +11,7 @@ const SYNC_EVENT = "coredash-view-mode-changed";
 function readMode(): ViewMode {
   try {
     const mode = localStorage.getItem(STORAGE_KEY);
-    if (mode === "focus" || mode === "kanban" || mode === "dashboard") {
+    if (mode === "focus" || mode === "dashboard") {
       return mode;
     }
     if (localStorage.getItem(LEGACY_FOCUS_KEY) === "true") {
@@ -77,17 +77,10 @@ export function useViewMode() {
     writeMode(next);
   }, []);
 
-  const toggleKanban = useCallback(() => {
-    const next: ViewMode = snapshot.mode === "kanban" ? "dashboard" : "kanban";
-    updateSnapshot(next);
-    writeMode(next);
-  }, []);
-
   return {
     mode: current.mode,
     mounted: current.mounted,
     setViewMode,
     toggleFocus,
-    toggleKanban,
   };
 }

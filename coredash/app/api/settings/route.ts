@@ -5,7 +5,6 @@ import {
   saveRuntimeSettings,
   validateRuntimeSettingsPatch,
 } from "@/features/settings/server/runtime-settings";
-import { refreshAmazonWishlistCron } from "@/features/wishlist/server/amazon-wishlist-cron";
 import { formatResponse } from "@/lib/api-response";
 
 export async function GET(req: NextRequest) {
@@ -28,7 +27,6 @@ export async function PATCH(req: NextRequest) {
     }
     const patch = validateRuntimeSettingsPatch(body);
     const data = await saveRuntimeSettings(patch);
-    await refreshAmazonWishlistCron(data.settings);
     return formatResponse(req, { message: "Runtime settings saved successfully", data });
   } catch (error: unknown) {
     if (error instanceof Error && /must be|Unknown setting|payload/.test(error.message)) {

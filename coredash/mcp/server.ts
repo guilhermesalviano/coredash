@@ -113,7 +113,7 @@ function registerReadTools(server: McpServer) {
       type: z
         .enum(["reminder", "task", "all"])
         .optional()
-        .describe('Filter todos by type: "reminder" (daily checklist items), "task" (Kanban tasks), or "all" (default: "all").'),
+        .describe('Filter todos by type: "reminder" (daily checklist items), "task" (persistent tasks), or "all" (default: "all").'),
     }),
   }, ({ onlyUnchecked, type }) => run(() => callApi("/api/todo", undefined, { onlyUnchecked, type })));
 
@@ -130,13 +130,6 @@ function registerReadTools(server: McpServer) {
     annotations: { readOnlyHint: true, idempotentHint: true },
     inputSchema: z.object({}),
   }, () => run(() => callApi("/api/products")));
-
-  server.registerTool("get_wishlist", {
-    title: "Get wishlist",
-    description: "Get the latest wishlist price alerts.",
-    annotations: { readOnlyHint: true, idempotentHint: true },
-    inputSchema: z.object({}),
-  }, () => run(() => callApi("/api/wishlist")));
 
   server.registerTool("get_emails", {
     title: "Get emails",
@@ -187,7 +180,7 @@ function registerWriteTools(server: McpServer) {
         .optional()
         .default("reminder")
         .describe(
-          'The category/tab in CoreDash: "reminder" (daily checklist item on the dashboard Reminders tab) or "task" (persistent Kanban task on the Tasks tab). Defaults to "reminder". Note: "reminder" is only a dashboard checklist category name and does NOT trigger notifications or alarms.'
+          'The category in CoreDash: "reminder" (daily checklist item on the dashboard) or "task" (persistent task). Defaults to "reminder". Note: "reminder" is only a dashboard checklist category name and does NOT trigger notifications or alarms.'
         ),
       repeat: z
         .boolean()

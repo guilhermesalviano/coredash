@@ -12,8 +12,6 @@ interface TodoProps {
   completed: TodoState[];
   checkedCount: number;
   todos?: TodoState[];
-  onOpenPipeline?: () => void;
-  onOpenKanban?: () => void;
   isBusy: boolean;
   progress: number;
 }
@@ -27,13 +25,9 @@ export default function TodoCard({
   completed,
   checkedCount,
   todos,
-  onOpenPipeline,
-  onOpenKanban,
   isBusy,
   progress,
 }: TodoProps) {
-  const handleOpenPipeline = onOpenPipeline || onOpenKanban;
-
   return (
     <>
       <TaskModal
@@ -56,16 +50,6 @@ export default function TodoCard({
 
             {/* Quick Actions */}
             <div className="flex items-center gap-2">
-              {handleOpenPipeline && (
-                <button
-                  type="button"
-                  onClick={handleOpenPipeline}
-                  title="Abrir Pipeline de Tarefas em tela cheia"
-                  className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 text-muted hover:text-foreground text-xs font-mono transition-colors cursor-pointer"
-                >
-                  Pipeline ↗
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setModalOpen(true)}

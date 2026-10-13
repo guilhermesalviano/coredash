@@ -68,11 +68,6 @@ export const AI = {
   personalContext: optional("PERSONAL_CONTEXT"),
 } as const;
 
-export const AMAZON_WISHLIST = {
-  id: optional("WISHLIST_ID"),
-  cronSchedule: optional("CRON_SCHEDULE", "0 11 * * *"),
-} as const;
-
 export const CONFIG = {
   isDev,
   logLevel: optional("LOG_LEVEL", isDev ? "debug" : "info"),

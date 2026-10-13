@@ -1,7 +1,6 @@
-import cron from "node-cron";
 import type { DataSource } from "typeorm";
 
-import { AI, AMAZON_WISHLIST, DB, GOOGLE, LOCATION } from "@/config/config";
+import { AI, DB, GOOGLE, LOCATION } from "@/config/config";
 import type {
   RuntimeSettings,
   RuntimeSettingsPatch,
@@ -16,7 +15,6 @@ interface RuntimeSettingsRow {
   timezone: string | null;
   latitude: string | null;
   longitude: string | null;
-  cron_schedule: string | null;
   ai_model: string | null;
   calendar_ids: string | null;
 }
@@ -25,7 +23,6 @@ const SETTING_KEYS = [
   "timezone",
   "latitude",
   "longitude",
-  "cronSchedule",
   "aiModel",
   "calendarIds",
 ] as const;
@@ -35,7 +32,6 @@ function environmentDefaults(): RuntimeSettings {
     timezone: LOCATION.timezone,
     latitude: LOCATION.latitude,
     longitude: LOCATION.longitude,
-    cronSchedule: AMAZON_WISHLIST.cronSchedule,
     aiModel: AI.model,
     calendarIds: GOOGLE.calendarIds,
   };
@@ -82,7 +78,7 @@ export function validateRuntimeSettingsPatch(input: unknown): RuntimeSettingsPat
   }
 
   const patch: RuntimeSettingsPatch = {};
-  for (const key of ["timezone", "latitude", "longitude", "cronSchedule", "aiModel"] as const) {
+  for (const key of ["timezone", "latitude", "longitude", "aiModel"] as const) {
     if (!(key in candidate)) continue;
     const value = candidate[key];
     assertString(value, key);
@@ -106,9 +102,6 @@ export function validateRuntimeSettingsPatch(input: unknown): RuntimeSettingsPat
       if (!normalized || !Number.isFinite(number) || number < -180 || number > 180) {
         throw new Error("longitude must be a number between -180 and 180");
       }
-    }
-    if (key === "cronSchedule" && normalized && (!cron.validate(normalized) || normalized.split(/\s+/).length !== 5)) {
-      throw new Error("cronSchedule must be a valid five-field cron expression");
     }
     if (key === "aiModel" && (!normalized || normalized.length > 200)) {
       throw new Error("aiModel must be between 1 and 200 characters");
@@ -142,7 +135,6 @@ async function getSettingsDataSource() {
           timezone VARCHAR(64) NULL,
           latitude VARCHAR(32) NULL,
           longitude VARCHAR(32) NULL,
-          cron_schedule VARCHAR(100) NULL,
           ai_model VARCHAR(255) NULL,
           calendar_ids TEXT NULL,
           updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -163,7 +155,6 @@ function toResponse(row: RuntimeSettingsRow | undefined): RuntimeSettingsRespons
     timezone: hasValue(row?.timezone) ? row!.timezone : defaults.timezone,
     latitude: hasValue(row?.latitude) ? row!.latitude : defaults.latitude,
     longitude: hasValue(row?.longitude) ? row!.longitude : defaults.longitude,
-    cronSchedule: hasValue(row?.cron_schedule) ? row!.cron_schedule : defaults.cronSchedule,
     aiModel: hasValue(row?.ai_model) ? row!.ai_model : defaults.aiModel,
     calendarIds: isStored(row?.calendar_ids) ? parseCalendarIds(row!.calendar_ids) : defaults.calendarIds,
   };
@@ -172,7 +163,6 @@ function toResponse(row: RuntimeSettingsRow | undefined): RuntimeSettingsRespons
     timezone: hasValue(row?.timezone) ? "database" : "environment",
     latitude: hasValue(row?.latitude) ? "database" : "environment",
     longitude: hasValue(row?.longitude) ? "database" : "environment",
-    cronSchedule: hasValue(row?.cron_schedule) ? "database" : "environment",
     aiModel: hasValue(row?.ai_model) ? "database" : "environment",
     calendarIds: isStored(row?.calendar_ids) ? "database" : "environment",
   };
@@ -182,19 +172,18 @@ function toResponse(row: RuntimeSettingsRow | undefined): RuntimeSettingsRespons
 
 export async function getRuntimeSettings(): Promise<RuntimeSettingsResponse> {
   const dataSource = await getSettingsDataSource();
-  const rows = await dataSource.query("SELECT timezone, latitude, longitude, cron_schedule, ai_model, calendar_ids FROM app_settings WHERE id = ?", [SETTINGS_ID]) as RuntimeSettingsRow[];
+  const rows = await dataSource.query("SELECT timezone, latitude, longitude, ai_model, calendar_ids FROM app_settings WHERE id = ?", [SETTINGS_ID]) as RuntimeSettingsRow[];
   return toResponse(rows[0]);
 }
 
 export async function saveRuntimeSettings(patch: RuntimeSettingsPatch): Promise<RuntimeSettingsResponse> {
   const dataSource = await getSettingsDataSource();
-  const currentRows = await dataSource.query("SELECT timezone, latitude, longitude, cron_schedule, ai_model, calendar_ids FROM app_settings WHERE id = ?", [SETTINGS_ID]) as RuntimeSettingsRow[];
+  const currentRows = await dataSource.query("SELECT timezone, latitude, longitude, ai_model, calendar_ids FROM app_settings WHERE id = ?", [SETTINGS_ID]) as RuntimeSettingsRow[];
   const current = currentRows[0];
   const values = {
     timezone: patch.timezone !== undefined ? patch.timezone : current?.timezone ?? null,
     latitude: patch.latitude !== undefined ? patch.latitude : current?.latitude ?? null,
     longitude: patch.longitude !== undefined ? patch.longitude : current?.longitude ?? null,
-    cronSchedule: patch.cronSchedule !== undefined ? patch.cronSchedule : current?.cron_schedule ?? null,
     aiModel: patch.aiModel !== undefined ? patch.aiModel : current?.ai_model ?? null,
     calendarIds: patch.calendarIds !== undefined
       ? patch.calendarIds
@@ -202,22 +191,22 @@ export async function saveRuntimeSettings(patch: RuntimeSettingsPatch): Promise<
         ? parseCalendarIds(current.calendar_ids)
         : null,
   };
-  const parameters = [SETTINGS_ID, values.timezone, values.latitude, values.longitude, values.cronSchedule, values.aiModel, values.calendarIds === null ? null : values.calendarIds.join(";")];
+  const parameters = [SETTINGS_ID, values.timezone, values.latitude, values.longitude, values.aiModel, values.calendarIds === null ? null : values.calendarIds.join(";")];
 
   if (DB.driver === "sqlite") {
     await dataSource.query(`
-      INSERT INTO app_settings (id, timezone, latitude, longitude, cron_schedule, ai_model, calendar_ids)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO app_settings (id, timezone, latitude, longitude, ai_model, calendar_ids)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET timezone=excluded.timezone, latitude=excluded.latitude,
-        longitude=excluded.longitude, cron_schedule=excluded.cron_schedule, ai_model=excluded.ai_model,
+        longitude=excluded.longitude, ai_model=excluded.ai_model,
         calendar_ids=excluded.calendar_ids, updated_at=CURRENT_TIMESTAMP
     `, parameters);
   } else {
     await dataSource.query(`
-      INSERT INTO app_settings (id, timezone, latitude, longitude, cron_schedule, ai_model, calendar_ids)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO app_settings (id, timezone, latitude, longitude, ai_model, calendar_ids)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE timezone=VALUES(timezone), latitude=VALUES(latitude), longitude=VALUES(longitude),
-        cron_schedule=VALUES(cron_schedule), ai_model=VALUES(ai_model), calendar_ids=VALUES(calendar_ids), updated_at=CURRENT_TIMESTAMP
+        ai_model=VALUES(ai_model), calendar_ids=VALUES(calendar_ids), updated_at=CURRENT_TIMESTAMP
     `, parameters);
   }
 

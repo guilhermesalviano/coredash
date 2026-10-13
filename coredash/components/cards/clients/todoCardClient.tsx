@@ -4,7 +4,6 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import { NewTaskForm, TodoState } from "@/types/task";
 import handleFireConfetti from "@/components/confetti";
 import { useStatus } from "@/contexts/statusContext";
-import { useViewMode } from "@/hooks/useViewMode";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { fetchJson } from "@/lib/api-client";
 import { useDayChange } from "@/hooks/useDayChange";
@@ -15,7 +14,6 @@ export default function TodoCardClient() {
   const [modalOpen, setModalOpen] = useState(false);
   const [isBusy, setIsBusy] = useState(true);
   const { reportStatus } = useStatus();
-  const { setViewMode } = useViewMode();
 
   const isFirstRender = useRef(true);
 
@@ -156,7 +154,6 @@ export default function TodoCardClient() {
       completed={completed}
       checkedCount={checkedCount}
       todos={todos}
-      onOpenPipeline={() => setViewMode("kanban")}
       isBusy={isBusy}
       progress={progress}
     />
