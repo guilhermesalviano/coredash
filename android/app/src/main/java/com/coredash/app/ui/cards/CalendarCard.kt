@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -27,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.coredash.app.data.calendar.CalendarEvent
 import com.coredash.app.ui.calendar.rememberCalendarPermission
+import com.coredash.app.ui.theme.Spacing
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -45,7 +48,7 @@ fun CalendarCard(
     val permission = rememberCalendarPermission()
     val context = LocalContext.current
 
-    DashboardCard(title = "Calendário") {
+    DashboardCard(title = "Calendário", icon = Icons.Default.DateRange) {
         when {
             permission.granted -> {
                 LaunchedEffect(selectedCalendarIds, calendarDays) {
@@ -82,13 +85,8 @@ private fun CalendarEvents(
     loading: Boolean,
 ) {
     when {
-        loading -> Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-        }
-        events.isEmpty() -> HintText("Nenhum evento nos próximos dias")
+        loading -> LoadingState("Carregando sua agenda…")
+        events.isEmpty() -> EmptyState("Sua agenda está livre", "Nenhum compromisso nos próximos dias.")
         else -> {
             val grouped = remember(events) { groupByDay(events) }
             grouped.forEach { (date, dayEvents) ->
@@ -96,7 +94,7 @@ private fun CalendarEvents(
                     text = dayLabel(date),
                     style = MaterialTheme.typography.titleSmall,
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     dayEvents.forEach { event -> EventRow(event) }
                 }
             }
@@ -110,17 +108,17 @@ private fun EventRow(event: CalendarEvent) {
     val eventColor = Color(event.color)
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.xxs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         Box(
             modifier = Modifier
                 .size(10.dp)
                 .clip(CircleShape)
                 .background(
-                    if (eventColor.alpha == 0f) MaterialTheme.colorScheme.primary else eventColor,
-                ),
+                if (eventColor.alpha == 0f) MaterialTheme.colorScheme.primary else eventColor,
+            ),
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(

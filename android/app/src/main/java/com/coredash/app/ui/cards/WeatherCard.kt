@@ -1,20 +1,20 @@
 package com.coredash.app.ui.cards
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.coredash.app.data.remote.Weather
+import com.coredash.app.ui.theme.Spacing
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
@@ -23,28 +23,38 @@ import kotlin.math.roundToInt
 fun WeatherCard(
     weather: Weather?,
     error: Boolean,
+    loading: Boolean,
+    onRetry: () -> Unit,
 ) {
-    DashboardCard(title = "Clima") {
+    DashboardCard(title = "Clima", icon = Icons.Default.LocationOn) {
         when {
+            loading -> LoadingState("Atualizando o clima…")
+            error -> ErrorState("Não foi possível carregar o clima", onRetry)
             weather != null -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "${weather.temperature.roundToInt()}°",
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                    Column(
-                        modifier = Modifier.padding(start = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = weatherCondition(weather.weatherCode),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "${weather.temperature.roundToInt()}°",
+                            style = MaterialTheme.typography.displayMedium,
                         )
-                        Text(
-                            text = "Vento: ${weather.windSpeed.roundToInt()} km/h",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Column(
+                            modifier = Modifier.padding(start = Spacing.sm),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.xxs),
+                        ) {
+                            Text(
+                                text = weatherCondition(weather.weatherCode),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                text = "Vento: ${weather.windSpeed.roundToInt()} km/h",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            )
+                        }
                     }
                 }
                 weather.daily.forEach { forecast ->
@@ -70,13 +80,7 @@ fun WeatherCard(
                     }
                 }
             }
-            error -> ErrorText("Erro ao carregar o clima")
-            else -> Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            }
+            else -> EmptyState("Clima indisponível", "Adicione sua localização na configuração inicial.")
         }
     }
 }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.coredash.app.RecurrenceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-14T14:16:49" hostname="grok-bot-vm-179507063" time="0.002">
+<testsuite name="com.coredash.app.RecurrenceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-14T14:27:21" hostname="grok-bot-vm-179507063" time="0.002">
   <properties/>
   <testcase name="MONTHLY clamps Jan 31 to leap February end" classname="com.coredash.app.RecurrenceTest" time="0.001"/>
-  <testcase name="from parses enum names case-insensitively" classname="com.coredash.app.RecurrenceTest" time="0.0"/>
-  <testcase name="from falls back to NONE for null or unknown values" classname="com.coredash.app.RecurrenceTest" time="0.001"/>
+  <testcase name="from parses enum names case-insensitively" classname="com.coredash.app.RecurrenceTest" time="0.001"/>
+  <testcase name="from falls back to NONE for null or unknown values" classname="com.coredash.app.RecurrenceTest" time="0.0"/>
   <testcase name="NONE has no next due date" classname="com.coredash.app.RecurrenceTest" time="0.0"/>
   <testcase name="DAILY advances one day" classname="com.coredash.app.RecurrenceTest" time="0.0"/>
   <testcase name="MONTHLY clamps Jan 31 to non-leap February end" classname="com.coredash.app.RecurrenceTest" time="0.0"/>

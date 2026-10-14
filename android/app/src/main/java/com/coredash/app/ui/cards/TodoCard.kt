@@ -2,6 +2,8 @@ package com.coredash.app.ui.cards
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -24,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,10 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import com.coredash.app.data.todo.Recurrence
 import com.coredash.app.data.todo.TodoEntity
+import com.coredash.app.ui.theme.Spacing
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -58,10 +64,10 @@ fun TodoCard(
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
 
-    DashboardCard(title = "Tarefas") {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    DashboardCard(title = "Tarefas", icon = Icons.Default.CheckCircle) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             if (todos.isEmpty()) {
-                HintText("Nenhuma tarefa")
+                EmptyState("Tudo em dia", "Adicione uma tarefa e organize seus próximos passos.")
             }
             todos.forEach { todo ->
                 TodoRow(
@@ -75,7 +81,7 @@ fun TodoCard(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(Spacing.xs))
                 Text("Nova tarefa")
             }
         }
@@ -98,24 +104,31 @@ private fun TodoRow(
     onToggleComplete: (Long) -> Unit,
     onDelete: (Long) -> Unit,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(
-            checked = todo.completed,
-            onCheckedChange = { onToggleComplete(todo.id) },
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = todo.title,
-                style = MaterialTheme.typography.bodyMedium,
-                textDecoration = if (todo.completed) TextDecoration.LineThrough else null,
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = todo.completed,
+                onCheckedChange = { onToggleComplete(todo.id) },
+                modifier = Modifier.semantics { contentDescription = todo.title },
             )
-            TodoDetails(todo)
-        }
-        IconButton(onClick = { onDelete(todo.id) }) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Excluir tarefa",
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = todo.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textDecoration = if (todo.completed) TextDecoration.LineThrough else null,
+                )
+                TodoDetails(todo)
+            }
+            IconButton(onClick = { onDelete(todo.id) }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Excluir tarefa ${todo.title}",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -136,7 +149,7 @@ private fun TodoDetails(todo: TodoEntity) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun AddTodoDialog(
     onDismiss: () -> Unit,
@@ -150,7 +163,7 @@ private fun AddTodoDialog(
 
     val dueDate = dueDateInput.trim()
         .takeIf { it.isNotEmpty() }
-        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+    ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
     val dueDateError = dueDateInput.isNotBlank() && dueDate == null
 
     AlertDialog(
@@ -159,7 +172,7 @@ private fun AddTodoDialog(
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
             ) {
                 OutlinedTextField(
                     value = title,
@@ -168,7 +181,7 @@ private fun AddTodoDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     priorities.forEach { (value, label) ->
                         FilterChip(
                             selected = priority == value,
@@ -230,7 +243,7 @@ private fun AddTodoDialog(
 }
 
 private fun priorityLabel(priority: String): String =
-    priorities.firstOrNull { it.first == priority }?.second ?: priorities[1].second
+priorities.firstOrNull { it.first == priority }?.second ?: priorities[1].second
 
 private fun recurrenceLabel(recurrence: Recurrence): String = when (recurrence) {
     Recurrence.NONE -> "Nenhuma"

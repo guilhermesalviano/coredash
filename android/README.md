@@ -9,18 +9,32 @@ e as integrações externas são chamadas diretamente pela rede com **Ktor**.
 
 ## Visão geral
 
-- **Linguagem/UI:** Kotlin + Jetpack Compose (Material 3).
+- **Linguagem/UI:** Kotlin + Jetpack Compose com **Material 3** (visual atualizado),
+  incluindo **cor dinâmica** (Android 12+) e **modo escuro** (claro/escuro/sistema).
 - **Arquitetura:** MVVM com `ViewModel` + `StateFlow`, separando `data/`, `ui/` e
   injeção manual via `AppContainer`.
 - **Persistência local:**
   - **Room** para o To-Do (tarefas com recorrência).
   - **DataStore Preferences** para configurações do app (tema, cards ativos, modo foco,
-    localização, etc.).
+    localização, etc.) e para a **personalização dos widgets** (ver abaixo).
   - **EncryptedSharedPreferences** para chaves de API e dados sensíveis.
 - **Rede:** **Ktor Client** (engine OkHttp) chamando APIs externas diretamente
-  (Open-Meteo para clima, brapi para ações, Mediastack para notícias).
+  (Open-Meteo para clima, Mediastack para notícias).
 - **Sem backend próprio:** não é necessário subir o servidor Next.js / Docker para usar
   o app.
+
+### Personalização dos widgets
+
+Os cards do painel podem ser configurados nas **Configurações** e as preferências ficam
+persistidas no **DataStore**:
+
+- **Ativar/desativar** cards individualmente.
+- **Reordenar** os cards na ordem de exibição.
+- **Opções por card:**
+  - **Notícias:** quantidade de itens e tópico.
+  - **Agenda:** número de dias exibidos.
+  - **Clima:** unidade em **°C ou °F**.
+  - **Agenda do dispositivo:** escolha de quais agendas exibir.
 
 ## Arquitetura e estrutura de pastas
 
@@ -39,17 +53,20 @@ android/
         │       ├── AppContainer.kt         # injeção de dependências
         │       ├── MainActivity.kt
         │       ├── data/
-        │       │   ├── todo/               # Room: entities, DAO, DB, recorrência
-        │       │   ├── settings/           # DataStore, EncryptedSharedPreferences, validação
-        │       │   └── remote/             # Ktor: clima, ações, notícias
-        │       └── ui/
-        │           ├── dashboard/          # tela e ViewModel do painel
-        │           ├── cards/              # cards (Weather, Todo, Stocks, News, ...)
-        │           ├── setup/              # formulário inicial
-        │           ├── settings/           # tela de configurações
-        │           └── theme/              # tema (claro/escuro/sistema)
+        │   │   ├── todo/               # Room: entities, DAO, DB, recorrência
+        │   │   ├── settings/           # DataStore, EncryptedSharedPreferences, validação
+        │   │   ├── calendar/           # agenda do dispositivo (CalendarContract)
+        │   │   ├── location/           # GPS/rede + Geocoder (usar minha localização)
+        │   │   └── remote/             # Ktor: clima, notícias
+        │   └── ui/
+        │       ├── dashboard/          # tela e ViewModel do painel
+        │       ├── cards/              # cards (Weather, Todo, Calendar, News, Gmail)
+        │       ├── setup/              # formulário inicial
+        │       ├── settings/           # tela de configurações
+        │       └── theme/              # tema (claro/escuro/sistema + cor dinâmica)
         └── test/java/com/coredash/app/     # testes unitários JUnit4
             ├── RecurrenceTest.kt
+            ├── CardOrderTest.kt
             └── SetupValidationTest.kt
 ```
 
@@ -63,6 +80,15 @@ android/
   ```properties
   sdk.dir=/caminho/para/Android/Sdk
   ```
+
+## Permissões
+
+Declaradas no `AndroidManifest.xml`:
+
+- `INTERNET` — chamadas de rede (clima e notícias).
+- `READ_CALENDAR` — leitura da **agenda do dispositivo** para o card de Calendar.
+- `ACCESS_COARSE_LOCATION` e `ACCESS_FINE_LOCATION` — usadas pelo botão
+  **“Usar minha localização”** no formulário inicial (GPS/rede + Geocoder).
 
 ## Como compilar e testar
 
@@ -84,16 +110,16 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## Paridade de funcionalidades: Web x Android
 
-| Funcionalidade                    | Web | Android | Observações                          |
-| --------------------------------- | :-: | :-----: | ------------------------------------ |
-| Weather (Open-Meteo)              | ✅  |   ✅    | Ktor + Open-Meteo                    |
-| To-Do com recorrência             | ✅  |   ✅    | Room (daily/weekly/monthly)          |
-| Stocks (brapi)                    | ✅  |   ✅    | Ktor + brapi                         |
-| News (Mediastack)                 | ✅  |   ✅    | Ktor + Mediastack                    |
-| Calendar                          | ✅  |   ✅    | Agenda do dispositivo (READ_CALENDAR) |
-| Gmail                             | ✅  |   ⏳    | TODO                                 |
-| Modo foco                         | ✅  |   ✅    |                                      |
-| Tema (claro/escuro/sistema)       | ✅  |   ✅    |                                      |
-| Toggle de cards                   | ✅  |   ✅    |                                      |
-| Formulário inicial                | ✅  |   ✅    | Validação de timezone/lat/lon        |
-| SerpAPI / Google News fallback    | ✅  |   ⏳    | TODO                                 |
+| Funcionalidade                          | Web |     Android      | Observações                                       |
+| --------------------------------------- | :-: | :--------------: | ------------------------------------------------- |
+| Weather (Open-Meteo)                    | ✅  |        ✅        | Ktor + Open-Meteo (unidade °C/°F)                 |
+| To-Do com recorrência                   | ✅  |        ✅        | Room (daily/weekly/monthly)                       |
+| Stocks / ações                          | ✅  | 🚫 Não planejado | Sem integração de ações no app Android            |
+| News (Mediastack)                       | ✅  |        ✅        | Ktor + Mediastack (quantidade/tópico configuráveis) |
+| Calendar                                | ✅  |        ✅        | Agenda do dispositivo via CalendarContract (READ_CALENDAR), escolha de agendas |
+| Gmail                                   | ✅  |        ⏳        | TODO                                              |
+| Modo foco                               | ✅  |        ✅        |                                                   |
+| Tema (claro/escuro/sistema)             | ✅  |        ✅        | Material 3 com cor dinâmica (Android 12+)         |
+| Personalização de widgets               | ✅  |        ✅        | Ativar/desativar, reordenar e opções (DataStore)  |
+| Formulário inicial                      | ✅  |        ✅        | Validação de timezone/lat/lon + “Usar minha localização” |
+| SerpAPI / Google News fallback          | ✅  |        ⏳        | TODO                                              |

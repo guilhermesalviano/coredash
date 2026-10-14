@@ -30,9 +30,11 @@ data class DashboardUiState(
     val todos: List<TodoEntity> = emptyList(),
     val weather: Weather? = null,
     val weatherError: Boolean = false,
+    val weatherLoading: Boolean = false,
     val news: List<NewsArticle> = emptyList(),
     val newsConfigured: Boolean = false,
     val newsError: Boolean = false,
+    val newsLoading: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
     val calendarLoading: Boolean = false,
 )
@@ -100,6 +102,17 @@ class DashboardViewModel(
         }
     }
 
+    fun retryWeather() {
+        val settings = _uiState.value.settings ?: return
+        if (!_uiState.value.weatherLoading) loadWeather(settings)
+    }
+
+    fun retryNews() {
+        val settings = _uiState.value.settings ?: return
+        val apiKey = secretStore.getMediastackApiKey()?.takeIf { it.isNotBlank() } ?: return
+        if (!_uiState.value.newsLoading) loadNews(settings, apiKey)
+    }
+
     private fun loadRemote(settings: AppSettings) {
         val mediastackKey = secretStore.getMediastackApiKey()?.takeIf { it.isNotBlank() }
 
@@ -121,26 +134,36 @@ class DashboardViewModel(
         if (key == remoteKey) return
         remoteKey = key
 
+        loadWeather(settings)
+
+        if (mediastackKey != null) {
+            loadNews(settings, mediastackKey)
+        } else {
+            _uiState.update { it.copy(news = emptyList(), newsError = false, newsLoading = false) }
+        }
+    }
+
+    private fun loadWeather(settings: AppSettings) {
         val latitude = settings.latitude
         val longitude = settings.longitude
         if (latitude != null && longitude != null) {
+            _uiState.update { it.copy(weatherLoading = true, weatherError = false) }
             viewModelScope.launch {
                 weatherRepository.getWeather(latitude, longitude, settings.timezone, settings.weatherUnit)
-                    .onSuccess { weather -> _uiState.update { it.copy(weather = weather, weatherError = false) } }
-                    .onFailure { _uiState.update { it.copy(weatherError = true) } }
+                    .onSuccess { weather -> _uiState.update { it.copy(weather = weather, weatherError = false, weatherLoading = false) } }
+                    .onFailure { _uiState.update { it.copy(weatherError = true, weatherLoading = false) } }
             }
         } else {
-            _uiState.update { it.copy(weather = null, weatherError = false) }
+            _uiState.update { it.copy(weather = null, weatherError = false, weatherLoading = false) }
         }
+    }
 
-        if (mediastackKey != null) {
-            viewModelScope.launch {
-                newsRepository.getNews(mediastackKey, settings.newsCount, settings.newsTopic)
-                    .onSuccess { news -> _uiState.update { it.copy(news = news, newsError = false) } }
-                    .onFailure { _uiState.update { it.copy(newsError = true) } }
-            }
-        } else {
-            _uiState.update { it.copy(news = emptyList(), newsError = false) }
+    private fun loadNews(settings: AppSettings, apiKey: String) {
+        _uiState.update { it.copy(newsLoading = true, newsError = false) }
+        viewModelScope.launch {
+            newsRepository.getNews(apiKey, settings.newsCount, settings.newsTopic)
+                .onSuccess { news -> _uiState.update { it.copy(news = news, newsError = false, newsLoading = false) } }
+                .onFailure { _uiState.update { it.copy(newsError = true, newsLoading = false) } }
         }
     }
 
