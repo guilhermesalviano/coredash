@@ -1,5 +1,4 @@
-import { GOOGLE } from '@/config/config';
-import { getRuntimeSettings } from '@/features/settings/server/runtime-settings';
+import { getResolvedRuntimeSettings } from '@/features/settings/server/runtime-settings';
 import { GmailMessage } from '@/types/gmail';
 import { google } from 'googleapis';
 
@@ -42,15 +41,15 @@ function extractHtmlBody(payload: {
   return '';
 }
 
+async function createGmailClient() {
+  const settings = await getResolvedRuntimeSettings();
+  const auth = new google.auth.OAuth2(settings.gmailClientId, settings.gmailClientSecret);
+  auth.setCredentials({ refresh_token: settings.gmailRefreshToken });
+  return { gmail: google.gmail({ version: 'v1', auth }), timezone: settings.timezone };
+}
+
 export async function markGmailMessageAsRead(id: string): Promise<void> {
-  const auth = new google.auth.OAuth2(
-    GOOGLE.gmailClientId,
-    GOOGLE.gmailClientSecret,
-  );
-
-  auth.setCredentials({ refresh_token: GOOGLE.gmailRefreshToken });
-
-  const gmail = google.gmail({ version: 'v1', auth });
+  const { gmail } = await createGmailClient();
 
   await gmail.users.messages.modify({
     userId: 'me',
@@ -65,14 +64,7 @@ export async function resolveRecentGmailMessageId(positionOrId: string): Promise
   const position = Number(positionOrId);
   if (!Number.isInteger(position) || position < 1) return null;
 
-  const auth = new google.auth.OAuth2(
-    GOOGLE.gmailClientId,
-    GOOGLE.gmailClientSecret,
-  );
-
-  auth.setCredentials({ refresh_token: GOOGLE.gmailRefreshToken });
-
-  const gmail = google.gmail({ version: 'v1', auth });
+  const { gmail } = await createGmailClient();
 
   const listRes = await gmail.users.messages.list({
     userId: 'me',
@@ -85,15 +77,7 @@ export async function resolveRecentGmailMessageId(positionOrId: string): Promise
 }
 
 export async function fetchGmailMessage(id: string): Promise<GmailMessage> {
-  const { settings } = await getRuntimeSettings();
-  const auth = new google.auth.OAuth2(
-    GOOGLE.gmailClientId,
-    GOOGLE.gmailClientSecret,
-  );
-
-  auth.setCredentials({ refresh_token: GOOGLE.gmailRefreshToken });
-
-  const gmail = google.gmail({ version: 'v1', auth });
+  const { gmail, timezone } = await createGmailClient();
 
   const detail = await gmail.users.messages.get({
     userId: 'me',
@@ -110,22 +94,14 @@ export async function fetchGmailMessage(id: string): Promise<GmailMessage> {
     snippet: detail.data.snippet ?? '',
     from: getHeader(headers, 'From').replace('\u003C', '- ').replace('\u003E', '').trim(),
     subject: getHeader(headers, 'Subject'),
-    date: normalizeDate(getHeader(headers, 'Date'), settings.timezone),
+    date: normalizeDate(getHeader(headers, 'Date'), timezone),
     isUnread: labelIds.includes('UNREAD'),
     body: detail.data.payload ? extractHtmlBody(detail.data.payload) : '',
   };
 }
 
 export async function fetchGoogleGmailAPI(options: { pageToken?: string } = {}): Promise<{ emails: GmailMessage[]; nextPageToken?: string }> {
-  const { settings } = await getRuntimeSettings();
-  const auth = new google.auth.OAuth2(
-    GOOGLE.gmailClientId,
-    GOOGLE.gmailClientSecret,
-  );
-
-  auth.setCredentials({ refresh_token: GOOGLE.gmailRefreshToken });
-
-  const gmail = google.gmail({ version: 'v1', auth });
+  const { gmail, timezone } = await createGmailClient();
 
   const listRes = await gmail.users.messages.list({
     userId: 'me',
@@ -155,7 +131,7 @@ export async function fetchGoogleGmailAPI(options: { pageToken?: string } = {}):
         snippet: detail.data.snippet ?? '',
         from: getHeader(headers, 'From').replace("\u003C", '- ').replace("\u003E", '').trim(),
         subject: getHeader(headers, 'Subject'),
-        date: normalizeDate(getHeader(headers, 'Date'), settings.timezone),
+        date: normalizeDate(getHeader(headers, 'Date'), timezone),
         isUnread: labelIds.includes('UNREAD'),
       };
     }),

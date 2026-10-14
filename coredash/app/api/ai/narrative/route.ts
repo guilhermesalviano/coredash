@@ -3,8 +3,9 @@ import { CONFIG } from "@/config/config";
 import getUserCity from "@/utils/get-user-city";
 import { format } from "date-fns";
 import logger from "@/lib/logger";
-import OllamaProvider from "@/lib/ai/providers/ollama";
-import { ROCKY_INSTRUCTION } from "@/lib/ai/assistants/rocky/instruction";
+import OpenRouterProvider from "@/lib/ai/providers/openrouter";
+import { rockyInstruction } from "@/lib/ai/assistants/rocky/instruction";
+import { getResolvedRuntimeSettings } from "@/features/settings/server/runtime-settings";
 
 export const maxDuration = 300; 
 
@@ -69,9 +70,10 @@ export async function POST(req: NextRequest) {
             `habits:${habitsSummary}`,
         ].filter(Boolean).join(";");
 
-        const { stream, error } = await OllamaProvider({
+        const settings = await getResolvedRuntimeSettings();
+        const { stream, error } = await OpenRouterProvider({
             prompt,
-            systemInstruction: ROCKY_INSTRUCTION,
+            systemInstruction: rockyInstruction(settings.personalContext),
         });
         if (error || !stream) {
             logger.error(error);
@@ -82,8 +84,7 @@ export async function POST(req: NextRequest) {
             async start(controller) {
                 logger.info("Narrative stream initialized.");
                 try {
-                    for await (const chunk of stream) {
-                        const text = chunk.message?.content ?? "";
+                    for await (const text of stream) {
                         if (text) controller.enqueue(new TextEncoder().encode(JSON.stringify({ response: text }) + "\n"));
                     }
                     controller.close();

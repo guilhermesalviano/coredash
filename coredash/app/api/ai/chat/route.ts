@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OllamaProvider from "@/lib/ai/providers/ollama";
+import OpenRouterProvider from "@/lib/ai/providers/openrouter";
 import type { ChatRequest } from "@/features/ai/types";
 import { checkRateLimit, requestRateLimitKey } from "@/lib/rate-limit";
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const lastMessage = body.messages.at(-1);
     if (!lastMessage) return NextResponse.json({ error: "At least one message is required" }, { status: 400 });
 
-    const { stream, error } = await OllamaProvider({
+    const { stream, error } = await OpenRouterProvider({
       prompt: lastMessage.content,
       systemInstruction: SYSTEM_PROMPT,
       history: body.messages.slice(0, -1),
@@ -29,8 +29,7 @@ export async function POST(request: NextRequest) {
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of stream) {
-            const text = chunk.message?.content ?? "";
+          for await (const text of stream) {
             if (text) controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text } })}\n\n`));
           }
           controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));

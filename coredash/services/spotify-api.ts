@@ -1,6 +1,5 @@
-import { SPOTIFY } from "@/config/config";
+import { getResolvedRuntimeSettings } from "@/features/settings/server/runtime-settings";
 import { SpotifyDevice, SpotifyLibrary, SpotifyPlayerResponse, SpotifySearchItem, SpotifyTrack } from "@/types/spotify";
-import { readSpotifyRefreshToken } from "@/utils/spotify-token-store";
 
 // ─── Access token cache ───────────────────────────────────────────────────────
 
@@ -12,11 +11,12 @@ async function getAccessToken(): Promise<string> {
     return cachedToken;
   }
 
-  const refreshToken = readSpotifyRefreshToken() ?? SPOTIFY.refreshToken;
+  const settings = await getResolvedRuntimeSettings();
+  const refreshToken = settings.spotifyRefreshToken;
   if (!refreshToken) throw new Error("not_connected");
 
   const credentials = Buffer.from(
-    `${SPOTIFY.clientId}:${SPOTIFY.clientSecret}`
+    `${settings.spotifyClientId}:${settings.spotifyClientSecret}`
   ).toString("base64");
 
   const res = await fetch("https://accounts.spotify.com/api/token", {

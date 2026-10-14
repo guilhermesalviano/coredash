@@ -2,6 +2,7 @@ import { ONE_MINUTE_IN_MS } from "@/constants";
 import { STOCKS } from "@/constants/stocks";
 import { formatResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
+import { getResolvedRuntimeSettings } from "@/features/settings/server/runtime-settings";
 import { fetchBrapiAPI } from "@/services/brapi-api";
 import { fetchYahooPrice } from "@/services/yahoo-finance";
 import { StockInternalAPIResponse } from "@/types/stock-api";
@@ -39,7 +40,8 @@ export async function GET(req: NextRequest) {
 
     const symbols = Object.values(STOCKS).flat();
 
-    const brapiData = await fetchBrapiAPI(symbols.join(","));
+    const settings = await getResolvedRuntimeSettings();
+    const brapiData = await fetchBrapiAPI(symbols.join(","), settings.brapiToken);
     if (!isErrorResponse(brapiData) && brapiData.results?.length) {
       const data = mapStocks(brapiData.results);
       stocksCache.set("default", data);

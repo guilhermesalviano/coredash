@@ -33,6 +33,14 @@ function writeCache(data: LocationCache): void {
 
 export default async function getUserCity(): Promise<LocationCache> {
   const { settings } = await getRuntimeSettings();
+  if (settings.city.trim()) {
+    return {
+      state: "",
+      city: settings.city.trim(),
+      latitude: settings.latitude,
+      longitude: settings.longitude,
+    };
+  }
   const cached = readCache(settings.latitude, settings.longitude);
   if (cached) {
     logger.info("return user location from cache.");

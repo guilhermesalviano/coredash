@@ -12,6 +12,7 @@ import StoreStatusBridge from "@/components/storeStatusBridge";
 import FocusMode from "@/components/focusMode";
 import FocusModeToggle from "@/components/focusModeToggle";
 import ProjectQrButton from "@/components/projectQrButton";
+import SetupGate from "@/components/setupGate";
 import { useViewMode } from "@/hooks/useViewMode";
 
 export default function Page() {
@@ -28,6 +29,7 @@ export default function Page() {
   }, [mode, mounted]);
 
   return (
+    <SetupGate>
     <>
       <Loading />
       <StoreStatusBridge />
@@ -54,5 +56,6 @@ export default function Page() {
       )}
       <ProjectQrButton />
     </>
+    </SetupGate>
   );
 }

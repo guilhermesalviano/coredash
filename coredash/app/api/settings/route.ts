@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest) {
     const data = await saveRuntimeSettings(patch);
     return formatResponse(req, { message: "Runtime settings saved successfully", data });
   } catch (error: unknown) {
-    if (error instanceof Error && /must be|Unknown setting|payload/.test(error.message)) {
+    if (error instanceof Error && /must be|Unknown setting|payload|configured together/.test(error.message)) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
     console.error("Failed to save runtime settings", error);

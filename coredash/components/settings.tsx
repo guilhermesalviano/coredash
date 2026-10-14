@@ -10,7 +10,7 @@ import {
 import storage from "@/lib/storage";
 import { CARD_REGISTRY, type CardId, useActiveCards } from "@/hooks/useActiveCards";
 import { useFocusMode } from "@/hooks/useFocusMode";
-import RuntimeSettingsSection from "@/components/runtimeSettings";
+import SetupForm from "@/components/setupForm";
 import styles from "./settings.module.css";
 
 const SECTIONS = [
@@ -207,7 +207,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
             </div>
             <div role="tabpanel" id="settings-panel-application" aria-labelledby="settings-tab-application"
               hidden={section !== "application"} className={`${styles.panel} ${styles.applicationPanel}`} tabIndex={0}>
-              <RuntimeSettingsSection />
+              <SetupForm presentation="panel" />
             </div>
           </div>
         </div>

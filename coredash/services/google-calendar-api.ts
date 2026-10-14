@@ -1,16 +1,15 @@
-import { GOOGLE } from '@/config/config';
-import { getRuntimeSettings } from '@/features/settings/server/runtime-settings';
+import { getResolvedRuntimeSettings } from '@/features/settings/server/runtime-settings';
 import { CalendarEventsResponse } from '@/types/services';
 import { addDays } from 'date-fns';
 import { google } from 'googleapis';
 import logger from '@/lib/logger';
 
 export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> {
- const { settings } = await getRuntimeSettings();
+ const settings = await getResolvedRuntimeSettings();
  const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: GOOGLE.clientEmail,
-      private_key: GOOGLE.privateKey,
+      client_email: settings.googleClientEmail,
+      private_key: settings.googlePrivateKey,
     },
     scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
   });

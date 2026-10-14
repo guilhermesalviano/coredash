@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SPOTIFY } from "@/config/config";
+import { getResolvedRuntimeSettings } from "@/features/settings/server/runtime-settings";
 import { getSpotifyRedirectUri } from "@/utils/spotify-redirect-uri";
 
 const SCOPES = [
@@ -12,7 +12,8 @@ const SCOPES = [
 ].join(" ");
 
 export async function GET(req: NextRequest) {
-  if (!SPOTIFY.clientId || !SPOTIFY.clientSecret) {
+  const settings = await getResolvedRuntimeSettings();
+  if (!settings.spotifyClientId || !settings.spotifyClientSecret) {
     return NextResponse.json(
       { error: "Spotify credentials not configured. Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET." },
       { status: 500 }
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
     "https://accounts.spotify.com/authorize?" +
     new URLSearchParams({
       response_type: "code",
-      client_id: SPOTIFY.clientId,
+      client_id: settings.spotifyClientId,
       scope: SCOPES,
       redirect_uri: redirectUri,
     });

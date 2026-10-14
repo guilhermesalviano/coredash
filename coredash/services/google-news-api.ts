@@ -7,12 +7,13 @@ import { toLogError } from "@/utils/to-logger-error";
 export interface GoogleNewsOptions {
   hl?: string;
   gl?: string;
+  apiKey?: string;
 }
 
 export async function fetchGoogleNewsAPI(options: GoogleNewsOptions = {}): Promise<SerpApiGoogleNewsResponse | ErrorResponse> {
   const params = new URLSearchParams({
     engine: "google_news_light",
-    api_key: APIS.serpApiKey,
+    api_key: options.apiKey ?? APIS.serpApiKey,
     q: "breaking news world",
     hl: options.hl?.trim() || "en",
     gl: options.gl?.trim() || "us",

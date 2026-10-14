@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 ```
 
-Copy `coredash/.env.example` to `coredash/.env` and configure only the integrations you use. The default single-host setup uses SQLite in the persistent `/data` volume. For a local Docker deployment, use `docker compose -f docker-compose.local.yml up -d --build`. When Ollama runs on the host, set `OLLAMA_URL=http://host.docker.internal:11434` in `coredash/.env`; native Node runs can keep `http://localhost:11434`.
+Copy `coredash/.env.example` to `coredash/.env` and configure only the integrations you use. The default single-host setup uses SQLite in the persistent `/data` volume. For a local Docker deployment, use `docker compose -f docker-compose.local.yml up -d --build`. Chat and the daily narrative call OpenRouter, so set `OPENROUTER_API_KEY` (and optionally `AI_MODEL`) before the assistant can answer. If that key is missing, the first-run setup screen collects it.
 
 ## Development
 
@@ -89,7 +89,35 @@ coredash/
 
 API routes preserve the existing endpoint paths and response envelopes. Weather, News, and Todo business logic now lives in their feature server modules rather than inside route handlers.
 
-The dashboard AI assistant uses `/api/ai/chat`, which streams responses through the configured server-side Ollama provider. Set `OLLAMA_URL` and `AI_MODEL` when using a non-default Ollama installation or model. The narrative endpoint also uses the server-side AI integration.
+The dashboard AI assistant uses `/api/ai/chat`, which streams responses through the server-side OpenRouter provider (`lib/ai/providers/openrouter.ts`). The narrative endpoint uses the same provider. Set `OPENROUTER_API_KEY` and, when you want a model other than `openai/gpt-4o-mini`, `AI_MODEL`. Both can also be saved from the setup screen; the key stays on the server and is never returned to the browser.
+
+### Setup fields
+
+The first-run screen appears when the OpenRouter key, model, timezone, latitude, or longitude is missing or invalid. Location and the model have code defaults, so a fresh install usually only needs the API key. The same form is available later under Settings → Application. Values are stored in the `app_settings` table and override the environment. Database connection settings stay in the environment and are not on the form. The field list lives in `coredash/features/settings/setup-fields.ts`.
+
+| Field | Environment variable | Required | Secret |
+| --- | --- | --- | --- |
+| OpenRouter API key | `OPENROUTER_API_KEY` | yes | yes |
+| Model | `AI_MODEL` | yes | no |
+| Personal context | `PERSONAL_CONTEXT` | no | no |
+| Timezone | `TZ` | yes | no |
+| Latitude | `LATITUDE` | yes | no |
+| Longitude | `LONGITUDE` | yes | no |
+| City | `CITY` | no | no |
+| Mediastack key | `NEWS_API_KEY` | no | yes |
+| SerpAPI key | `SERPAPI_KEY` | no | yes |
+| brapi token | `BRAPI_TOKEN` | no | yes |
+| Google service account email | `GOOGLE_CLIENT_EMAIL` | no | no |
+| Google service account private key | `GOOGLE_PRIVATE_KEY` | no | yes |
+| Calendar IDs | `GOOGLE_CALENDAR_IDS` | no | no |
+| Gmail OAuth client ID | `GOOGLE_GMAIL_CLIENT_ID` | no | no |
+| Gmail OAuth client secret | `GOOGLE_GMAIL_CLIENT_SECRET` | no | yes |
+| Gmail refresh token | `GOOGLE_GMAIL_REFRESH_TOKEN` | no | yes |
+| Spotify client ID | `SPOTIFY_CLIENT_ID` | no | no |
+| Spotify client secret | `SPOTIFY_CLIENT_SECRET` | no | yes |
+| Spotify refresh token | `SPOTIFY_REFRESH_TOKEN` | no | yes |
+
+Weather uses Open-Meteo and does not need an API key. Optional groups are all-or-nothing when you edit them: Calendar needs the email, private key, and at least one calendar ID together; Gmail needs the client ID, client secret, and refresh token together; Spotify needs the client ID and client secret together. The Spotify refresh token can be saved later from the Spotify card. A blank secret field keeps the value already stored.
 
 ### MCP server
 

@@ -4,8 +4,8 @@ import logger from "@/lib/logger";
 import { BrapiResponse, ErrorResponse } from "@/types/services";
 import { toLogError } from "@/utils/to-logger-error";
 
-export async function fetchBrapiAPI(stocks: string): Promise<BrapiResponse | ErrorResponse> {
-  const url = `${EXTERNAL_SERVICES.brapi}/${stocks}?token=${APIS.brapiToken}`;
+export async function fetchBrapiAPI(stocks: string, token = APIS.brapiToken): Promise<BrapiResponse | ErrorResponse> {
+  const url = `${EXTERNAL_SERVICES.brapi}/${stocks}?token=${token}`;
 
   const response = await fetchWithTimeout(url, {
     next: { revalidate: UPDATE_INTERVAL_MS },

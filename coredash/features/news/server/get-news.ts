@@ -1,4 +1,5 @@
 import { ONE_MINUTE_IN_MS } from "@/constants";
+import { getResolvedRuntimeSettings } from "@/features/settings/server/runtime-settings";
 import { fetchGoogleNewsAPI } from "@/services/google-news-api";
 import { fetchMediastackAPI } from "@/services/mediastack-api";
 import { isErrorResponse } from "@/utils/check-service-error";
@@ -13,7 +14,8 @@ export async function getNews(): Promise<NewsItem[]> {
   const cached = newsCache.get("default");
   if (cached) return cached;
 
-  const googleNews = await fetchGoogleNewsAPI();
+  const settings = await getResolvedRuntimeSettings();
+  const googleNews = await fetchGoogleNewsAPI({ apiKey: settings.serpApiKey });
   if (!isErrorResponse(googleNews) && googleNews.news_results?.length) {
     const data = googleNews.news_results
       .sort((a, b) => parseRelativeDate(b.date) - parseRelativeDate(a.date))
@@ -30,7 +32,7 @@ export async function getNews(): Promise<NewsItem[]> {
     return data;
   }
 
-  const fallback = await fetchMediastackAPI();
+  const fallback = await fetchMediastackAPI(settings.newsApiKey);
   const data = fallback.data.map((article, id) => ({
     id,
     source: `about ${differenceInHours(new Date(), new Date(article.published_at))} hours ago`,

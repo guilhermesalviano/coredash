@@ -19,13 +19,13 @@ export const EXTERNAL_SERVICES = {
   serpApi: api("https://serpapi.com", "/search"),
   brapi: api("https://brapi.dev", "/api/quote"),
   mediastack: "https://api.mediastack.com/v1/news",
-  ollama: optional("OLLAMA_URL", "http://localhost:11434"),
 } as const;
 
 export const LOCATION = {
   latitude: optional("LATITUDE", "-23.533773"),
   longitude: optional("LONGITUDE", "-46.625290"),
   timezone: optional("TZ", "America/Sao_Paulo"),
+  city: optional("CITY"),
 } as const;
 
 export const UPDATE_INTERVAL_MS = 1 * 60 * 60 * 1000;
@@ -54,7 +54,6 @@ export const APIS = {
   brapiToken: optional("BRAPI_TOKEN"),
   serpApiKey: optional("SERPAPI_KEY"),
   newsApiKey: optional("NEWS_API_KEY"),
-  geminiApiKey: optional("GEMINI_API_KEY"),
 } as const;
 
 export const SPOTIFY = {
@@ -64,8 +63,9 @@ export const SPOTIFY = {
 } as const;
 
 export const AI = {
-  model: optional("AI_MODEL", "gemma4:e2b"),
+  model: optional("AI_MODEL", "openai/gpt-4o-mini"),
   personalContext: optional("PERSONAL_CONTEXT"),
+  openRouterApiKey: optional("OPENROUTER_API_KEY"),
 } as const;
 
 export const CONFIG = {

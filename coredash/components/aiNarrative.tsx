@@ -53,7 +53,7 @@ export const AINarrative: React.FC<AINarrativeProps> = ({ weather, hour }) => {
           if (!line.trim()) continue;
           try {
             const json = JSON.parse(line);
-            // Ollama: json.response | OpenAI SSE: json.choices?.[0]?.delta?.content
+            // Narrative streams newline-delimited JSON: { response }
             const chunk = json.response ?? json.choices?.[0]?.delta?.content ?? "";
             if (chunk) setText((prev) => prev + chunk);
           } catch {

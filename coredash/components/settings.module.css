@@ -149,7 +149,11 @@ textarea.input { resize: vertical; min-height: 82px; line-height: 1.6; }
 .runtimeEmpty h2 { font-size: 19px; font-weight: 500; letter-spacing: -.025em; }
 .runtimeEmpty p { color: var(--muted); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; max-width: 320px; }
 
-.overlay button:focus-visible, .input:focus-visible, .panel:focus-visible { outline: 2px solid var(--settings-accent); outline-offset: 3px; }
+.optionalBadge { margin-left: auto; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--settings-line); border-radius: 999px; padding: 2px 7px; }
+.setupScreen { position: fixed; inset: 0; z-index: 80; overflow: auto; background: var(--background); color: var(--foreground); }
+.setupCard { width: min(760px, 100%); min-height: 100%; margin: 0 auto; background: var(--surface); }
+.setupScreen .runtimeBody { padding-top: 48px; }
+.overlay button:focus-visible, .input:focus-visible, .panel:focus-visible, .setupScreen button:focus-visible, .setupScreen .input:focus-visible { outline: 2px solid var(--settings-accent); outline-offset: 3px; }
 .input:focus-visible { outline-offset: 0; border-color: var(--settings-accent); }
 .overlay button:disabled, .input:disabled { cursor: not-allowed; opacity: .5; }
 .spinner { animation: settings-spin 1s linear infinite; }

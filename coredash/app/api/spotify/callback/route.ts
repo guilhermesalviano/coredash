@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SPOTIFY } from "@/config/config";
+import { getResolvedRuntimeSettings, saveRuntimeSettings } from "@/features/settings/server/runtime-settings";
 import { writeSpotifyRefreshToken } from "@/utils/spotify-token-store";
 import { getSpotifyRedirectUri } from "@/utils/spotify-redirect-uri";
 import logger from "@/lib/logger";
@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
 
   try {
     logger.info(`[spotify/callback] exchanging code, redirect_uri=${redirectUri}`);
+    const settings = await getResolvedRuntimeSettings();
 
     const res = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization:
           "Basic " +
-          Buffer.from(`${SPOTIFY.clientId}:${SPOTIFY.clientSecret}`).toString("base64"),
+          Buffer.from(`${settings.spotifyClientId}:${settings.spotifyClientSecret}`).toString("base64"),
       },
       body: new URLSearchParams({
         grant_type: "authorization_code",
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest) {
     }
 
     writeSpotifyRefreshToken(tokens.refresh_token);
+    await saveRuntimeSettings({ spotifyRefreshToken: tokens.refresh_token }, { skipSetupValidation: true });
     logger.info("Spotify refresh token saved successfully.");
 
     return NextResponse.redirect(new URL("/?spotify=connected", origin));
