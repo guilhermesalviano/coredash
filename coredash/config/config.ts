@@ -56,12 +56,6 @@ export const APIS = {
   newsApiKey: optional("NEWS_API_KEY"),
 } as const;
 
-export const SPOTIFY = {
-  clientId: optional("SPOTIFY_CLIENT_ID"),
-  clientSecret: optional("SPOTIFY_CLIENT_SECRET"),
-  refreshToken: optional("SPOTIFY_REFRESH_TOKEN"),
-} as const;
-
 export const CONFIG = {
   isDev,
   logLevel: optional("LOG_LEVEL", isDev ? "debug" : "info"),

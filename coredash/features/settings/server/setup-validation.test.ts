@@ -20,15 +20,12 @@ function environment(overrides: Partial<EnvironmentSettings> = {}): EnvironmentS
     calendarIds: [],
     googleClientEmail: "",
     gmailClientId: "",
-    spotifyClientId: "",
     newsApiKey: "",
     serpApiKey: "",
     brapiToken: "",
     googlePrivateKey: "",
     gmailClientSecret: "",
     gmailRefreshToken: "",
-    spotifyClientSecret: "",
-    spotifyRefreshToken: "",
     ...overrides,
   };
 }
@@ -68,6 +65,7 @@ test("rejects invalid runtime settings", () => {
   assert.throws(() => validateRuntimeSettingsPatch({ longitude: "-181" }), /longitude/);
   assert.throws(() => validateRuntimeSettingsPatch({ timezone: "" }), /timezone must be configured/);
   assert.throws(() => validateRuntimeSettingsPatch({ aiModel: "openai/gpt-4o-mini" }), /Unknown setting/);
+  assert.throws(() => validateRuntimeSettingsPatch({ spotifyClientId: "client" }), /Unknown setting/);
   assert.throws(() => validateRuntimeSettingsPatch({ cronSchedule: "0 8 * * 6" }), /Unknown setting/);
   assert.throws(() => validateRuntimeSettingsPatch({ unknown: "value" }), /Unknown setting/);
 });

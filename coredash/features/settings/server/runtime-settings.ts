@@ -1,7 +1,6 @@
 import type { DataSource } from "typeorm";
 
-import { APIS, DB, GOOGLE, LOCATION, SPOTIFY } from "@/config/config";
-import { readSpotifyRefreshToken } from "@/utils/spotify-token-store";
+import { APIS, DB, GOOGLE, LOCATION } from "@/config/config";
 import type { RuntimeSettingsPatch, RuntimeSettingsResponse } from "@/features/settings/types";
 import {
   applySettingsPatch,
@@ -32,9 +31,6 @@ interface RuntimeSettingsRow {
   gmail_client_id?: string | null;
   gmail_client_secret?: string | null;
   gmail_refresh_token?: string | null;
-  spotify_client_id?: string | null;
-  spotify_client_secret?: string | null;
-  spotify_refresh_token?: string | null;
 }
 
 const EXTRA_COLUMNS = [
@@ -47,9 +43,6 @@ const EXTRA_COLUMNS = [
   "gmail_client_id TEXT NULL",
   "gmail_client_secret TEXT NULL",
   "gmail_refresh_token TEXT NULL",
-  "spotify_client_id TEXT NULL",
-  "spotify_client_secret TEXT NULL",
-  "spotify_refresh_token TEXT NULL",
 ];
 
 const SELECT_COLUMNS = [
@@ -66,9 +59,6 @@ const SELECT_COLUMNS = [
   "gmail_client_id",
   "gmail_client_secret",
   "gmail_refresh_token",
-  "spotify_client_id",
-  "spotify_client_secret",
-  "spotify_refresh_token",
 ].join(", ");
 
 function environmentDefaults(): EnvironmentSettings {
@@ -83,9 +73,6 @@ function environmentDefaults(): EnvironmentSettings {
     gmailClientId: GOOGLE.gmailClientId,
     gmailClientSecret: GOOGLE.gmailClientSecret,
     gmailRefreshToken: GOOGLE.gmailRefreshToken,
-    spotifyClientId: SPOTIFY.clientId,
-    spotifyClientSecret: SPOTIFY.clientSecret,
-    spotifyRefreshToken: SPOTIFY.refreshToken,
     newsApiKey: APIS.newsApiKey,
     serpApiKey: APIS.serpApiKey,
     brapiToken: APIS.brapiToken,
@@ -112,15 +99,12 @@ function fromRow(row: RuntimeSettingsRow | undefined): StoredSettings {
     calendarIds: row.calendar_ids === null || row.calendar_ids === undefined ? null : parseCalendarIds(row.calendar_ids),
     googleClientEmail: row.google_client_email ?? null,
     gmailClientId: row.gmail_client_id ?? null,
-    spotifyClientId: row.spotify_client_id ?? null,
     newsApiKey: row.news_api_key ?? null,
     serpApiKey: row.serpapi_key ?? null,
     brapiToken: row.brapi_token ?? null,
     googlePrivateKey: row.google_private_key ?? null,
     gmailClientSecret: row.gmail_client_secret ?? null,
     gmailRefreshToken: row.gmail_refresh_token ?? null,
-    spotifyClientSecret: row.spotify_client_secret ?? null,
-    spotifyRefreshToken: row.spotify_refresh_token ?? null,
   };
 }
 
@@ -145,9 +129,6 @@ async function getSettingsDataSource() {
           gmail_client_id TEXT NULL,
           gmail_client_secret TEXT NULL,
           gmail_refresh_token TEXT NULL,
-          spotify_client_id TEXT NULL,
-          spotify_client_secret TEXT NULL,
-          spotify_refresh_token TEXT NULL,
           updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
@@ -176,23 +157,14 @@ async function readStored(): Promise<StoredSettings> {
   return fromRow(rows[0]);
 }
 
-function environmentWithSpotifyFile(): EnvironmentSettings {
-  const env = environmentDefaults();
-  if (!env.spotifyRefreshToken.trim()) {
-    const fileToken = readSpotifyRefreshToken();
-    if (fileToken) env.spotifyRefreshToken = fileToken;
-  }
-  return env;
-}
-
 export async function getResolvedRuntimeSettings(): Promise<ResolvedRuntimeSettings> {
   const stored = await readStored();
-  return resolveSettings(stored, environmentWithSpotifyFile());
+  return resolveSettings(stored, environmentDefaults());
 }
 
 export async function getRuntimeSettings(): Promise<RuntimeSettingsResponse> {
   const stored = await readStored();
-  const resolved = resolveSettings(stored, environmentWithSpotifyFile());
+  const resolved = resolveSettings(stored, environmentDefaults());
   return toPublicSettingsResponse(resolved, stored);
 }
 
@@ -212,28 +184,21 @@ function storedParameters(stored: StoredSettings): unknown[] {
     stored.gmailClientId,
     stored.gmailClientSecret,
     stored.gmailRefreshToken,
-    stored.spotifyClientId,
-    stored.spotifyClientSecret,
-    stored.spotifyRefreshToken,
   ];
 }
 
 export async function saveRuntimeSettings(
   patch: RuntimeSettingsPatch,
-  options?: { skipSetupValidation?: boolean },
 ): Promise<RuntimeSettingsResponse> {
   const dataSource = await getSettingsDataSource();
   const current = await readStored();
   const next = applySettingsPatch(current, patch);
-  if (!options?.skipSetupValidation) {
-    assertResolvedSettings(patch, resolveSettings(next, environmentWithSpotifyFile()));
-  }
+  assertResolvedSettings(patch, resolveSettings(next, environmentDefaults()));
   const parameters = storedParameters(next);
   const columns = [
     "id", "timezone", "latitude", "longitude", "calendar_ids", "city",
     "news_api_key", "brapi_token", "serpapi_key", "google_client_email",
     "google_private_key", "gmail_client_id", "gmail_client_secret", "gmail_refresh_token",
-    "spotify_client_id", "spotify_client_secret", "spotify_refresh_token",
   ];
   const placeholders = columns.map(() => "?").join(", ");
   const assignments = columns.slice(1).map((column) => `${column}=excluded.${column}`).join(", ");

@@ -5,7 +5,6 @@ import CalendarCardClient from "./cards/clients/calendarCardClient";
 import StocksCardClient from "@/components/cards/clients/stocksCardClient";
 import StatusReporter from "./statusReporter";
 import TodoCardClient from "./cards/clients/todoCardClient";
-import SpotifyCard from "./cards/spotify";
 import GmailCard from "./cards/gmail";
 import { CardId, useActiveCards } from "@/hooks/useActiveCards";
 import NewsCard from "./cards/news";
@@ -17,7 +16,6 @@ const CARD_MAP: Record<CardId, React.ComponentType | null> = {
   calendar:  CalendarCardClient,
   gmail:     GmailCard,
   todo:      TodoCardClient,
-  spotify:   SpotifyCard,
   stocks:    isWeekend ? null : StocksCardClient,
   news:     NewsCard,
 };

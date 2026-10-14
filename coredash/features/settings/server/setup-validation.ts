@@ -20,15 +20,12 @@ export interface StoredSettings {
   calendarIds: string[] | null;
   googleClientEmail: string | null;
   gmailClientId: string | null;
-  spotifyClientId: string | null;
   newsApiKey: string | null;
   serpApiKey: string | null;
   brapiToken: string | null;
   googlePrivateKey: string | null;
   gmailClientSecret: string | null;
   gmailRefreshToken: string | null;
-  spotifyClientSecret: string | null;
-  spotifyRefreshToken: string | null;
 }
 
 export interface EnvironmentSettings {
@@ -39,15 +36,12 @@ export interface EnvironmentSettings {
   calendarIds: string[];
   googleClientEmail: string;
   gmailClientId: string;
-  spotifyClientId: string;
   newsApiKey: string;
   serpApiKey: string;
   brapiToken: string;
   googlePrivateKey: string;
   gmailClientSecret: string;
   gmailRefreshToken: string;
-  spotifyClientSecret: string;
-  spotifyRefreshToken: string;
 }
 
 export interface ResolvedRuntimeSettings extends RuntimeSettings {
@@ -57,8 +51,6 @@ export interface ResolvedRuntimeSettings extends RuntimeSettings {
   googlePrivateKey: string;
   gmailClientSecret: string;
   gmailRefreshToken: string;
-  spotifyClientSecret: string;
-  spotifyRefreshToken: string;
 }
 
 const STRING_PATCH_KEYS = [
@@ -68,15 +60,12 @@ const STRING_PATCH_KEYS = [
   "city",
   "googleClientEmail",
   "gmailClientId",
-  "spotifyClientId",
   "newsApiKey",
   "serpApiKey",
   "brapiToken",
   "googlePrivateKey",
   "gmailClientSecret",
   "gmailRefreshToken",
-  "spotifyClientSecret",
-  "spotifyRefreshToken",
 ] as const;
 
 const REQUIRED_PUBLIC = ["timezone", "latitude", "longitude"] as const;
@@ -92,11 +81,6 @@ const INTEGRATION_GROUPS: Array<{ name: string; keys: SetupFieldKey[]; label: st
     keys: ["gmailClientId", "gmailClientSecret", "gmailRefreshToken"],
     label: "Gmail credentials must be configured together (client id, client secret, and refresh token).",
   },
-  {
-    name: "spotify",
-    keys: ["spotifyClientId", "spotifyClientSecret"],
-    label: "Spotify credentials must be configured together (client id and client secret).",
-  },
 ];
 
 export function emptyStoredSettings(): StoredSettings {
@@ -108,15 +92,12 @@ export function emptyStoredSettings(): StoredSettings {
     calendarIds: null,
     googleClientEmail: null,
     gmailClientId: null,
-    spotifyClientId: null,
     newsApiKey: null,
     serpApiKey: null,
     brapiToken: null,
     googlePrivateKey: null,
     gmailClientSecret: null,
     gmailRefreshToken: null,
-    spotifyClientSecret: null,
-    spotifyRefreshToken: null,
   };
 }
 
@@ -195,7 +176,7 @@ export function validateRuntimeSettingsPatch(input: unknown): RuntimeSettingsPat
       }
     }
     if (key === "city") limited(normalized, "city", 120);
-    if (key === "googleClientEmail" || key === "gmailClientId" || key === "spotifyClientId") {
+    if (key === "googleClientEmail" || key === "gmailClientId") {
       limited(normalized, key, 255);
     }
     if (key === "googlePrivateKey") limited(normalized, key, 8000);
@@ -242,15 +223,12 @@ export function resolveSettings(stored: StoredSettings, env: EnvironmentSettings
     calendarIds: stored.calendarIds ?? env.calendarIds,
     googleClientEmail: pickText(stored.googleClientEmail, env.googleClientEmail),
     gmailClientId: pickText(stored.gmailClientId, env.gmailClientId),
-    spotifyClientId: pickText(stored.spotifyClientId, env.spotifyClientId),
     newsApiKey: pickText(stored.newsApiKey, env.newsApiKey),
     serpApiKey: pickText(stored.serpApiKey, env.serpApiKey),
     brapiToken: pickText(stored.brapiToken, env.brapiToken),
     googlePrivateKey: normalizePrivateKey(pickText(stored.googlePrivateKey, env.googlePrivateKey)),
     gmailClientSecret: pickText(stored.gmailClientSecret, env.gmailClientSecret),
     gmailRefreshToken: pickText(stored.gmailRefreshToken, env.gmailRefreshToken),
-    spotifyClientSecret: pickText(stored.spotifyClientSecret, env.spotifyClientSecret),
-    spotifyRefreshToken: pickText(stored.spotifyRefreshToken, env.spotifyRefreshToken),
   };
 }
 
@@ -299,7 +277,6 @@ export function toPublicSettingsResponse(resolved: ResolvedRuntimeSettings, stor
     calendarIds: resolved.calendarIds,
     googleClientEmail: resolved.googleClientEmail,
     gmailClientId: resolved.gmailClientId,
-    spotifyClientId: resolved.spotifyClientId,
   };
   const sources: RuntimeSettingsSources = {
     timezone: sourceFor(stored.timezone),
@@ -309,7 +286,6 @@ export function toPublicSettingsResponse(resolved: ResolvedRuntimeSettings, stor
     calendarIds: stored.calendarIds === null ? "environment" : "database",
     googleClientEmail: sourceFor(stored.googleClientEmail),
     gmailClientId: sourceFor(stored.gmailClientId),
-    spotifyClientId: sourceFor(stored.spotifyClientId),
   };
   const secrets = Object.fromEntries(
     SECRET_FIELD_KEYS.map((key) => {

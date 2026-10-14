@@ -107,11 +107,8 @@ The first-run screen appears when the timezone, latitude, or longitude is missin
 | Gmail OAuth client ID | `GOOGLE_GMAIL_CLIENT_ID` | no | no |
 | Gmail OAuth client secret | `GOOGLE_GMAIL_CLIENT_SECRET` | no | yes |
 | Gmail refresh token | `GOOGLE_GMAIL_REFRESH_TOKEN` | no | yes |
-| Spotify client ID | `SPOTIFY_CLIENT_ID` | no | no |
-| Spotify client secret | `SPOTIFY_CLIENT_SECRET` | no | yes |
-| Spotify refresh token | `SPOTIFY_REFRESH_TOKEN` | no | yes |
 
-Weather uses Open-Meteo and does not need an API key. Optional groups are all-or-nothing when you edit them: Calendar needs the email, private key, and at least one calendar ID together; Gmail needs the client ID, client secret, and refresh token together; Spotify needs the client ID and client secret together. The Spotify refresh token can be saved later from the Spotify card. A blank secret field keeps the value already stored.
+Weather uses Open-Meteo and does not need an API key. Optional groups are all-or-nothing when you edit them: Calendar needs the email, private key, and at least one calendar ID together; Gmail needs the client ID, client secret, and refresh token together. A blank secret field keeps the value already stored.
 
 ## Deployment
 

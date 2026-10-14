@@ -8,7 +8,6 @@ export interface RuntimeSettings {
   calendarIds: string[];
   googleClientEmail: string;
   gmailClientId: string;
-  spotifyClientId: string;
 }
 
 export type RuntimeSettingSource = "database" | "environment";
@@ -21,7 +20,6 @@ export interface RuntimeSettingsSources {
   calendarIds: RuntimeSettingSource;
   googleClientEmail: RuntimeSettingSource;
   gmailClientId: RuntimeSettingSource;
-  spotifyClientId: RuntimeSettingSource;
 }
 
 export type SecretFieldKey = Extract<SetupFieldKey,
@@ -31,8 +29,6 @@ export type SecretFieldKey = Extract<SetupFieldKey,
   | "googlePrivateKey"
   | "gmailClientSecret"
   | "gmailRefreshToken"
-  | "spotifyClientSecret"
-  | "spotifyRefreshToken"
 >;
 
 export type SecretConfiguration = Record<SecretFieldKey, boolean>;
@@ -52,13 +48,10 @@ export interface RuntimeSettingsPatch {
   calendarIds?: string[] | null;
   googleClientEmail?: string | null;
   gmailClientId?: string | null;
-  spotifyClientId?: string | null;
   newsApiKey?: string | null;
   serpApiKey?: string | null;
   brapiToken?: string | null;
   googlePrivateKey?: string | null;
   gmailClientSecret?: string | null;
   gmailRefreshToken?: string | null;
-  spotifyClientSecret?: string | null;
-  spotifyRefreshToken?: string | null;
 }

@@ -29,12 +29,6 @@ export const SETUP_GROUPS = [
     description: "Optional. Save the OAuth client ID, client secret, and refresh token together, or leave all of them empty.",
     optional: true,
   },
-  {
-    id: "spotify",
-    title: "Spotify",
-    description: "Optional. Save the client ID and client secret together. The refresh token can be pasted here or connected from the Spotify card.",
-    optional: true,
-  },
 ] as const;
 
 export type SetupGroupId = (typeof SETUP_GROUPS)[number]["id"];
@@ -52,10 +46,7 @@ export type SetupFieldKey =
   | "calendarIds"
   | "gmailClientId"
   | "gmailClientSecret"
-  | "gmailRefreshToken"
-  | "spotifyClientId"
-  | "spotifyClientSecret"
-  | "spotifyRefreshToken";
+  | "gmailRefreshToken";
 
 export type SetupInputKind = "text" | "number" | "textarea" | "secret" | "secret-textarea" | "list";
 
@@ -207,36 +198,6 @@ export const SETUP_FIELDS: readonly SetupField[] = [
     secret: true,
     input: "secret",
     help: "OAuth refresh token. scripts/get-gmail-token.ts can mint one.",
-  },
-  {
-    key: "spotifyClientId",
-    label: "Client ID",
-    env: "SPOTIFY_CLIENT_ID",
-    group: "spotify",
-    required: false,
-    secret: false,
-    input: "text",
-    help: "Spotify application client ID.",
-  },
-  {
-    key: "spotifyClientSecret",
-    label: "Client secret",
-    env: "SPOTIFY_CLIENT_SECRET",
-    group: "spotify",
-    required: false,
-    secret: true,
-    input: "secret",
-    help: "Spotify application client secret.",
-  },
-  {
-    key: "spotifyRefreshToken",
-    label: "Refresh token",
-    env: "SPOTIFY_REFRESH_TOKEN",
-    group: "spotify",
-    required: false,
-    secret: true,
-    input: "secret",
-    help: "Optional until you connect Spotify. The dashboard connect flow can save this later.",
   },
 ];
 

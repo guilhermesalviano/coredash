@@ -7,7 +7,6 @@ export const CARD_REGISTRY = [
   { id: "weather",   label: "Weather",          emoji: "🌤" },
   { id: "calendar",  label: "Calendar",         emoji: "📅" },
   { id: "gmail",     label: "Gmail",            emoji: "📧" },
-  { id: "spotify",   label: "Spotify",          emoji: "🎵" },
   { id: "stocks",    label: "Stocks",           emoji: "📈" },
   { id: "todo",      label: "To-Do",            emoji: "✅" },
   { id: "news",      label: "News",             emoji: "📰" },
@@ -19,18 +18,22 @@ const STORAGE_KEY = "active_cards";
 const SYNC_EVENT = "active-cards-changed";
 
 const DEFAULT_ACTIVE: CardId[] = [
-  "weather", "calendar", "gmail", "spotify", "todo",
+  "weather", "calendar", "gmail", "todo",
 ];
+
+export function sanitizeActiveCards(stored: unknown): CardId[] {
+  if (!Array.isArray(stored)) return [...DEFAULT_ACTIVE];
+  const valid = new Set<string>(CARD_REGISTRY.map((card) => card.id));
+  return stored.filter((id): id is CardId => typeof id === "string" && valid.has(id));
+}
 
 function load(): CardId[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_ACTIVE;
-    const parsed = JSON.parse(raw) as CardId[];
-    const valid = CARD_REGISTRY.map((c) => c.id);
-    return parsed.filter((id) => valid.includes(id));
+    if (!raw) return [...DEFAULT_ACTIVE];
+    return sanitizeActiveCards(JSON.parse(raw));
   } catch {
-    return DEFAULT_ACTIVE;
+    return [...DEFAULT_ACTIVE];
   }
 }
 

@@ -16,6 +16,7 @@ the next stable version; 0.1.2, 0.1.3 and 0.1.8 never had a stable release.
 ### Removed
 
 - AI chat, the `/ai` page, the daily narrative, the Rocky card, and the OpenRouter provider.
+- Spotify card, OAuth routes, player API, and Spotify setup fields. A saved `spotify` card id in local storage is ignored.
 - The MCP server, including `/api/mcp` and the stdio launcher.
 - Kanban view mode and the Pipeline task board. Dashboard and Focus modes remain.
 - Amazon wishlist scraping, scheduled price snapshots, the price-drop card, and the crawl schedule. Price drops and update status were computed only from scraped snapshots, so the wishlist feature was removed with the scraper.

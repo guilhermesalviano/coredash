@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import {
-  Check, ChevronRight, CloudSun, Focus, LayoutGrid, Mail, Moon, Music2,
+  Check, ChevronRight, CloudSun, Focus, LayoutGrid, Mail, Moon,
   Newspaper, Palette, CalendarDays, Settings2, SlidersHorizontal,
   Sun, TrendingUp, ListChecks, X, type LucideIcon,
 } from "lucide-react";
@@ -25,7 +25,6 @@ const CARD_DETAILS: Record<CardId, { icon: LucideIcon; description: string }> = 
   weather: { icon: CloudSun, description: "The forecast at a glance" },
   calendar: { icon: CalendarDays, description: "What’s coming up next" },
   gmail: { icon: Mail, description: "Stay on top of your inbox" },
-  spotify: { icon: Music2, description: "Your music, within reach" },
   stocks: { icon: TrendingUp, description: "Follow the market" },
   todo: { icon: ListChecks, description: "Your daily reminders" },
   news: { icon: Newspaper, description: "Catch up on the headlines" },
