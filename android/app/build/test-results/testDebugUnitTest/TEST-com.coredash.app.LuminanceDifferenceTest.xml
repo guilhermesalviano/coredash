@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coredash.app.LuminanceDifferenceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-14T14:53:57" hostname="grok-bot-vm-179507063" time="0.004">
+  <properties/>
+  <testcase name="identical frames have zero difference" classname="com.coredash.app.LuminanceDifferenceTest" time="0.001"/>
+  <testcase name="empty frames are rejected" classname="com.coredash.app.LuminanceDifferenceTest" time="0.0"/>
+  <testcase name="unequal sample counts are rejected" classname="com.coredash.app.LuminanceDifferenceTest" time="0.0"/>
+  <testcase name="quiet period is bounded to fifteen seconds through five minutes" classname="com.coredash.app.LuminanceDifferenceTest" time="0.002"/>
+  <testcase name="first frame establishes baseline and threshold is strictly exceeded" classname="com.coredash.app.LuminanceDifferenceTest" time="0.001"/>
+  <testcase name="luminance bytes are unsigned and differences are averaged" classname="com.coredash.app.LuminanceDifferenceTest" time="0.0"/>
+  <testcase name="reset and resolution changes establish a new baseline" classname="com.coredash.app.LuminanceDifferenceTest" time="0.0"/>
+  <testcase name="small noise is rejected and high sensitivity detects smaller motion" classname="com.coredash.app.LuminanceDifferenceTest" time="0.0"/>
+  <testcase name="baseline is not affected by reusing the input array" classname="com.coredash.app.LuminanceDifferenceTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

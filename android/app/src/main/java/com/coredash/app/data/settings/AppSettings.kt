@@ -33,6 +33,9 @@ enum class CardId {
 }
 
 data class AppSettings(
+    val motionWakeEnabled: Boolean = false,
+    val quietPeriodSeconds: Int = DEFAULT_QUIET_PERIOD_SECONDS,
+    val motionSensitivity: MotionSensitivity = MotionSensitivity.MEDIUM,
     val timezone: String = "UTC",
     val latitude: Double? = null,
     val longitude: Double? = null,

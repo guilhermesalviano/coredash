@@ -18,6 +18,9 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class SettingsRepository(private val context: Context) {
 
     private object Keys {
+        val MOTION_WAKE_ENABLED = booleanPreferencesKey("motion_wake_enabled")
+        val QUIET_PERIOD_SECONDS = intPreferencesKey("quiet_period_seconds")
+        val MOTION_SENSITIVITY = stringPreferencesKey("motion_sensitivity")
         val TIMEZONE = stringPreferencesKey("timezone")
         val LATITUDE = doublePreferencesKey("latitude")
         val LONGITUDE = doublePreferencesKey("longitude")
@@ -35,6 +38,11 @@ class SettingsRepository(private val context: Context) {
 
     val settingsFlow: Flow<AppSettings> = context.dataStore.data.map { prefs ->
         AppSettings(
+            motionWakeEnabled = prefs[Keys.MOTION_WAKE_ENABLED] ?: false,
+            quietPeriodSeconds = normalizeQuietPeriod(prefs[Keys.QUIET_PERIOD_SECONDS] ?: DEFAULT_QUIET_PERIOD_SECONDS),
+            motionSensitivity = MotionSensitivity.entries.firstOrNull {
+                it.name == prefs[Keys.MOTION_SENSITIVITY]
+            } ?: MotionSensitivity.MEDIUM,
             timezone = prefs[Keys.TIMEZONE] ?: "UTC",
             latitude = prefs[Keys.LATITUDE],
             longitude = prefs[Keys.LONGITUDE],
@@ -57,6 +65,18 @@ class SettingsRepository(private val context: Context) {
             newsTopic = normalizeNewsTopic(prefs[Keys.NEWS_TOPIC]),
             weatherUnit = normalizeWeatherUnit(prefs[Keys.WEATHER_UNIT]),
         )
+    }
+
+    suspend fun setMotionWakeEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.MOTION_WAKE_ENABLED] = enabled }
+    }
+
+    suspend fun setQuietPeriod(seconds: Int) {
+        context.dataStore.edit { it[Keys.QUIET_PERIOD_SECONDS] = normalizeQuietPeriod(seconds) }
+    }
+
+    suspend fun setMotionSensitivity(sensitivity: MotionSensitivity) {
+        context.dataStore.edit { it[Keys.MOTION_SENSITIVITY] = sensitivity.name }
     }
 
     suspend fun setTimezone(timezone: String) {

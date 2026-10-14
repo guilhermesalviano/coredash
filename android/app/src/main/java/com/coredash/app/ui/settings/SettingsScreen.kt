@@ -71,6 +71,7 @@ import kotlin.math.roundToInt
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenSetup: () -> Unit,
+    cameraError: String? = null,
     viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.factory(
             (LocalContext.current.applicationContext as CoreDashApp).container,
@@ -120,6 +121,14 @@ fun SettingsScreen(
                         }
                     }
                 }
+
+                MotionWakeSettingsCard(
+                    settings = settings,
+                    cameraError = cameraError,
+                    onEnabledChange = viewModel::setMotionWakeEnabled,
+                    onQuietPeriodChange = viewModel::setQuietPeriod,
+                    onSensitivityChange = viewModel::setMotionSensitivity,
+                )
 
                 DashboardCard(title = "Widgets", icon = Icons.Default.Settings) {
                     Text("Escolha o que aparece e organize a ordem do painel.", style = MaterialTheme.typography.bodyMedium,

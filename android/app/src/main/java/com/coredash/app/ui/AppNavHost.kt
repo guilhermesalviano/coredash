@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import com.coredash.app.CoreDashApp
 import com.coredash.app.data.settings.SetupValidation
 import com.coredash.app.ui.cards.LoadingState
 import com.coredash.app.ui.dashboard.DashboardScreen
+import com.coredash.app.ui.motion.MotionWakeController
 import com.coredash.app.ui.settings.SettingsScreen
 import com.coredash.app.ui.setup.SetupScreen
 
@@ -30,7 +32,7 @@ object Routes {
 }
 
 @Composable
-fun AppNavHost() {
+fun AppNavHost(motionWake: MotionWakeController) {
     val context = LocalContext.current
     val container = (context.applicationContext as CoreDashApp).container
     val settings by container.settingsRepository.settingsFlow.collectAsState(initial = null)
@@ -73,13 +75,19 @@ fun AppNavHost() {
         }
 
         composable(Routes.DASHBOARD) {
+            DisposableEffect(motionWake) {
+                motionWake.setDashboardActive(true)
+                onDispose { motionWake.setDashboardActive(false) }
+            }
             DashboardScreen(
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
 
         composable(Routes.SETTINGS) {
+            val cameraError by motionWake.cameraError.collectAsState()
             SettingsScreen(
+                cameraError = cameraError,
                 onBack = { navController.popBackStack() },
                 onOpenSetup = {
                     navController.navigate(Routes.SETUP) {

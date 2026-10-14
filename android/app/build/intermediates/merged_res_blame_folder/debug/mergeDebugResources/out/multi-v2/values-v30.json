@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.coredash.app-mergeDebugResources-53:/values-v30/values-v30.xml",
+            "outputFile": "com.coredash.app-mergeDebugResources-60:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "/home/box/.gradle/caches/8.10.2/transforms/044334bba4858c1f2084c71197de0b18/transformed/material3-release/res/values-v30/values-v30.xml",
+                    "source": "/home/box/.gradle/caches/8.10.2/transforms/70f4ac53f234ee2d75e568cd04f3fd6e/transformed/material3-release/res/values-v30/values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

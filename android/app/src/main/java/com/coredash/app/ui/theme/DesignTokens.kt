@@ -45,6 +45,16 @@ val CoreDashTypography = Typography(
     labelSmall = type(11, 16, FontWeight.Medium),
 )
 
+/** Larger card text for tablets while keeping controls and card padding compact. */
+val TabletDashboardTypography = CoreDashTypography.copy(
+    titleMedium = type(20, 28, FontWeight.SemiBold),
+    titleSmall = type(16, 24, FontWeight.SemiBold),
+    bodyLarge = type(18, 26),
+    bodyMedium = type(16, 24),
+    bodySmall = type(14, 20),
+    labelMedium = type(14, 20, FontWeight.Medium),
+)
+
 val CoreDashShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(12.dp),

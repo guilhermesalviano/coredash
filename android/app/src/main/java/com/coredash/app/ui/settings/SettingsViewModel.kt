@@ -9,6 +9,7 @@ import com.coredash.app.AppContainer
 import com.coredash.app.data.calendar.DeviceCalendar
 import com.coredash.app.data.calendar.DeviceCalendarRepository
 import com.coredash.app.data.settings.AppSettings
+import com.coredash.app.data.settings.MotionSensitivity
 import com.coredash.app.data.settings.CardId
 import com.coredash.app.data.settings.SettingsRepository
 import com.coredash.app.data.settings.ThemeMode
@@ -34,6 +35,18 @@ class SettingsViewModel(
 
     private val _calendars = MutableStateFlow<List<DeviceCalendar>>(emptyList())
     val calendars: StateFlow<List<DeviceCalendar>> = _calendars.asStateFlow()
+
+    fun setMotionWakeEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setMotionWakeEnabled(enabled) }
+    }
+
+    fun setQuietPeriod(seconds: Int) {
+        viewModelScope.launch { settingsRepository.setQuietPeriod(seconds) }
+    }
+
+    fun setMotionSensitivity(sensitivity: MotionSensitivity) {
+        viewModelScope.launch { settingsRepository.setMotionSensitivity(sensitivity) }
+    }
 
     fun setTheme(theme: ThemeMode) {
         viewModelScope.launch { settingsRepository.setTheme(theme) }
