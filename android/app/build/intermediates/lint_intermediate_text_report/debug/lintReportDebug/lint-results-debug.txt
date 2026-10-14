@@ -1,0 +1,155 @@
+/workspace/coredash/android/app/src/main/java/com/coredash/app/data/location/DeviceLocationProvider.kt:87: Error: Call requires API level 30 (current min is 26): android.location.LocationManager#getCurrentLocation [NewApi]
+        manager.getCurrentLocation(
+                ~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "NewApi":
+   This check scans through all the Android API calls in the application and
+   warns about any calls that are not available on all versions targeted by
+   this application (according to its minimum SDK attribute in the manifest).
+
+   If you really want to use this API and don't need to support older devices
+   just set the minSdkVersion in your build.gradle or AndroidManifest.xml
+   files.
+
+   If your code is deliberately accessing newer APIs, and you have ensured
+   (e.g. with conditional execution) that this code will only ever be called
+   on a supported platform, then you can annotate your class or method with
+   the @TargetApi annotation specifying the local minimum SDK to apply, such
+   as @TargetApi(11), such that this check considers 11 rather than your
+   manifest file's minimum SDK as the required API level.
+
+   If you are deliberately setting android: attributes in style definitions,
+   make sure you place this in a values-vNN folder in order to avoid running
+   into runtime conflicts on certain devices where manufacturers have added
+   custom attributes whose ids conflict with the new ones on later platforms.
+
+   Similarly, you can use tools:targetApi="11" in an XML file to indicate that
+   the element will only be inflated in an adequate context.
+
+/workspace/coredash/android/gradle/libs.versions.toml:2: Warning: A newer version of com.android.application than 8.7.3 is available: 9.4.1 [AndroidGradlePluginVersion]
+agp = "8.7.3"
+      ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:2: Warning: A newer version of com.android.application than 8.7.3 is available: 9.4.1 [AndroidGradlePluginVersion]
+agp = "8.7.3"
+      ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:2: Warning: A newer version of com.android.application than 8.7.3 is available: 9.4.1 [AndroidGradlePluginVersion]
+agp = "8.7.3"
+      ~~~~~~~
+
+   Explanation for issues of type "AndroidGradlePluginVersion":
+   This detector looks for usage of the Android Gradle Plugin where the
+   version you are using is not the current stable release. Using older
+   versions is fine, and there are cases where you deliberately want to stick
+   with an older version. However, you may simply not be aware that a more
+   recent version is available, and that is what this lint check helps find.
+
+/workspace/coredash/android/gradle/libs.versions.toml:5: Warning: A newer version of androidx.compose:compose-bom than 2024.12.01 is available: 2026.09.00 [GradleDependency]
+composeBom = "2024.12.01"
+             ~~~~~~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:5: Warning: A newer version of androidx.compose:compose-bom than 2024.12.01 is available: 2026.09.00 [GradleDependency]
+composeBom = "2024.12.01"
+             ~~~~~~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:5: Warning: A newer version of androidx.compose:compose-bom than 2024.12.01 is available: 2026.09.00 [GradleDependency]
+composeBom = "2024.12.01"
+             ~~~~~~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:6: Warning: A newer version of androidx.navigation:navigation-compose than 2.8.5 is available: 2.10.2 [GradleDependency]
+navigationCompose = "2.8.5"
+                    ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:6: Warning: A newer version of androidx.navigation:navigation-compose than 2.8.5 is available: 2.10.2 [GradleDependency]
+navigationCompose = "2.8.5"
+                    ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:6: Warning: A newer version of androidx.navigation:navigation-compose than 2.8.5 is available: 2.10.2 [GradleDependency]
+navigationCompose = "2.8.5"
+                    ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-compiler than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-compiler than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-compiler than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-ktx than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-ktx than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-ktx than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-runtime than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-runtime than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:7: Warning: A newer version of androidx.room:room-runtime than 2.6.1 is available: 2.8.5 [GradleDependency]
+room = "2.6.1"
+       ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:8: Warning: A newer version of androidx.datastore:datastore-preferences than 1.1.1 is available: 1.2.1 [GradleDependency]
+datastore = "1.1.1"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:8: Warning: A newer version of androidx.datastore:datastore-preferences than 1.1.1 is available: 1.2.1 [GradleDependency]
+datastore = "1.1.1"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:8: Warning: A newer version of androidx.datastore:datastore-preferences than 1.1.1 is available: 1.2.1 [GradleDependency]
+datastore = "1.1.1"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:9: Warning: A newer version of androidx.security:security-crypto than 1.1.0-alpha06 is available: 1.1.0 [GradleDependency]
+securityCrypto = "1.1.0-alpha06"
+                 ~~~~~~~~~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:9: Warning: A newer version of androidx.security:security-crypto than 1.1.0-alpha06 is available: 1.1.0 [GradleDependency]
+securityCrypto = "1.1.0-alpha06"
+                 ~~~~~~~~~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:9: Warning: A newer version of androidx.security:security-crypto than 1.1.0-alpha06 is available: 1.1.0 [GradleDependency]
+securityCrypto = "1.1.0-alpha06"
+                 ~~~~~~~~~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:13: Warning: A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.8.7 is available: 2.11.0 [GradleDependency]
+lifecycle = "2.8.7"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:13: Warning: A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.8.7 is available: 2.11.0 [GradleDependency]
+lifecycle = "2.8.7"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:13: Warning: A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.8.7 is available: 2.11.0 [GradleDependency]
+lifecycle = "2.8.7"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:13: Warning: A newer version of androidx.lifecycle:lifecycle-viewmodel-compose than 2.8.7 is available: 2.11.0 [GradleDependency]
+lifecycle = "2.8.7"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:13: Warning: A newer version of androidx.lifecycle:lifecycle-viewmodel-compose than 2.8.7 is available: 2.11.0 [GradleDependency]
+lifecycle = "2.8.7"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:13: Warning: A newer version of androidx.lifecycle:lifecycle-viewmodel-compose than 2.8.7 is available: 2.11.0 [GradleDependency]
+lifecycle = "2.8.7"
+            ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:14: Warning: A newer version of androidx.activity:activity-compose than 1.9.3 is available: 1.13.0 [GradleDependency]
+activityCompose = "1.9.3"
+                  ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:14: Warning: A newer version of androidx.activity:activity-compose than 1.9.3 is available: 1.13.0 [GradleDependency]
+activityCompose = "1.9.3"
+                  ~~~~~~~
+/workspace/coredash/android/gradle/libs.versions.toml:14: Warning: A newer version of androidx.activity:activity-compose than 1.9.3 is available: 1.13.0 [GradleDependency]
+activityCompose = "1.9.3"
+                  ~~~~~~~
+
+   Explanation for issues of type "GradleDependency":
+   This detector looks for usages of libraries where the version you are using
+   is not the current stable release. Using older versions is fine, and there
+   are cases where you deliberately want to stick with an older version.
+   However, you may simply not be aware that a more recent version is
+   available, and that is what this lint check helps find.
+
+/workspace/coredash/android/app/src/main/AndroidManifest.xml:9: Warning: Should explicitly set android:icon, there is no default [MissingApplicationIcon]
+    <application
+     ~~~~~~~~~~~
+
+   Explanation for issues of type "MissingApplicationIcon":
+   You should set an icon for the application as whole because there is no
+   default. This attribute must be set as a reference to a drawable resource
+   containing the image (for example @drawable/icon).
+
+   https://developer.android.com/studio/publish/preparing#publishing-configure
+
+1 errors, 34 warnings

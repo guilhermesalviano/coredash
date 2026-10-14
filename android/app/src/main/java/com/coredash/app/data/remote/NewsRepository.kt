@@ -34,11 +34,13 @@ class NewsRepository(
     suspend fun getNews(
         accessKey: String,
         limit: Int = 10,
+        topic: String = "general",
     ): Result<List<NewsArticle>> = runCatching {
         val response: MediastackResponse = client.get("$baseUrl/v1/news") {
             parameter("access_key", accessKey)
             parameter("languages", "pt,en")
             parameter("limit", limit)
+            if (topic.isNotBlank()) parameter("categories", topic)
         }.body()
 
         response.data.map { article ->

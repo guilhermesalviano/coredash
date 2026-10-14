@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.7.3" type="conditional_incidents">
+
+    <incident
+        id="NewApi"
+        severity="error"
+        message="">
+        <fix-data minSdk="fffffffffe000000" requiresApi="ffffffffe0000000"/>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/coredash/app/data/location/DeviceLocationProvider.kt"
+            line="87"
+            column="17"
+            startOffset="3054"
+            endLine="87"
+            endColumn="35"
+            endOffset="3072"/>
+        <map>
+            <entry
+                name="desc"
+                string="(Ljava.lang.String;Landroid.os.CancellationSignal;Ljava.util.concurrent.Executor;Ljava.util.function.Consumer;)"/>
+            <entry
+                name="message"
+                string="Call requires API level 30 (current min is %1$s): `android.location.LocationManager#getCurrentLocation`"/>
+            <api-levels id="minSdk"
+                value="fffffffffe000000"/>
+            <entry
+                name="name"
+                string="getCurrentLocation"/>
+            <entry
+                name="owner"
+                string="android.location.LocationManager"/>
+            <api-levels id="requiresApi"
+                value="ffffffffe0000000"/>
+        </map>
+    </incident>
+
+</incidents>

@@ -1,5 +1,6 @@
 package com.coredash.app.data.remote
 
+import com.coredash.app.data.settings.WeatherUnit
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -50,6 +51,7 @@ class WeatherRepository(
         latitude: Double,
         longitude: Double,
         timezone: String = "UTC",
+        temperatureUnit: WeatherUnit = WeatherUnit.CELSIUS,
     ): Result<Weather> = runCatching {
         val response: OpenMeteoResponse = client.get(baseUrl) {
             url {
@@ -59,6 +61,7 @@ class WeatherRepository(
                 parameters.append("daily", "weather_code,temperature_2m_max,temperature_2m_min")
                 parameters.append("forecast_days", "5")
                 parameters.append("timezone", timezone)
+                parameters.append("temperature_unit", temperatureUnit.apiValue)
             }
         }.body()
 

@@ -6,6 +6,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.coredash.app.AppContainer
+import com.coredash.app.data.location.DeviceLocation
+import com.coredash.app.data.location.DeviceLocationProvider
+import com.coredash.app.data.location.LocationDisabledException
+import com.coredash.app.data.location.LocationPermissionException
 import com.coredash.app.data.settings.SecretStore
 import com.coredash.app.data.settings.SettingsRepository
 import com.coredash.app.data.settings.SetupValidation
@@ -24,23 +28,22 @@ data class SetupUiState(
     val latitude: String = "",
     val longitude: String = "",
     val city: String = "",
-    val tickers: String = "",
     val mediastackApiKey: String = "",
     val serpApiKey: String = "",
-    val brapiToken: String = "",
-    val googleServiceAccountJson: String = "",
-    val googleCalendarId: String = "",
     val gmailClientId: String = "",
     val gmailClientSecret: String = "",
     val gmailRefreshToken: String = "",
     val errors: List<String> = emptyList(),
     val isLoading: Boolean = true,
     val isSaved: Boolean = false,
+    val isLocating: Boolean = false,
+    val locationMessage: String? = null,
 )
 
 class SetupViewModel(
     private val settingsRepository: SettingsRepository,
     private val secretStore: SecretStore,
+    private val locationProvider: DeviceLocationProvider,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -66,12 +69,8 @@ class SetupViewModel(
             latitude = settings.latitude?.toString().orEmpty(),
             longitude = settings.longitude?.toString().orEmpty(),
             city = settings.city,
-            tickers = settings.stockTickers.joinToString(", "),
             mediastackApiKey = secretStore.getMediastackApiKey().orEmpty(),
             serpApiKey = secretStore.getSerpApiKey().orEmpty(),
-            brapiToken = secretStore.getBrapiToken().orEmpty(),
-            googleServiceAccountJson = secretStore.getGoogleServiceAccountJson().orEmpty(),
-            googleCalendarId = secretStore.getGoogleCalendarId().orEmpty(),
             gmailClientId = secretStore.getGmailClientId().orEmpty(),
             gmailClientSecret = secretStore.getGmailClientSecret().orEmpty(),
             gmailRefreshToken = secretStore.getGmailRefreshToken().orEmpty(),
@@ -87,23 +86,52 @@ class SetupViewModel(
 
     fun onCityChange(value: String) = _uiState.update { it.copy(city = value) }
 
-    fun onTickersChange(value: String) = _uiState.update { it.copy(tickers = value) }
-
     fun onMediastackApiKeyChange(value: String) = _uiState.update { it.copy(mediastackApiKey = value) }
 
     fun onSerpApiKeyChange(value: String) = _uiState.update { it.copy(serpApiKey = value) }
-
-    fun onBrapiTokenChange(value: String) = _uiState.update { it.copy(brapiToken = value) }
-
-    fun onGoogleServiceAccountJsonChange(value: String) = _uiState.update { it.copy(googleServiceAccountJson = value) }
-
-    fun onGoogleCalendarIdChange(value: String) = _uiState.update { it.copy(googleCalendarId = value) }
 
     fun onGmailClientIdChange(value: String) = _uiState.update { it.copy(gmailClientId = value) }
 
     fun onGmailClientSecretChange(value: String) = _uiState.update { it.copy(gmailClientSecret = value) }
 
     fun onGmailRefreshTokenChange(value: String) = _uiState.update { it.copy(gmailRefreshToken = value) }
+
+    fun onLocationPermissionDenied() {
+        _uiState.update { it.copy(locationMessage = "Permissão de localização negada.") }
+    }
+
+    fun useMyLocation() {
+        if (_uiState.value.isLocating) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLocating = true, locationMessage = null) }
+            locationProvider.current()
+                .onSuccess { location -> onLocationLoaded(location) }
+                .onFailure { error ->
+                    _uiState.update { it.copy(locationMessage = locationMessageFor(error)) }
+                }
+            _uiState.update { it.copy(isLocating = false) }
+        }
+    }
+
+    private fun onLocationLoaded(location: DeviceLocation) {
+        _uiState.update { current ->
+            current.copy(
+                timezone = location.timezone,
+                latitude = location.lat.toString(),
+                longitude = location.lon.toString(),
+                city = location.city ?: current.city,
+                errors = emptyList(),
+                locationMessage = null,
+            )
+        }
+    }
+
+    private fun locationMessageFor(error: Throwable): String = when (error) {
+        is LocationDisabledException ->
+            "Localização desativada. Ative a localização do dispositivo e tente novamente."
+        is LocationPermissionException -> "Permissão de localização negada."
+        else -> "Não foi possível obter sua localização."
+    }
 
     fun save() {
         val current = _uiState.value
@@ -125,13 +153,9 @@ class SetupViewModel(
             settingsRepository.setTimezone(current.timezone.trim())
             settingsRepository.setLocation(latitude, longitude)
             settingsRepository.setCity(current.city)
-            settingsRepository.setStockTickers(parseTickers(current.tickers))
 
             secretStore.setMediastackApiKey(current.mediastackApiKey.trim().ifEmpty { null })
             secretStore.setSerpApiKey(current.serpApiKey.trim().ifEmpty { null })
-            secretStore.setBrapiToken(current.brapiToken.trim().ifEmpty { null })
-            secretStore.setGoogleServiceAccountJson(current.googleServiceAccountJson.trim().ifEmpty { null })
-            secretStore.setGoogleCalendarId(current.googleCalendarId.trim().ifEmpty { null })
             secretStore.setGmailClientId(current.gmailClientId.trim().ifEmpty { null })
             secretStore.setGmailClientSecret(current.gmailClientSecret.trim().ifEmpty { null })
             secretStore.setGmailRefreshToken(current.gmailRefreshToken.trim().ifEmpty { null })
@@ -140,17 +164,13 @@ class SetupViewModel(
         }
     }
 
-    private fun parseTickers(raw: String): List<String> = raw
-        .split(",")
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-
     companion object {
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 SetupViewModel(
                     settingsRepository = container.settingsRepository,
                     secretStore = container.secretStore,
+                    locationProvider = container.locationProvider,
                 )
             }
         }

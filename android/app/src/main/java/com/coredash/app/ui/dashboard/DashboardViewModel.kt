@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.coredash.app.AppContainer
+import com.coredash.app.data.calendar.CalendarEvent
+import com.coredash.app.data.calendar.DeviceCalendarRepository
 import com.coredash.app.data.remote.NewsArticle
 import com.coredash.app.data.remote.NewsRepository
-import com.coredash.app.data.remote.Stock
-import com.coredash.app.data.remote.StocksRepository
 import com.coredash.app.data.remote.Weather
 import com.coredash.app.data.remote.WeatherRepository
 import com.coredash.app.data.settings.AppSettings
@@ -30,20 +30,19 @@ data class DashboardUiState(
     val todos: List<TodoEntity> = emptyList(),
     val weather: Weather? = null,
     val weatherError: Boolean = false,
-    val stocks: List<Stock> = emptyList(),
-    val stocksConfigured: Boolean = false,
-    val stocksError: Boolean = false,
     val news: List<NewsArticle> = emptyList(),
     val newsConfigured: Boolean = false,
     val newsError: Boolean = false,
+    val calendarEvents: List<CalendarEvent> = emptyList(),
+    val calendarLoading: Boolean = false,
 )
 
 class DashboardViewModel(
     private val settingsRepository: SettingsRepository,
     private val todoRepository: TodoRepository,
     private val weatherRepository: WeatherRepository,
-    private val stocksRepository: StocksRepository,
     private val newsRepository: NewsRepository,
+    private val calendarRepository: DeviceCalendarRepository,
     private val secretStore: SecretStore,
 ) : ViewModel() {
 
@@ -79,6 +78,14 @@ class DashboardViewModel(
         viewModelScope.launch { todoRepository.deleteById(id) }
     }
 
+    fun loadCalendar(calendarIds: Set<Long>, days: Int) {
+        _uiState.update { it.copy(calendarLoading = true) }
+        viewModelScope.launch {
+            val events = calendarRepository.upcomingEvents(calendarIds, days)
+            _uiState.update { it.copy(calendarEvents = events, calendarLoading = false) }
+        }
+    }
+
     fun addTodo(title: String, priority: String, dueDate: LocalDate?, recurrence: Recurrence) {
         if (title.isBlank()) return
         viewModelScope.launch {
@@ -94,13 +101,10 @@ class DashboardViewModel(
     }
 
     private fun loadRemote(settings: AppSettings) {
-        val brapiToken = secretStore.getBrapiToken()?.takeIf { it.isNotBlank() }
         val mediastackKey = secretStore.getMediastackApiKey()?.takeIf { it.isNotBlank() }
-        val stocksConfigured = brapiToken != null && settings.stockTickers.isNotEmpty()
 
         _uiState.update {
             it.copy(
-                stocksConfigured = stocksConfigured,
                 newsConfigured = mediastackKey != null,
             )
         }
@@ -109,9 +113,10 @@ class DashboardViewModel(
             settings.latitude,
             settings.longitude,
             settings.timezone,
-            settings.stockTickers.joinToString(","),
-            brapiToken,
             mediastackKey,
+            settings.newsCount,
+            settings.newsTopic,
+            settings.weatherUnit,
         ).joinToString("|")
         if (key == remoteKey) return
         remoteKey = key
@@ -120,7 +125,7 @@ class DashboardViewModel(
         val longitude = settings.longitude
         if (latitude != null && longitude != null) {
             viewModelScope.launch {
-                weatherRepository.getWeather(latitude, longitude, settings.timezone)
+                weatherRepository.getWeather(latitude, longitude, settings.timezone, settings.weatherUnit)
                     .onSuccess { weather -> _uiState.update { it.copy(weather = weather, weatherError = false) } }
                     .onFailure { _uiState.update { it.copy(weatherError = true) } }
             }
@@ -128,19 +133,9 @@ class DashboardViewModel(
             _uiState.update { it.copy(weather = null, weatherError = false) }
         }
 
-        if (stocksConfigured) {
-            viewModelScope.launch {
-                stocksRepository.getQuotes(settings.stockTickers, brapiToken)
-                    .onSuccess { stocks -> _uiState.update { it.copy(stocks = stocks, stocksError = false) } }
-                    .onFailure { _uiState.update { it.copy(stocksError = true) } }
-            }
-        } else {
-            _uiState.update { it.copy(stocks = emptyList(), stocksError = false) }
-        }
-
         if (mediastackKey != null) {
             viewModelScope.launch {
-                newsRepository.getNews(mediastackKey)
+                newsRepository.getNews(mediastackKey, settings.newsCount, settings.newsTopic)
                     .onSuccess { news -> _uiState.update { it.copy(news = news, newsError = false) } }
                     .onFailure { _uiState.update { it.copy(newsError = true) } }
             }
@@ -156,8 +151,8 @@ class DashboardViewModel(
                     settingsRepository = container.settingsRepository,
                     todoRepository = container.todoRepository,
                     weatherRepository = container.weatherRepository,
-                    stocksRepository = container.stocksRepository,
                     newsRepository = container.newsRepository,
+                    calendarRepository = container.calendarRepository,
                     secretStore = container.secretStore,
                 )
             }

@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -24,7 +25,12 @@ class SettingsRepository(private val context: Context) {
         val THEME = stringPreferencesKey("theme")
         val ACTIVE_CARDS = stringSetPreferencesKey("active_cards")
         val FOCUS_MODE = booleanPreferencesKey("focus_mode")
-        val STOCK_TICKERS = stringPreferencesKey("stock_tickers")
+        val SELECTED_CALENDAR_IDS = stringSetPreferencesKey("selected_calendar_ids")
+        val CALENDAR_DAYS = intPreferencesKey("calendar_days")
+        val CARD_ORDER = stringPreferencesKey("card_order")
+        val NEWS_COUNT = intPreferencesKey("news_count")
+        val NEWS_TOPIC = stringPreferencesKey("news_topic")
+        val WEATHER_UNIT = stringPreferencesKey("weather_unit")
     }
 
     val settingsFlow: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -41,11 +47,15 @@ class SettingsRepository(private val context: Context) {
                 ?.toSet()
                 ?: CardId.DEFAULT_ACTIVE,
             focusMode = prefs[Keys.FOCUS_MODE] ?: false,
-            stockTickers = prefs[Keys.STOCK_TICKERS]
-                ?.split(",")
-                ?.map { it.trim() }
-                ?.filter { it.isNotEmpty() }
-                ?: emptyList(),
+            selectedCalendarIds = prefs[Keys.SELECTED_CALENDAR_IDS]
+                ?.mapNotNull { stored -> stored.toLongOrNull() }
+                ?.toSet()
+                ?: emptySet(),
+            calendarDays = prefs[Keys.CALENDAR_DAYS] ?: 3,
+            cardOrder = normalizeCardOrder(prefs[Keys.CARD_ORDER]?.split(",")),
+            newsCount = normalizeNewsCount(prefs[Keys.NEWS_COUNT]),
+            newsTopic = normalizeNewsTopic(prefs[Keys.NEWS_TOPIC]),
+            weatherUnit = normalizeWeatherUnit(prefs[Keys.WEATHER_UNIT]),
         )
     }
 
@@ -76,8 +86,29 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[Keys.FOCUS_MODE] = enabled }
     }
 
-    suspend fun setStockTickers(tickers: List<String>) {
-        val normalized = tickers.map { it.trim().uppercase() }.filter { it.isNotEmpty() }.distinct()
-        context.dataStore.edit { it[Keys.STOCK_TICKERS] = normalized.joinToString(",") }
+    suspend fun setSelectedCalendarIds(ids: Set<Long>) {
+        context.dataStore.edit { it[Keys.SELECTED_CALENDAR_IDS] = ids.map { id -> id.toString() }.toSet() }
+    }
+
+    suspend fun setCalendarDays(days: Int) {
+        context.dataStore.edit { it[Keys.CALENDAR_DAYS] = days }
+    }
+
+    suspend fun setCardOrder(order: List<CardId>) {
+        context.dataStore.edit {
+            it[Keys.CARD_ORDER] = order.joinToString(",") { card -> card.name }
+        }
+    }
+
+    suspend fun setNewsCount(count: Int) {
+        context.dataStore.edit { it[Keys.NEWS_COUNT] = normalizeNewsCount(count) }
+    }
+
+    suspend fun setNewsTopic(topic: String) {
+        context.dataStore.edit { it[Keys.NEWS_TOPIC] = normalizeNewsTopic(topic) }
+    }
+
+    suspend fun setWeatherUnit(unit: WeatherUnit) {
+        context.dataStore.edit { it[Keys.WEATHER_UNIT] = unit.name }
     }
 }

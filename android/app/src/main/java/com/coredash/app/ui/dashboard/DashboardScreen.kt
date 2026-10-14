@@ -30,9 +30,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coredash.app.CoreDashApp
 import com.coredash.app.data.settings.CardId
+import com.coredash.app.ui.cards.CalendarCard
 import com.coredash.app.ui.cards.NewsCard
 import com.coredash.app.ui.cards.PlaceholderCard
-import com.coredash.app.ui.cards.StocksCard
 import com.coredash.app.ui.cards.TodoCard
 import com.coredash.app.ui.cards.WeatherCard
 
@@ -92,7 +92,7 @@ fun DashboardScreen(
         val cards = if (current.focusMode) {
             listOf(CardId.TODO)
         } else {
-            CardId.entries.filter { it in current.activeCards }
+            current.cardOrder.filter { it in current.activeCards }
         }
 
         LazyColumn(
@@ -108,18 +108,19 @@ fun DashboardScreen(
                         weather = uiState.weather,
                         error = uiState.weatherError,
                     )
-                    CardId.CALENDAR -> PlaceholderCard(title = "Calendário")
+                    CardId.CALENDAR -> CalendarCard(
+                        events = uiState.calendarEvents,
+                        loading = uiState.calendarLoading,
+                        selectedCalendarIds = current.selectedCalendarIds,
+                        calendarDays = current.calendarDays,
+                        onLoad = viewModel::loadCalendar,
+                    )
                     CardId.GMAIL -> PlaceholderCard(title = "Gmail")
                     CardId.TODO -> TodoCard(
                         todos = uiState.todos,
                         onToggleComplete = viewModel::toggleTodoComplete,
                         onDelete = viewModel::deleteTodo,
                         onAdd = viewModel::addTodo,
-                    )
-                    CardId.STOCKS -> StocksCard(
-                        stocks = uiState.stocks,
-                        configured = uiState.stocksConfigured,
-                        error = uiState.stocksError,
                     )
                     CardId.NEWS -> NewsCard(
                         articles = uiState.news,

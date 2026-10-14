@@ -36,15 +36,6 @@ class SecretStore(context: Context) {
     fun getSerpApiKey(): String? = get(KEY_SERPAPI_API_KEY)
     fun setSerpApiKey(value: String?) = set(KEY_SERPAPI_API_KEY, value)
 
-    fun getBrapiToken(): String? = get(KEY_BRAPI_TOKEN)
-    fun setBrapiToken(value: String?) = set(KEY_BRAPI_TOKEN, value)
-
-    fun getGoogleServiceAccountJson(): String? = get(KEY_GOOGLE_SERVICE_ACCOUNT_JSON)
-    fun setGoogleServiceAccountJson(value: String?) = set(KEY_GOOGLE_SERVICE_ACCOUNT_JSON, value)
-
-    fun getGoogleCalendarId(): String? = get(KEY_GOOGLE_CALENDAR_ID)
-    fun setGoogleCalendarId(value: String?) = set(KEY_GOOGLE_CALENDAR_ID, value)
-
     fun getGmailClientId(): String? = get(KEY_GMAIL_CLIENT_ID)
     fun setGmailClientId(value: String?) = set(KEY_GMAIL_CLIENT_ID, value)
 
@@ -59,9 +50,6 @@ class SecretStore(context: Context) {
 
         const val KEY_MEDIASTACK_API_KEY = "MEDIASTACK_API_KEY"
         const val KEY_SERPAPI_API_KEY = "SERPAPI_API_KEY"
-        const val KEY_BRAPI_TOKEN = "BRAPI_TOKEN"
-        const val KEY_GOOGLE_SERVICE_ACCOUNT_JSON = "GOOGLE_SERVICE_ACCOUNT_JSON"
-        const val KEY_GOOGLE_CALENDAR_ID = "GOOGLE_CALENDAR_ID"
         const val KEY_GMAIL_CLIENT_ID = "GMAIL_CLIENT_ID"
         const val KEY_GMAIL_CLIENT_SECRET = "GMAIL_CLIENT_SECRET"
         const val KEY_GMAIL_REFRESH_TOKEN = "GMAIL_REFRESH_TOKEN"

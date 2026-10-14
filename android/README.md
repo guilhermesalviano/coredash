@@ -90,7 +90,7 @@ app/build/outputs/apk/debug/app-debug.apk
 | To-Do com recorrência             | ✅  |   ✅    | Room (daily/weekly/monthly)          |
 | Stocks (brapi)                    | ✅  |   ✅    | Ktor + brapi                         |
 | News (Mediastack)                 | ✅  |   ✅    | Ktor + Mediastack                    |
-| Calendar                          | ✅  |   ⏳    | TODO (OAuth / Credential Manager)    |
+| Calendar                          | ✅  |   ✅    | Agenda do dispositivo (READ_CALENDAR) |
 | Gmail                             | ✅  |   ⏳    | TODO                                 |
 | Modo foco                         | ✅  |   ✅    |                                      |
 | Tema (claro/escuro/sistema)       | ✅  |   ✅    |                                      |

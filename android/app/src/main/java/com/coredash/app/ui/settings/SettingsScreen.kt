@@ -1,6 +1,7 @@
 package com.coredash.app.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -17,20 +24,33 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coredash.app.CoreDashApp
+import com.coredash.app.data.settings.AppSettings
 import com.coredash.app.data.settings.CardId
+import com.coredash.app.data.settings.MAX_NEWS_COUNT
+import com.coredash.app.data.settings.MIN_NEWS_COUNT
+import com.coredash.app.data.settings.NEWS_TOPICS
 import com.coredash.app.data.settings.ThemeMode
+import com.coredash.app.data.settings.WeatherUnit
+import com.coredash.app.ui.calendar.rememberCalendarPermission
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +64,8 @@ fun SettingsScreen(
     ),
 ) {
     val settings by viewModel.settings.collectAsState()
+    val calendars by viewModel.calendars.collectAsState()
+    val calendarPermission = rememberCalendarPermission()
 
     Scaffold(
         topBar = {
@@ -83,21 +105,54 @@ fun SettingsScreen(
             }
 
             Text(
-                text = "Cartões",
+                text = "Personalizar widgets",
                 style = MaterialTheme.typography.titleMedium,
             )
-            CardId.entries.forEach { card ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+            WidgetCustomization(
+                settings = settings,
+                onToggle = viewModel::setCardEnabled,
+                onMove = viewModel::moveCard,
+                onNewsCount = viewModel::setNewsCount,
+                onNewsTopic = viewModel::setNewsTopic,
+                onCalendarDays = viewModel::setCalendarDays,
+                onWeatherUnit = viewModel::setWeatherUnit,
+            )
+
+            if (calendarPermission.granted) {
+                LaunchedEffect(Unit) { viewModel.loadCalendars() }
+
+                Text(
+                    text = "Agendas do dispositivo",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (calendars.isEmpty()) {
                     Text(
-                        text = card.label(),
-                        modifier = Modifier.weight(1f),
+                        text = "Nenhuma agenda encontrada",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Switch(
-                        checked = card in settings.activeCards,
-                        onCheckedChange = { enabled -> viewModel.setCardEnabled(card, enabled) },
+                } else {
+                    calendars.forEach { calendar ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = calendar.displayName,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Checkbox(
+                                checked = calendar.id in settings.selectedCalendarIds,
+                                onCheckedChange = { checked ->
+                                    viewModel.setCalendarSelected(calendar.id, checked)
+                                },
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Nenhuma marcada significa todas as agendas.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -123,6 +178,182 @@ private fun CardId.label(): String = when (this) {
     CardId.CALENDAR -> "Calendário"
     CardId.GMAIL -> "Gmail"
     CardId.TODO -> "Tarefas"
-    CardId.STOCKS -> "Ações"
     CardId.NEWS -> "Notícias"
 }
+
+private val CardId.hasOptions: Boolean
+    get() = this == CardId.NEWS || this == CardId.CALENDAR || this == CardId.WEATHER
+
+@Composable
+private fun WidgetCustomization(
+    settings: AppSettings,
+    onToggle: (CardId, Boolean) -> Unit,
+    onMove: (CardId, Boolean) -> Unit,
+    onNewsCount: (Int) -> Unit,
+    onNewsTopic: (String) -> Unit,
+    onCalendarDays: (Int) -> Unit,
+    onWeatherUnit: (WeatherUnit) -> Unit,
+) {
+    val expanded = remember { mutableStateMapOf<CardId, Boolean>() }
+
+    settings.cardOrder.forEachIndexed { index, card ->
+        val isExpanded = expanded[card] == true
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = card.label(),
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(
+                    onClick = { onMove(card, true) },
+                    enabled = index > 0,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowUp,
+                        contentDescription = "Mover ${card.label()} para cima",
+                    )
+                }
+                IconButton(
+                    onClick = { onMove(card, false) },
+                    enabled = index < settings.cardOrder.lastIndex,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = "Mover ${card.label()} para baixo",
+                    )
+                }
+                Switch(
+                    checked = card in settings.activeCards,
+                    onCheckedChange = { enabled -> onToggle(card, enabled) },
+                )
+                if (card.hasOptions) {
+                    IconButton(onClick = { expanded[card] = !isExpanded }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = if (isExpanded) {
+                                "Recolher opções de ${card.label()}"
+                            } else {
+                                "Expandir opções de ${card.label()}"
+                            },
+                        )
+                    }
+                }
+            }
+
+            if (isExpanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    when (card) {
+                        CardId.NEWS -> NewsOptions(
+                            count = settings.newsCount,
+                            topic = settings.newsTopic,
+                            onCountChange = onNewsCount,
+                            onTopicChange = onNewsTopic,
+                        )
+                        CardId.CALENDAR -> CalendarOptions(
+                            days = settings.calendarDays,
+                            onDaysChange = onCalendarDays,
+                        )
+                        CardId.WEATHER -> WeatherOptions(
+                            unit = settings.weatherUnit,
+                            onUnitChange = onWeatherUnit,
+                        )
+                        else -> Unit
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NewsOptions(
+    count: Int,
+    topic: String,
+    onCountChange: (Int) -> Unit,
+    onTopicChange: (String) -> Unit,
+) {
+    Text(
+        text = "Notícias por vez: $count",
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    Slider(
+        value = count.toFloat(),
+        onValueChange = { value -> onCountChange(value.roundToInt()) },
+        valueRange = MIN_NEWS_COUNT.toFloat()..MAX_NEWS_COUNT.toFloat(),
+        steps = MAX_NEWS_COUNT - MIN_NEWS_COUNT - 1,
+    )
+
+    var topicExpanded by remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton(onClick = { topicExpanded = true }) {
+            Text("Tópico: ${topic.label()}")
+        }
+        DropdownMenu(
+            expanded = topicExpanded,
+            onDismissRequest = { topicExpanded = false },
+        ) {
+            NEWS_TOPICS.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.label()) },
+                    onClick = {
+                        onTopicChange(option)
+                        topicExpanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarOptions(
+    days: Int,
+    onDaysChange: (Int) -> Unit,
+) {
+    Text(
+        text = "Dias exibidos",
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(1, 3, 7, 14).forEach { option ->
+            FilterChip(
+                selected = days == option,
+                onClick = { onDaysChange(option) },
+                label = { Text(option.toString()) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeatherOptions(
+    unit: WeatherUnit,
+    onUnitChange: (WeatherUnit) -> Unit,
+) {
+    Text(
+        text = "Unidade de temperatura",
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WeatherUnit.entries.forEach { option ->
+            FilterChip(
+                selected = unit == option,
+                onClick = { onUnitChange(option) },
+                label = { Text(option.label()) },
+            )
+        }
+    }
+}
+
+private fun WeatherUnit.label(): String = when (this) {
+    WeatherUnit.CELSIUS -> "Celsius"
+    WeatherUnit.FAHRENHEIT -> "Fahrenheit"
+}
+
+private fun String.label(): String = replaceFirstChar { it.uppercaseChar() }

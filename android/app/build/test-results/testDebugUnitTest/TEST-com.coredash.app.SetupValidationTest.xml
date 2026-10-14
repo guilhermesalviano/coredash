@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.coredash.app.SetupValidationTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-14T13:29:50" hostname="grok-bot-vm-179507063" time="0.029">
+<testsuite name="com.coredash.app.SetupValidationTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-14T14:16:49" hostname="grok-bot-vm-179507063" time="0.013">
   <properties/>
-  <testcase name="latitude out of range is rejected" classname="com.coredash.app.SetupValidationTest" time="0.002"/>
-  <testcase name="isComplete reflects validity of settings" classname="com.coredash.app.SetupValidationTest" time="0.021"/>
+  <testcase name="latitude out of range is rejected" classname="com.coredash.app.SetupValidationTest" time="0.003"/>
+  <testcase name="isComplete reflects validity of settings" classname="com.coredash.app.SetupValidationTest" time="0.005"/>
   <testcase name="longitude out of range is rejected" classname="com.coredash.app.SetupValidationTest" time="0.0"/>
-  <testcase name="valid timezone and coordinates produce no errors" classname="com.coredash.app.SetupValidationTest" time="0.003"/>
-  <testcase name="invalid timezone is rejected" classname="com.coredash.app.SetupValidationTest" time="0.001"/>
-  <testcase name="non-numeric coordinates are rejected" classname="com.coredash.app.SetupValidationTest" time="0.001"/>
+  <testcase name="valid timezone and coordinates produce no errors" classname="com.coredash.app.SetupValidationTest" time="0.002"/>
+  <testcase name="invalid timezone is rejected" classname="com.coredash.app.SetupValidationTest" time="0.0"/>
+  <testcase name="non-numeric coordinates are rejected" classname="com.coredash.app.SetupValidationTest" time="0.0"/>
   <testcase name="blank timezone is rejected" classname="com.coredash.app.SetupValidationTest" time="0.0"/>
-  <testcase name="boundary coordinates are accepted" classname="com.coredash.app.SetupValidationTest" time="0.0"/>
+  <testcase name="boundary coordinates are accepted" classname="com.coredash.app.SetupValidationTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

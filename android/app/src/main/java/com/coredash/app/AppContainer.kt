@@ -1,9 +1,10 @@
 package com.coredash.app
 
 import android.content.Context
+import com.coredash.app.data.calendar.DeviceCalendarRepository
+import com.coredash.app.data.location.DeviceLocationProvider
 import com.coredash.app.data.remote.HttpClientFactory
 import com.coredash.app.data.remote.NewsRepository
-import com.coredash.app.data.remote.StocksRepository
 import com.coredash.app.data.remote.WeatherRepository
 import com.coredash.app.data.settings.SecretStore
 import com.coredash.app.data.settings.SettingsRepository
@@ -23,11 +24,13 @@ class AppContainer(context: Context) {
 
     val settingsRepository: SettingsRepository = SettingsRepository(appContext)
 
+    val calendarRepository: DeviceCalendarRepository = DeviceCalendarRepository(appContext)
+
+    val locationProvider: DeviceLocationProvider = DeviceLocationProvider(appContext)
+
     val secretStore: SecretStore = SecretStore(appContext)
 
     val weatherRepository: WeatherRepository = WeatherRepository(httpClient)
-
-    val stocksRepository: StocksRepository = StocksRepository(httpClient)
 
     val newsRepository: NewsRepository = NewsRepository(httpClient)
 }

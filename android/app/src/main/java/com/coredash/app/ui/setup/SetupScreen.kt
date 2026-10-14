@@ -1,11 +1,17 @@
 package com.coredash.app.ui.setup
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +21,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -28,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coredash.app.CoreDashApp
 
@@ -41,6 +49,17 @@ fun SetupScreen(
     ),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        if (grants.values.any { it }) {
+            viewModel.useMyLocation()
+        } else {
+            viewModel.onLocationPermissionDenied()
+        }
+    }
 
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
@@ -143,14 +162,33 @@ fun SetupScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedTextField(
-                value = uiState.tickers,
-                onValueChange = viewModel::onTickersChange,
-                label = { Text("Ações (opcional)") },
-                supportingText = { Text("Separadas por vírgula, ex.: PETR4, VALE3") },
-                singleLine = true,
+            OutlinedButton(
+                onClick = {
+                    if (context.hasLocationPermission()) {
+                        viewModel.useMyLocation()
+                    } else {
+                        locationPermissionLauncher.launch(locationPermissions)
+                    }
+                },
+                enabled = !uiState.isLocating,
                 modifier = Modifier.fillMaxWidth(),
-            )
+            ) {
+                if (uiState.isLocating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+                Text("Usar minha localização")
+            }
+
+            uiState.locationMessage?.let { message ->
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -168,21 +206,6 @@ fun SetupScreen(
                 label = "SerpApi API Key",
                 value = uiState.serpApiKey,
                 onValueChange = viewModel::onSerpApiKeyChange,
-            )
-            SecretField(
-                label = "BRAPI Token",
-                value = uiState.brapiToken,
-                onValueChange = viewModel::onBrapiTokenChange,
-            )
-            SecretField(
-                label = "Google Service Account JSON",
-                value = uiState.googleServiceAccountJson,
-                onValueChange = viewModel::onGoogleServiceAccountJsonChange,
-            )
-            SecretField(
-                label = "Google Calendar ID",
-                value = uiState.googleCalendarId,
-                onValueChange = viewModel::onGoogleCalendarIdChange,
             )
             SecretField(
                 label = "Gmail Client ID",
@@ -209,6 +232,17 @@ fun SetupScreen(
         }
     }
 }
+
+private val locationPermissions = arrayOf(
+    Manifest.permission.ACCESS_COARSE_LOCATION,
+    Manifest.permission.ACCESS_FINE_LOCATION,
+)
+
+private fun Context.hasLocationPermission(): Boolean =
+    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED
 
 @Composable
 private fun SecretField(
