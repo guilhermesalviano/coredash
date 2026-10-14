@@ -17,13 +17,10 @@ export interface StoredSettings {
   latitude: string | null;
   longitude: string | null;
   city: string | null;
-  aiModel: string | null;
-  personalContext: string | null;
   calendarIds: string[] | null;
   googleClientEmail: string | null;
   gmailClientId: string | null;
   spotifyClientId: string | null;
-  openRouterApiKey: string | null;
   newsApiKey: string | null;
   serpApiKey: string | null;
   brapiToken: string | null;
@@ -39,13 +36,10 @@ export interface EnvironmentSettings {
   latitude: string;
   longitude: string;
   city: string;
-  aiModel: string;
-  personalContext: string;
   calendarIds: string[];
   googleClientEmail: string;
   gmailClientId: string;
   spotifyClientId: string;
-  openRouterApiKey: string;
   newsApiKey: string;
   serpApiKey: string;
   brapiToken: string;
@@ -57,7 +51,6 @@ export interface EnvironmentSettings {
 }
 
 export interface ResolvedRuntimeSettings extends RuntimeSettings {
-  openRouterApiKey: string;
   newsApiKey: string;
   serpApiKey: string;
   brapiToken: string;
@@ -73,12 +66,9 @@ const STRING_PATCH_KEYS = [
   "latitude",
   "longitude",
   "city",
-  "aiModel",
-  "personalContext",
   "googleClientEmail",
   "gmailClientId",
   "spotifyClientId",
-  "openRouterApiKey",
   "newsApiKey",
   "serpApiKey",
   "brapiToken",
@@ -89,7 +79,7 @@ const STRING_PATCH_KEYS = [
   "spotifyRefreshToken",
 ] as const;
 
-const REQUIRED_PUBLIC = ["timezone", "latitude", "longitude", "aiModel"] as const;
+const REQUIRED_PUBLIC = ["timezone", "latitude", "longitude"] as const;
 
 const INTEGRATION_GROUPS: Array<{ name: string; keys: SetupFieldKey[]; label: string }> = [
   {
@@ -115,13 +105,10 @@ export function emptyStoredSettings(): StoredSettings {
     latitude: null,
     longitude: null,
     city: null,
-    aiModel: null,
-    personalContext: null,
     calendarIds: null,
     googleClientEmail: null,
     gmailClientId: null,
     spotifyClientId: null,
-    openRouterApiKey: null,
     newsApiKey: null,
     serpApiKey: null,
     brapiToken: null,
@@ -207,9 +194,7 @@ export function validateRuntimeSettingsPatch(input: unknown): RuntimeSettingsPat
         throw new Error("longitude must be a number between -180 and 180");
       }
     }
-    if (key === "aiModel") limited(normalized, "aiModel", 200);
     if (key === "city") limited(normalized, "city", 120);
-    if (key === "personalContext") limited(normalized, "personalContext", 2000);
     if (key === "googleClientEmail" || key === "gmailClientId" || key === "spotifyClientId") {
       limited(normalized, key, 255);
     }
@@ -254,13 +239,10 @@ export function resolveSettings(stored: StoredSettings, env: EnvironmentSettings
     latitude: pickText(stored.latitude, env.latitude),
     longitude: pickText(stored.longitude, env.longitude),
     city: pickText(stored.city, env.city),
-    aiModel: pickText(stored.aiModel, env.aiModel),
-    personalContext: pickText(stored.personalContext, env.personalContext),
     calendarIds: stored.calendarIds ?? env.calendarIds,
     googleClientEmail: pickText(stored.googleClientEmail, env.googleClientEmail),
     gmailClientId: pickText(stored.gmailClientId, env.gmailClientId),
     spotifyClientId: pickText(stored.spotifyClientId, env.spotifyClientId),
-    openRouterApiKey: pickText(stored.openRouterApiKey, env.openRouterApiKey),
     newsApiKey: pickText(stored.newsApiKey, env.newsApiKey),
     serpApiKey: pickText(stored.serpApiKey, env.serpApiKey),
     brapiToken: pickText(stored.brapiToken, env.brapiToken),
@@ -279,8 +261,6 @@ function present(resolved: ResolvedRuntimeSettings, key: SetupFieldKey): boolean
 
 export function missingRequiredSettings(resolved: ResolvedRuntimeSettings): SetupFieldKey[] {
   const missing: SetupFieldKey[] = [];
-  if (!hasText(resolved.openRouterApiKey)) missing.push("openRouterApiKey");
-  if (!hasText(resolved.aiModel)) missing.push("aiModel");
   if (!hasText(resolved.timezone) || !validTimezone(resolved.timezone)) missing.push("timezone");
   const latitude = Number(resolved.latitude);
   if (!hasText(resolved.latitude) || !Number.isFinite(latitude) || latitude < -90 || latitude > 90) missing.push("latitude");
@@ -316,8 +296,6 @@ export function toPublicSettingsResponse(resolved: ResolvedRuntimeSettings, stor
     latitude: resolved.latitude,
     longitude: resolved.longitude,
     city: resolved.city,
-    aiModel: resolved.aiModel,
-    personalContext: resolved.personalContext,
     calendarIds: resolved.calendarIds,
     googleClientEmail: resolved.googleClientEmail,
     gmailClientId: resolved.gmailClientId,
@@ -328,8 +306,6 @@ export function toPublicSettingsResponse(resolved: ResolvedRuntimeSettings, stor
     latitude: sourceFor(stored.latitude),
     longitude: sourceFor(stored.longitude),
     city: sourceFor(stored.city),
-    aiModel: sourceFor(stored.aiModel),
-    personalContext: sourceFor(stored.personalContext),
     calendarIds: stored.calendarIds === null ? "environment" : "database",
     googleClientEmail: sourceFor(stored.googleClientEmail),
     gmailClientId: sourceFor(stored.gmailClientId),

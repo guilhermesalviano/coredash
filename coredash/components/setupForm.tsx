@@ -93,9 +93,12 @@ export default function SetupForm({
 
   const persist = async (restoreDefaults = false) => {
     if (!draft || !data || saving) return;
-    if (!restoreDefaults && data.setupRequired && !data.secrets.openRouterApiKey && !draft.openRouterApiKey.trim()) {
-      setError("OpenRouter API key must be configured.");
-      return;
+    if (!restoreDefaults && data.setupRequired) {
+      const missing = SETUP_FIELDS.filter((field) => field.required && !draft[field.key].trim());
+      if (missing.length > 0) {
+        setError(`${missing.map((field) => field.label).join(", ")} must be configured.`);
+        return;
+      }
     }
     setSaving(true);
     setError(null);

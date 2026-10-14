@@ -1,12 +1,4 @@
-export const DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o-mini";
-
 export const SETUP_GROUPS = [
-  {
-    id: "ai",
-    title: "OpenRouter",
-    description: "Required. Chat and the daily narrative both call OpenRouter.",
-    optional: false,
-  },
   {
     id: "location",
     title: "Location",
@@ -48,9 +40,6 @@ export const SETUP_GROUPS = [
 export type SetupGroupId = (typeof SETUP_GROUPS)[number]["id"];
 
 export type SetupFieldKey =
-  | "openRouterApiKey"
-  | "aiModel"
-  | "personalContext"
   | "timezone"
   | "latitude"
   | "longitude"
@@ -83,39 +72,6 @@ export interface SetupField {
 }
 
 export const SETUP_FIELDS: readonly SetupField[] = [
-  {
-    key: "openRouterApiKey",
-    label: "API key",
-    env: "OPENROUTER_API_KEY",
-    group: "ai",
-    required: true,
-    secret: true,
-    input: "secret",
-    help: "Bearer token from openrouter.ai/keys. Stored on the server and never sent back to the browser.",
-    placeholder: "sk-or-...",
-  },
-  {
-    key: "aiModel",
-    label: "Model",
-    env: "AI_MODEL",
-    group: "ai",
-    required: true,
-    secret: false,
-    input: "text",
-    help: "OpenRouter model id, for example openai/gpt-4o-mini.",
-    placeholder: DEFAULT_OPENROUTER_MODEL,
-  },
-  {
-    key: "personalContext",
-    label: "Personal context",
-    env: "PERSONAL_CONTEXT",
-    group: "ai",
-    required: false,
-    secret: false,
-    input: "textarea",
-    help: "Optional names and household context Rocky can use in the narrative.",
-    placeholder: "Names for you, your partner, and your pets",
-  },
   {
     key: "timezone",
     label: "Timezone",

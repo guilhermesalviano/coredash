@@ -8,13 +8,11 @@ test("validates and normalizes runtime settings", () => {
     timezone: " America/Sao_Paulo ",
     latitude: "-23.5",
     longitude: "-46.6",
-    aiModel: " gemma3:4b ",
     calendarIds: ["work", " work ", "", "home"],
   }), {
     timezone: "America/Sao_Paulo",
     latitude: "-23.5",
     longitude: "-46.6",
-    aiModel: "gemma3:4b",
     calendarIds: ["work", "home"],
   });
 });

@@ -11,11 +11,9 @@
     "test:news": "tsx --test services/google-news-api.test.ts",
     "test:focus": "tsx --test features/focus/*.test.ts",
     "test:todos": "tsx --test features/todos/server/todo-service.test.ts",
-    "test:settings": "tsx --test features/settings/server/*.test.ts lib/ai/providers/openrouter.test.ts",
-    "mcp": "tsx mcp/stdio.ts"
+    "test:settings": "tsx --test features/settings/server/*.test.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/server": "^2.0.0",
     "@toon-format/toon": "^4.1.1",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
@@ -31,8 +29,7 @@
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
-    "yahoo-finance2": "^3.13.2",
-    "zod": "^4.6.1"
+    "yahoo-finance2": "^3.13.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -62,12 +62,6 @@ export const SPOTIFY = {
   refreshToken: optional("SPOTIFY_REFRESH_TOKEN"),
 } as const;
 
-export const AI = {
-  model: optional("AI_MODEL", "openai/gpt-4o-mini"),
-  personalContext: optional("PERSONAL_CONTEXT"),
-  openRouterApiKey: optional("OPENROUTER_API_KEY"),
-} as const;
-
 export const CONFIG = {
   isDev,
   logLevel: optional("LOG_LEVEL", isDev ? "debug" : "info"),

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 
 export const CARD_REGISTRY = [
   { id: "weather",   label: "Weather",          emoji: "🌤" },
-  { id: "narrative", label: "Rocky (AI)",       emoji: "✨" },
   { id: "calendar",  label: "Calendar",         emoji: "📅" },
   { id: "gmail",     label: "Gmail",            emoji: "📧" },
   { id: "spotify",   label: "Spotify",          emoji: "🎵" },
@@ -20,7 +19,7 @@ const STORAGE_KEY = "active_cards";
 const SYNC_EVENT = "active-cards-changed";
 
 const DEFAULT_ACTIVE: CardId[] = [
-  "weather", "narrative", "calendar", "gmail", "spotify", "todo",
+  "weather", "calendar", "gmail", "spotify", "todo",
 ];
 
 function load(): CardId[] {

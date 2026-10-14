@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import {
   Check, ChevronRight, CloudSun, Focus, LayoutGrid, Mail, Moon, Music2,
   Newspaper, Palette, CalendarDays, Settings2, SlidersHorizontal,
-  Sparkles, Sun, TrendingUp, ListChecks, X, type LucideIcon,
+  Sun, TrendingUp, ListChecks, X, type LucideIcon,
 } from "lucide-react";
 import storage from "@/lib/storage";
 import { CARD_REGISTRY, type CardId, useActiveCards } from "@/hooks/useActiveCards";
@@ -23,7 +23,6 @@ type ThemeMode = "light" | "dark";
 
 const CARD_DETAILS: Record<CardId, { icon: LucideIcon; description: string }> = {
   weather: { icon: CloudSun, description: "The forecast at a glance" },
-  narrative: { icon: Sparkles, description: "A little help from Rocky" },
   calendar: { icon: CalendarDays, description: "What’s coming up next" },
   gmail: { icon: Mail, description: "Stay on top of your inbox" },
   spotify: { icon: Music2, description: "Your music, within reach" },

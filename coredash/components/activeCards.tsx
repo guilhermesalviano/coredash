@@ -5,7 +5,6 @@ import CalendarCardClient from "./cards/clients/calendarCardClient";
 import StocksCardClient from "@/components/cards/clients/stocksCardClient";
 import StatusReporter from "./statusReporter";
 import TodoCardClient from "./cards/clients/todoCardClient";
-import NarrativeSummaryCard from "./cards/narrativeSummaryCard";
 import SpotifyCard from "./cards/spotify";
 import GmailCard from "./cards/gmail";
 import { CardId, useActiveCards } from "@/hooks/useActiveCards";
@@ -15,7 +14,6 @@ const isWeekend = [0, 6].includes(new Date().getDay());
 
 const CARD_MAP: Record<CardId, React.ComponentType | null> = {
   weather:   WeatherCardClient,
-  narrative: NarrativeSummaryCard,
   calendar:  CalendarCardClient,
   gmail:     GmailCard,
   todo:      TodoCardClient,

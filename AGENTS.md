@@ -39,7 +39,6 @@ docker compose up --build
 - Use `formatResponse` for API responses so the existing JSON and `?format=toon` behavior remains compatible.
 - Use `fetchJson<T>` for client requests that return the standard `{ data, message }` envelope.
 - Keep dashboard state typed through `features/dashboard/types.ts`; avoid introducing `any` into shared state or feature boundaries.
-- AI chat requests must go through `/api/ai/chat`. Do not call external AI providers directly from the browser.
 
 ## Change guidelines
 

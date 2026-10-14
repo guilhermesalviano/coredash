@@ -1,6 +1,6 @@
 import type { DataSource } from "typeorm";
 
-import { AI, APIS, DB, GOOGLE, LOCATION, SPOTIFY } from "@/config/config";
+import { APIS, DB, GOOGLE, LOCATION, SPOTIFY } from "@/config/config";
 import { readSpotifyRefreshToken } from "@/utils/spotify-token-store";
 import type { RuntimeSettingsPatch, RuntimeSettingsResponse } from "@/features/settings/types";
 import {
@@ -22,11 +22,8 @@ interface RuntimeSettingsRow {
   timezone?: string | null;
   latitude?: string | null;
   longitude?: string | null;
-  ai_model?: string | null;
   calendar_ids?: string | null;
   city?: string | null;
-  personal_context?: string | null;
-  openrouter_api_key?: string | null;
   news_api_key?: string | null;
   brapi_token?: string | null;
   serpapi_key?: string | null;
@@ -42,8 +39,6 @@ interface RuntimeSettingsRow {
 
 const EXTRA_COLUMNS = [
   "city VARCHAR(120) NULL",
-  "personal_context TEXT NULL",
-  "openrouter_api_key TEXT NULL",
   "news_api_key TEXT NULL",
   "brapi_token TEXT NULL",
   "serpapi_key TEXT NULL",
@@ -61,11 +56,8 @@ const SELECT_COLUMNS = [
   "timezone",
   "latitude",
   "longitude",
-  "ai_model",
   "calendar_ids",
   "city",
-  "personal_context",
-  "openrouter_api_key",
   "news_api_key",
   "brapi_token",
   "serpapi_key",
@@ -85,8 +77,6 @@ function environmentDefaults(): EnvironmentSettings {
     latitude: LOCATION.latitude,
     longitude: LOCATION.longitude,
     city: LOCATION.city,
-    aiModel: AI.model,
-    personalContext: AI.personalContext,
     calendarIds: GOOGLE.calendarIds,
     googleClientEmail: GOOGLE.clientEmail,
     googlePrivateKey: GOOGLE.privateKey,
@@ -96,7 +86,6 @@ function environmentDefaults(): EnvironmentSettings {
     spotifyClientId: SPOTIFY.clientId,
     spotifyClientSecret: SPOTIFY.clientSecret,
     spotifyRefreshToken: SPOTIFY.refreshToken,
-    openRouterApiKey: AI.openRouterApiKey,
     newsApiKey: APIS.newsApiKey,
     serpApiKey: APIS.serpApiKey,
     brapiToken: APIS.brapiToken,
@@ -120,13 +109,10 @@ function fromRow(row: RuntimeSettingsRow | undefined): StoredSettings {
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
     city: row.city ?? null,
-    aiModel: row.ai_model ?? null,
-    personalContext: row.personal_context ?? null,
     calendarIds: row.calendar_ids === null || row.calendar_ids === undefined ? null : parseCalendarIds(row.calendar_ids),
     googleClientEmail: row.google_client_email ?? null,
     gmailClientId: row.gmail_client_id ?? null,
     spotifyClientId: row.spotify_client_id ?? null,
-    openRouterApiKey: row.openrouter_api_key ?? null,
     newsApiKey: row.news_api_key ?? null,
     serpApiKey: row.serpapi_key ?? null,
     brapiToken: row.brapi_token ?? null,
@@ -149,11 +135,8 @@ async function getSettingsDataSource() {
           timezone VARCHAR(64) NULL,
           latitude VARCHAR(32) NULL,
           longitude VARCHAR(32) NULL,
-          ai_model VARCHAR(255) NULL,
           calendar_ids TEXT NULL,
           city VARCHAR(120) NULL,
-          personal_context TEXT NULL,
-          openrouter_api_key TEXT NULL,
           news_api_key TEXT NULL,
           brapi_token TEXT NULL,
           serpapi_key TEXT NULL,
@@ -219,11 +202,8 @@ function storedParameters(stored: StoredSettings): unknown[] {
     stored.timezone,
     stored.latitude,
     stored.longitude,
-    stored.aiModel,
     stored.calendarIds === null ? null : stored.calendarIds.join(";"),
     stored.city,
-    stored.personalContext,
-    stored.openRouterApiKey,
     stored.newsApiKey,
     stored.brapiToken,
     stored.serpApiKey,
@@ -250,8 +230,8 @@ export async function saveRuntimeSettings(
   }
   const parameters = storedParameters(next);
   const columns = [
-    "id", "timezone", "latitude", "longitude", "ai_model", "calendar_ids", "city", "personal_context",
-    "openrouter_api_key", "news_api_key", "brapi_token", "serpapi_key", "google_client_email",
+    "id", "timezone", "latitude", "longitude", "calendar_ids", "city",
+    "news_api_key", "brapi_token", "serpapi_key", "google_client_email",
     "google_private_key", "gmail_client_id", "gmail_client_secret", "gmail_refresh_token",
     "spotify_client_id", "spotify_client_secret", "spotify_refresh_token",
   ];

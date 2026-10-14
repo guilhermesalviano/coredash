@@ -5,8 +5,6 @@ export interface RuntimeSettings {
   latitude: string;
   longitude: string;
   city: string;
-  aiModel: string;
-  personalContext: string;
   calendarIds: string[];
   googleClientEmail: string;
   gmailClientId: string;
@@ -20,8 +18,6 @@ export interface RuntimeSettingsSources {
   latitude: RuntimeSettingSource;
   longitude: RuntimeSettingSource;
   city: RuntimeSettingSource;
-  aiModel: RuntimeSettingSource;
-  personalContext: RuntimeSettingSource;
   calendarIds: RuntimeSettingSource;
   googleClientEmail: RuntimeSettingSource;
   gmailClientId: RuntimeSettingSource;
@@ -29,7 +25,6 @@ export interface RuntimeSettingsSources {
 }
 
 export type SecretFieldKey = Extract<SetupFieldKey,
-  | "openRouterApiKey"
   | "newsApiKey"
   | "serpApiKey"
   | "brapiToken"
@@ -54,13 +49,10 @@ export interface RuntimeSettingsPatch {
   latitude?: string | null;
   longitude?: string | null;
   city?: string | null;
-  aiModel?: string | null;
-  personalContext?: string | null;
   calendarIds?: string[] | null;
   googleClientEmail?: string | null;
   gmailClientId?: string | null;
   spotifyClientId?: string | null;
-  openRouterApiKey?: string | null;
   newsApiKey?: string | null;
   serpApiKey?: string | null;
   brapiToken?: string | null;
