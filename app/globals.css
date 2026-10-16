@@ -20,18 +20,25 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --surface: #ffffff;
-  --surface2: #f1f3f5;
-  --border: #e9ecef;
-  --border-hover: #3a3a3a;
-  --muted: #555;
-  --accent: #5a6e0f;
+  --background: #dce8f3;
+  --foreground: #0f172a;
+  --surface: #f3f8fd;
+  --surface2: #e7f0f8;
+  --surface3: #dce7f3;
+  --border: rgba(148, 163, 184, 0.25);
+  --border-hover: rgba(100, 116, 139, 0.45);
+  --muted: #64748b;
+  --accent: #0038ff;
   --font-mono: 'Space Mono', monospace;
   --font-body: 'DM Sans', sans-serif;
-  --gradient-start: #f5f5f4;
-  --gradient-end: #eef5db;
+  --gradient-start: #f3f8fd;
+  --gradient-end: #e9f2fb;
+  --wall-bg: #dbe7f3;
+  --wall-card: rgba(244, 249, 254, 0.88);
+  --wall-card-inner: rgba(230, 239, 248, 0.72);
+  --wall-border: rgba(255, 255, 255, 0.75);
+  --wall-rail-active-bg: #0f172a;
+  --wall-rail-active-fg: #ffffff;
 }
 
 @theme inline {
@@ -71,45 +78,44 @@
   }
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --surface: #1a1a1a;
-    --surface2: #2a2a2a;
-    --muted: #aaaaaa;
-    --border: #3a3a3a;
-    --border-hover: #e9ecef;
-    --gradient-start: #2a2a2a;
-    --gradient-end: #1a1a1a;
-    --gradient-start-raining: #7796b6;
-  }
-}
-
 [data-theme="light"] {
-  --background: #ffffff;
-  --foreground: #171717;
-  --surface: #ffffff;
-  --surface2: #f1f3f5;
-  --border: #e9ecef;
-  --border-hover: #3a3a3a;
-  --muted: #555;
-  --accent: #5a6e0f;
-  --gradient-start: #f5f5f4;
-  --gradient-end: #eef5db;
+  --background: #dce8f3;
+  --foreground: #0f172a;
+  --surface: #f3f8fd;
+  --surface2: #e7f0f8;
+  --surface3: #dce7f3;
+  --border: rgba(148, 163, 184, 0.25);
+  --border-hover: rgba(100, 116, 139, 0.45);
+  --muted: #64748b;
+  --accent: #0038ff;
+  --gradient-start: #f3f8fd;
+  --gradient-end: #e9f2fb;
+  --wall-bg: #dbe7f3;
+  --wall-card: rgba(244, 249, 254, 0.88);
+  --wall-card-inner: rgba(228, 238, 248, 0.76);
+  --wall-border: rgba(255, 255, 255, 0.75);
+  --wall-rail-active-bg: #0f172a;
+  --wall-rail-active-fg: #ffffff;
 }
 
 [data-theme="dark"] {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --surface: #1a1a1a;
-  --surface2: #2a2a2a;
-  --muted: #aaaaaa;
-  --border: #3a3a3a;
-  --border-hover: #e9ecef;
-  --gradient-start: #2a2a2a;
-  --gradient-end: #1a1a1a;
+  --background: #0b111e;
+  --foreground: #f1f5f9;
+  --surface: #131c2e;
+  --surface2: #1c2840;
+  --surface3: #243352;
+  --muted: #94a3b8;
+  --border: rgba(148, 163, 184, 0.16);
+  --border-hover: rgba(148, 163, 184, 0.35);
+  --accent: #3b82f6;
+  --gradient-start: #131c2e;
+  --gradient-end: #0f172a;
+  --wall-bg: #0b111e;
+  --wall-card: rgba(20, 29, 47, 0.92);
+  --wall-card-inner: rgba(30, 41, 66, 0.75);
+  --wall-border: rgba(148, 163, 184, 0.14);
+  --wall-rail-active-bg: #3b82f6;
+  --wall-rail-active-fg: #ffffff;
 }
 
 body {
@@ -1192,3 +1198,748 @@ body[data-focus="on"] .header {
   text-align: right;
 }
 
+/* ============================================================================
+   WALL TABLET DASHBOARD LAYOUT & CARDS
+   ============================================================================ */
+
+.wall-shell {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 100dvh;
+  padding: 16px;
+  background: var(--wall-bg);
+  color: var(--foreground);
+}
+
+/* Left Vertical Navigation Rail */
+.wall-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 8px;
+  border-radius: 26px;
+  background: var(--wall-card);
+  border: 1px solid var(--wall-border);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(16px);
+}
+
+.wall-rail-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.wall-rail-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.15s ease;
+}
+
+.wall-rail-btn:hover {
+  background: var(--wall-card-inner);
+  color: var(--foreground);
+}
+
+.wall-rail-btn--active {
+  background: var(--wall-rail-active-bg);
+  color: var(--wall-rail-active-fg);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+}
+
+.wall-rail-btn--active:hover {
+  background: var(--wall-rail-active-bg);
+  color: var(--wall-rail-active-fg);
+}
+
+.wall-rail-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+  padding-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* Main Content Area */
+.wall-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Top Row: Clock + Next Event on Left, Weather Chart on Right */
+.wall-top-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.92fr) minmax(380px, 1.48fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.wall-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.wall-clock-card {
+  padding: 18px 22px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.wall-big-time {
+  font-size: clamp(3.6rem, 6vw, 5.4rem);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  color: var(--foreground);
+}
+
+.wall-big-date {
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Vibrant Royal Blue "PRÓXIMO" Card */
+.wall-next-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, #0038ff 0%, #1b4dff 100%);
+  color: #ffffff;
+  box-shadow: 0 14px 32px rgba(0, 56, 255, 0.26);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 148px;
+}
+
+.wall-next-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 10px;
+}
+
+.wall-next-title {
+  font-size: clamp(1.35rem, 2.1vw, 1.8rem);
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.wall-next-meta {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.wall-hero-right {
+  display: flex;
+  min-width: 0;
+}
+
+/* Weather Card Redesign */
+.wall-weather-card {
+  flex: 1;
+  max-width: none !important;
+  min-width: 0 !important;
+  border-radius: 26px !important;
+  padding: 22px 24px !important;
+  background: var(--wall-card) !important;
+  border: 1px solid var(--wall-border) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.wall-weather-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.wall-weather-current {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.wall-weather-main-icon {
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 10px rgba(245, 158, 11, 0.22));
+}
+
+.wall-weather-temp {
+  font-size: clamp(2.6rem, 4vw, 3.5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--foreground);
+}
+
+.wall-weather-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wall-weather-condition {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.wall-weather-sub {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.wall-weather-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wall-weather-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: var(--wall-card-inner);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.wall-weather-chart-wrap {
+  width: 100%;
+  overflow: hidden;
+  padding: 2px 0;
+}
+
+.wall-weather-svg {
+  width: 100%;
+  height: 108px;
+  display: block;
+}
+
+.wall-chart-temp-label {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--foreground);
+}
+
+.wall-weather-hours-axis {
+  position: relative;
+  height: 16px;
+}
+
+.wall-chart-hour-label {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 7-Day Daily Strip */
+.wall-weather-daily {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.wall-daily-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 4px;
+  border-radius: 14px;
+  transition: background-color 0.15s ease;
+}
+
+.wall-daily-item--today {
+  background: var(--wall-card-inner);
+}
+
+.wall-daily-day {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: lowercase;
+}
+
+.wall-daily-item--today .wall-daily-day {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.wall-daily-icon {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.wall-daily-temps {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.wall-daily-max {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.wall-daily-min {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.wall-daily-rain {
+  font-size: 10px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+/* Bottom Row: 3 Equal-Height Cards */
+.wall-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  flex: 1;
+  align-items: stretch;
+}
+
+.wall-card {
+  border-radius: 26px;
+  padding: 20px 22px;
+  background: var(--wall-card);
+  border: 1px solid var(--wall-border);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+  max-height: 460px;
+}
+
+.wall-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.wall-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wall-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wall-card-icon--blue {
+  background: rgba(59, 130, 246, 0.14);
+  color: #2563eb;
+}
+
+.wall-card-icon--purple {
+  background: rgba(139, 92, 246, 0.14);
+  color: #7c3aed;
+}
+
+.wall-card-icon--amber {
+  background: rgba(245, 158, 11, 0.16);
+  color: #d97706;
+}
+
+.wall-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--foreground);
+  letter-spacing: -0.01em;
+}
+
+.wall-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wall-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--wall-card-inner);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.wall-icon-action {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: none;
+  background: var(--wall-card-inner);
+  color: var(--foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.wall-icon-action:hover {
+  background: var(--surface3);
+  transform: scale(1.04);
+}
+
+.wall-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding-right: 2px;
+}
+
+/* Upcoming Events List */
+.wall-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wall-event-item {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 16px;
+  background: var(--wall-card-inner);
+  transition: transform 0.15s ease;
+}
+
+.wall-event-bar {
+  width: 4px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.wall-event-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wall-event-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wall-event-datetime {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wall-event-days-pill {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.wall-event-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wall-event-tag {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* Routines & Tasks List */
+.wall-routines-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wall-routine-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--wall-card-inner);
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.wall-routine-item:hover {
+  background: var(--surface3);
+}
+
+.wall-routine-item--done {
+  opacity: 0.55;
+}
+
+.wall-routine-item--done .wall-routine-title {
+  text-decoration: line-through;
+}
+
+.wall-check-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid rgba(100, 116, 139, 0.45);
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.wall-check-circle--checked {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.wall-routine-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wall-routine-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.25;
+}
+
+.wall-routine-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wall-routine-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wall-routine-sponsor {
+  padding: 1.5px 8px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.14);
+  color: #2563eb;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .wall-routine-sponsor {
+  background: rgba(59, 130, 246, 0.22);
+  color: #60a5fa;
+}
+
+.wall-priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.wall-item-delete {
+  opacity: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.wall-routine-item:hover .wall-item-delete {
+  opacity: 1;
+}
+
+.wall-item-delete:hover {
+  color: #ef4444;
+}
+
+.wall-completed-Count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  padding-top: 4px;
+}
+
+/* Empty State ("Tudo feito" / "Não há tarefas pendentes") */
+.wall-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  gap: 8px;
+}
+
+.wall-empty-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.wall-empty-badge--green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.wall-empty-badge--blue {
+  background: rgba(59, 130, 246, 0.14);
+  color: #3b82f6;
+}
+
+.wall-empty-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--foreground);
+}
+
+.wall-empty-subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1100px) {
+  .wall-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wall-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wall-card {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .wall-shell {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .wall-rail {
+    flex-direction: row;
+    padding: 8px 14px;
+    border-radius: 20px;
+  }
+
+  .wall-rail-group {
+    flex-direction: row;
+  }
+
+  .wall-rail-clock {
+    display: none;
+  }
+}

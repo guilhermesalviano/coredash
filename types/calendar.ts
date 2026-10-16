@@ -49,6 +49,10 @@ export interface CalendarEventItem {
   startDateTime?: string;
   endDateTime?: string;
   title: string;
+  summary?: string;
+  calendarName?: string;
+  location?: string;
+  daysUntil?: number;
   type?: string;
   color?: string;
 }
@@ -56,20 +60,6 @@ export interface CalendarEventItem {
 export interface CalendarInternalAPIResponse {
   todayEvents: CalendarEventItem[];
   nextDayEvents?: CalendarEventItem[];
-  importantEvents: {
-    id: string;
-    start: string;
-    end: string;
-    title: string;
-    type?: string;
-    color?: string;
-  }[];
-  futureEvents?: {
-    id: string;
-    start: string;
-    end: string;
-    title: string;
-    type?: string;
-    color?: string;
-  }[];
+  importantEvents: CalendarEventItem[];
+  futureEvents?: CalendarEventItem[];
 }

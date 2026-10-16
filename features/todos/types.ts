@@ -24,6 +24,8 @@ export interface CreateTodoInput {
   type?: TodoType;
   status?: TaskStatus;
   description?: string | null;
+  sponsor?: string | null;
+  usualCompletionTime?: string | null;
   order?: number;
   repeat?: number | boolean;
   weeklyInterval?: number;
@@ -39,6 +41,7 @@ export interface UpdateTodoInput {
   title?: string;
   description?: string | null;
   priority?: string;
+  sponsor?: string | null;
 }
 
 export interface GetTodosOptions {

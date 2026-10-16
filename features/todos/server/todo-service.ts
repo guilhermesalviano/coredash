@@ -238,6 +238,7 @@ export async function createTodo(input: CreateTodoInput): Promise<Todo> {
     type: todoType,
     status: initialStatus,
     description: input.description ?? null,
+    sponsor: input.sponsor?.trim() || null,
     order: order ?? 0,
     priority: input.priority ?? "medium",
     createdAt: new Date(),
@@ -248,7 +249,7 @@ export async function createTodo(input: CreateTodoInput): Promise<Todo> {
     await db.getRepository(TodoCheck).save({
       id: uuidv4(),
       timestamp: format(new Date(), "yyyy-MM-dd"),
-      hour: format(new Date(), "HH:mm"),
+      hour: input.usualCompletionTime?.trim() || format(new Date(), "HH:mm"),
       checked: input.checked ?? 0,
       todo,
     });
@@ -269,6 +270,7 @@ export async function updateTodo(input: UpdateTodoInput): Promise<void> {
   if (input.title !== undefined) updates.title = input.title.trim();
   if (input.priority !== undefined) updates.priority = input.priority;
   if (input.description !== undefined) updates.description = input.description;
+  if (input.sponsor !== undefined) updates.sponsor = input.sponsor?.trim() || null;
   if (input.order !== undefined) updates.order = input.order;
 
   if (input.status !== undefined) {

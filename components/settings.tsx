@@ -215,11 +215,11 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function Settings() {
+export default function Settings({ className = "icon-button" }: { className?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-label="Open settings" className="icon-button">
+      <button type="button" onClick={() => setOpen(true)} aria-label="Open settings" className={className}>
         <Settings2 size={18} strokeWidth={1.8} aria-hidden="true" />
       </button>
       {open && <SettingsModal onClose={() => setOpen(false)} />}

@@ -31,7 +31,7 @@ async function fetchSlice<K extends DashboardKey>(key: K, endpoint: string) {
 }
 
 const fetchers: Record<DashboardKey, () => Promise<void>> = {
-  weather: () => fetchSlice("weather", "/api/weather?limit=6"),
+  weather: () => fetchSlice("weather", "/api/weather?limit=24"),
   news: () => fetchSlice("news", "/api/news"),
   stocks: () => fetchSlice("stocks", "/api/stocks"),
 };

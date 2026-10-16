@@ -7,6 +7,7 @@ export interface TodoState {
   title: string;
   checked: number;
   priority: Priority;
+  sponsor?: string;
   type?: TodoType;
   status?: TaskStatus;
   description?: string | null;
@@ -29,6 +30,8 @@ export interface NewTaskForm {
   type?: TodoType;
   status?: TaskStatus;
   description?: string | null;
+  sponsor?: string;
+  usualCompletionTime?: string;
   recurrence?: TaskRecurrenceForm;
 }
 

@@ -5,8 +5,14 @@ import { google } from 'googleapis';
 import logger from '@/lib/logger';
 
 export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> {
- const settings = await getResolvedRuntimeSettings();
- const auth = new google.auth.GoogleAuth({
+  const settings = await getResolvedRuntimeSettings();
+  const calendarsIds = settings.calendarIds;
+
+  if (!calendarsIds || calendarsIds.length === 0 || !settings.googleClientEmail || !settings.googlePrivateKey) {
+    return [];
+  }
+
+  const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: settings.googleClientEmail,
       private_key: settings.googlePrivateKey,
@@ -19,11 +25,7 @@ export async function fetchGoogleCalendarAPI(): Promise<CalendarEventsResponse> 
   const now = new Date();
 
   const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-  const endOfDay = new Date(addDays(now, 7)).toISOString();
-
-  const calendarsIds = settings.calendarIds;
-
-  if (!calendarsIds || calendarsIds.length === 0) throw new Error("No Google Calendar IDs configured.");
+  const endOfDay = new Date(addDays(now, 14)).toISOString();
 
   const allEvents: CalendarEventsResponse = [];
 

@@ -166,12 +166,14 @@ interface CurrentUnits {
 }
 
 interface CurrentWeather {
-  time:                 string;
-  interval:             number;
-  temperature_2m:       number;
-  relative_humidity_2m: number;
-  apparent_temperature: number;
-  weather_code:         number;
+  time:                      string;
+  interval:                  number;
+  temperature_2m:            number;
+  relative_humidity_2m:      number;
+  apparent_temperature:      number;
+  weather_code:              number;
+  wind_speed_10m?:           number;
+  precipitation_probability?: number;
 }
 
 interface HourlyUnits {
@@ -181,17 +183,24 @@ interface HourlyUnits {
 }
 
 interface HourlyWeather {
-  time:           string[];
-  temperature_2m: number[];
-  weather_code:   number[];
-  is_day:         number[];
+  time:                      string[];
+  temperature_2m:            number[];
+  weather_code:              number[];
+  is_day:                    number[];
   precipitation_probability: number[];
+}
+
+interface DailyWeather {
+  time:                          string[];
+  weather_code:                  number[];
+  temperature_2m_max:            number[];
+  temperature_2m_min:            number[];
+  precipitation_probability_max: number[];
 }
 
 export interface OpenMeteoProps {
   latitude: string;
   longitude: string;
-  limit: number;
   timezone?: string;
 }
 
@@ -207,4 +216,5 @@ export interface WeatherResponse {
   current:               CurrentWeather;
   hourly_units:          HourlyUnits;
   hourly:                HourlyWeather;
+  daily?:                DailyWeather;
 }

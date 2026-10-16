@@ -70,6 +70,13 @@ export async function GET(req: NextRequest) {
     const tomorrowStr = tomorrowDate.toISOString().slice(0, 10);
     const events = await fetchGoogleCalendarAPI();
 
+    const computeDaysUntil = (dateStr: string): number => {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const targetUtc = Date.UTC(y, m - 1, d);
+      const todayUtc = Date.UTC(todayYear, todayMonth - 1, todayDay);
+      return Math.max(0, Math.round((targetUtc - todayUtc) / (1000 * 60 * 60 * 24)));
+    };
+
     const futureEvents = events
       .filter((event) => {
         const eventDate = event.start.dateTime 
@@ -81,14 +88,26 @@ export async function GET(req: NextRequest) {
         return eventDate !== null && eventDate > todayStr;
       })
       .map((event) => {
+        const eventDateStr = event.start.dateTime
+          ? formatInTimezone(event.start.dateTime, settings.timezone, true)
+          : event.start.date ?? todayStr;
+        const calendarLabel = formatCalendarName(event.calendarName ?? "");
+        const summary = event.summary || "Ocupado";
         return {
           id: event.id,
           start: event.start.dateTime ? formatInTimezone(event.start.dateTime, settings.timezone) : event.start.date
             ? `${event.start.date.slice(8, 10)}/${event.start.date.slice(5, 7)}/${event.start.date.slice(0, 4)}` : "Horário não definido",
           end: (event.end.dateTime ? formatTimeInTimezone(event.end.dateTime, settings.timezone) : ""),
-          title: [formatCalendarName(event.calendarName ?? ""), event.summary || "Ocupado"].filter(Boolean).join(" - "),
+          startDateTime: event.start.dateTime || event.start.date,
+          endDateTime: event.end.dateTime || event.end.date,
+          title: [calendarLabel, summary].filter(Boolean).join(" - "),
+          summary,
+          calendarName: calendarLabel,
+          location: event.location,
+          daysUntil: computeDaysUntil(eventDateStr),
+          color: getCalendarColor(event.calendarName ?? ""),
           type: getEventType(event.description || event.summary)
-        }
+        };
       });
 
     const importantEvents = futureEvents.filter((event) => event.type === "birthday");
@@ -102,16 +121,24 @@ export async function GET(req: NextRequest) {
       return event.start.date === targetDateStr;
     };
 
-    const mapCalendarEvent = (event: typeof events[number]) => ({
-      id: event.id,
-      start: (event.start.dateTime ? formatTimeInTimezone(event.start.dateTime, settings.timezone) : "All day"),
-      end: (event.end.dateTime ? formatTimeInTimezone(event.end.dateTime, settings.timezone) : ""),
-      startDateTime: event.start.dateTime,
-      endDateTime: event.end.dateTime,
-      title: [formatCalendarName(event.calendarName ?? ""), event.summary || "Ocupado"].filter(Boolean).join(" - "),
-      color: getCalendarColor(event.calendarName ?? ""),
-      type: getEventType(event.summary)
-    });
+    const mapCalendarEvent = (event: typeof events[number], daysUntil = 0) => {
+      const calendarLabel = formatCalendarName(event.calendarName ?? "");
+      const summary = event.summary || "Ocupado";
+      return {
+        id: event.id,
+        start: (event.start.dateTime ? formatTimeInTimezone(event.start.dateTime, settings.timezone) : "All day"),
+        end: (event.end.dateTime ? formatTimeInTimezone(event.end.dateTime, settings.timezone) : ""),
+        startDateTime: event.start.dateTime || event.start.date,
+        endDateTime: event.end.dateTime || event.end.date,
+        title: [calendarLabel, summary].filter(Boolean).join(" - "),
+        summary,
+        calendarName: calendarLabel,
+        location: event.location,
+        daysUntil,
+        color: getCalendarColor(event.calendarName ?? ""),
+        type: getEventType(event.summary)
+      };
+    };
 
     const sortCalendarEvents = (a: { start: string }, b: { start: string }) => {
       if (a.start === "All day" && b.start !== "All day") return -1;
@@ -121,23 +148,20 @@ export async function GET(req: NextRequest) {
 
     const todayEvents = events
       .filter((event) => isEventOnDate(event, todayStr))
-      .map(mapCalendarEvent)
+      .map((event) => mapCalendarEvent(event, 0))
       .sort(sortCalendarEvents);
 
     const nextDayEvents = events
       .filter((event) => isEventOnDate(event, tomorrowStr))
-      .map(mapCalendarEvent)
+      .map((event) => mapCalendarEvent(event, 1))
       .sort(sortCalendarEvents);
 
     const responseBody: CalendarInternalAPIResponse = { 
       todayEvents, 
       nextDayEvents,
-      importantEvents 
+      importantEvents,
+      futureEvents,
     };
-
-    if (includeFutureEvents) {
-      responseBody.futureEvents = futureEvents;
-    }
 
     calendarCache.set(cacheKey, responseBody)
 

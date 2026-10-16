@@ -11,7 +11,6 @@ import Settings from "@/components/settings";
 import StoreStatusBridge from "@/components/storeStatusBridge";
 import FocusMode from "@/components/focusMode";
 import FocusModeToggle from "@/components/focusModeToggle";
-import ProjectQrButton from "@/components/projectQrButton";
 import SetupGate from "@/components/setupGate";
 import { useViewMode } from "@/hooks/useViewMode";
 
@@ -30,32 +29,33 @@ export default function Page() {
 
   return (
     <SetupGate>
-    <>
-      <Loading />
-      <StoreStatusBridge />
-      <ActionLoader />
-      <div className="header grid grid-cols-3 items-center w-full py-4! sm:px-14! sticky z-60">
-        <div className="header-brand flex gap-2 items-center">
-          <Logo />
-        </div>
+      <>
+        <Loading />
+        <StoreStatusBridge />
+        <ActionLoader />
+        {mounted && mode === "focus" ? (
+          <>
+            <div className="header grid grid-cols-3 items-center w-full py-4! sm:px-14! sticky z-60">
+              <div className="header-brand flex gap-2 items-center">
+                <Logo />
+              </div>
 
-        <div className="header-clock flex justify-center">
-          <Clock />
-        </div>
+              <div className="header-clock flex justify-center">
+                <Clock />
+              </div>
 
-        <div className="header-status flex items-center justify-end gap-4">
-          <SystemsStatus />
-          <FocusModeToggle />
-          <Settings />
-        </div>
-      </div>
-      {mounted && mode === "focus" ? (
-        <FocusMode />
-      ) : (
-        <ActiveCards />
-      )}
-      <ProjectQrButton />
-    </>
+              <div className="header-status flex items-center justify-end gap-4">
+                <SystemsStatus />
+                <FocusModeToggle />
+                <Settings />
+              </div>
+            </div>
+            <FocusMode />
+          </>
+        ) : (
+          <ActiveCards />
+        )}
+      </>
     </SetupGate>
   );
 }
