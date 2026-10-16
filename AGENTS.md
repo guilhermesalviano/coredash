@@ -2,31 +2,25 @@
 
 ## Project layout
 
-The Next.js application lives in `coredash/`. The repository root contains Docker and mock-service configuration.
+The Next.js application lives in the repository root (`.`) and the native Android app lives in `android/`.
 
-- `coredash/app/`: Next.js App Router pages and API route adapters.
-- `coredash/features/`: feature-owned contracts and server/application logic.
-- `coredash/components/`: reusable UI and dashboard cards.
-- `coredash/services/`: external-provider adapters.
-- `coredash/entities/`: TypeORM persistence entities.
-- `coredash/lib/`: shared infrastructure such as database, logging, caching, and API helpers.
-- `coredash/types/`: compatibility exports and cross-feature types.
+- `app/`: Next.js App Router pages and API route adapters.
+- `features/`: feature-owned contracts and server/application logic.
+- `components/`: reusable UI and dashboard cards.
+- `services/`: external-provider adapters.
+- `entities/`: TypeORM persistence entities (SQLite).
+- `lib/`: shared infrastructure such as database, logging, caching, and API helpers.
+- `types/`: compatibility exports and cross-feature types.
 
 ## Development commands
 
-Run commands from `coredash/`:
+Run commands from the repository root:
 
 ```bash
 npm run dev
 npx tsc --noEmit
 npm run lint
 npm run build
-```
-
-Use the root Docker Compose file when mock external services are needed:
-
-```bash
-docker compose up --build
 ```
 
 ## Architecture rules

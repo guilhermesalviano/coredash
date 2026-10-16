@@ -1,6 +1,6 @@
 import type { DataSource } from "typeorm";
 
-import { APIS, DB, GOOGLE, LOCATION } from "@/config/config";
+import { APIS, GOOGLE, LOCATION } from "@/config/config";
 import type { RuntimeSettingsPatch, RuntimeSettingsResponse } from "@/features/settings/types";
 import {
   applySettingsPatch,
@@ -13,6 +13,8 @@ import {
   type ResolvedRuntimeSettings,
   type StoredSettings,
 } from "@/features/settings/server/setup-validation";
+import { fetchNominatimAPI } from "@/services/nominatim-api";
+import { isErrorResponse } from "@/utils/check-service-error";
 
 const SETTINGS_ID = 1;
 let settingsTablePromise: Promise<DataSource> | null = null;
@@ -115,7 +117,7 @@ async function getSettingsDataSource() {
       const dataSource = await getDatabaseConnection();
       await dataSource.query(`
         CREATE TABLE IF NOT EXISTS app_settings (
-          id ${DB.driver === "sqlite" ? "INTEGER PRIMARY KEY" : "INT NOT NULL PRIMARY KEY"},
+          id INTEGER PRIMARY KEY,
           timezone VARCHAR(64) NULL,
           latitude VARCHAR(32) NULL,
           longitude VARCHAR(32) NULL,
@@ -202,23 +204,35 @@ export async function saveRuntimeSettings(
   ];
   const placeholders = columns.map(() => "?").join(", ");
   const assignments = columns.slice(1).map((column) => `${column}=excluded.${column}`).join(", ");
-  const mariadbAssignments = columns.slice(1).map((column) => `${column}=VALUES(${column})`).join(", ");
 
-  if (DB.driver === "sqlite") {
-    await dataSource.query(`
-      INSERT INTO app_settings (${columns.join(", ")})
-      VALUES (${placeholders})
-      ON CONFLICT(id) DO UPDATE SET ${assignments}, updated_at=CURRENT_TIMESTAMP
-    `, parameters);
-  } else {
-    await dataSource.query(`
-      INSERT INTO app_settings (${columns.join(", ")})
-      VALUES (${placeholders})
-      ON DUPLICATE KEY UPDATE ${mariadbAssignments}, updated_at=CURRENT_TIMESTAMP
-    `, parameters);
-  }
+  await dataSource.query(`
+    INSERT INTO app_settings (${columns.join(", ")})
+    VALUES (${placeholders})
+    ON CONFLICT(id) DO UPDATE SET ${assignments}, updated_at=CURRENT_TIMESTAMP
+  `, parameters);
 
   return getRuntimeSettings();
+}
+
+export async function resolveCityFromCoordinates(
+  latitude: string,
+  longitude: string,
+): Promise<string | null> {
+  const lat = Number(latitude.trim());
+  const lon = Number(longitude.trim());
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    throw new Error("latitude must be a number between -90 and 90");
+  }
+  if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+    throw new Error("longitude must be a number between -180 and 180");
+  }
+  const response = await fetchNominatimAPI({
+    latitude: String(lat),
+    longitude: String(lon),
+  });
+  if (isErrorResponse(response)) return null;
+  const address = response.address;
+  return address?.city || address?.municipality || address?.suburb || null;
 }
 
 export { validateRuntimeSettingsPatch };

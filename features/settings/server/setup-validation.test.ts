@@ -8,6 +8,7 @@ import {
   resolveSettings,
   toPublicSettingsResponse,
   validateRuntimeSettingsPatch,
+  validateSetupLocation,
   type EnvironmentSettings,
 } from "@/features/settings/server/setup-validation";
 
@@ -137,4 +138,20 @@ test("normalizes stored private keys without returning them publicly", () => {
   assert.equal(resolved.googlePrivateKey, "line1\nline2");
   assert.equal(JSON.stringify(toPublicSettingsResponse(resolved, stored)).includes("line1"), false);
   assert.equal(toPublicSettingsResponse(resolved, stored).secrets.googlePrivateKey, true);
+});
+
+test("validateSetupLocation matches Kotlin SetupValidation rules", () => {
+  assert.deepEqual(validateSetupLocation("America/Sao_Paulo", "-23.55", "-46.63"), []);
+  assert.deepEqual(validateSetupLocation("UTC", "90", "180"), []);
+  assert.deepEqual(validateSetupLocation("UTC", "-90", "-180"), []);
+  assert.deepEqual(validateSetupLocation("   ", "0", "0"), ["timezone is required"]);
+  assert.deepEqual(validateSetupLocation("Mars/Olympus", "0", "0"), ["timezone must be a valid IANA timezone"]);
+  assert.deepEqual(validateSetupLocation("UTC", "90.1", "0"), ["latitude must be a number between -90 and 90"]);
+  assert.deepEqual(validateSetupLocation("UTC", "-90.1", "0"), ["latitude must be a number between -90 and 90"]);
+  assert.deepEqual(validateSetupLocation("UTC", "0", "180.1"), ["longitude must be a number between -180 and 180"]);
+  assert.deepEqual(validateSetupLocation("UTC", "0", "-180.1"), ["longitude must be a number between -180 and 180"]);
+  assert.deepEqual(validateSetupLocation("UTC", "abc", "12x"), [
+    "latitude must be a number between -90 and 90",
+    "longitude must be a number between -180 and 180",
+  ]);
 });

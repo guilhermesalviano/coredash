@@ -1,8 +1,14 @@
 export const SETUP_GROUPS = [
   {
+    id: "timezone",
+    title: "Timezone",
+    description: "IANA timezone used for dates, weather, and calendars (e.g. America/Sao_Paulo).",
+    optional: false,
+  },
+  {
     id: "location",
-    title: "Location",
-    description: "Required for weather and local time. Weather uses Open-Meteo and does not need an API key. City is optional; leave it blank to look the place up from the coordinates.",
+    title: "Your location",
+    description: "Used to display weather for your region. Weather uses Open-Meteo and does not need an API key.",
     optional: false,
   },
   {
@@ -67,7 +73,7 @@ export const SETUP_FIELDS: readonly SetupField[] = [
     key: "timezone",
     label: "Timezone",
     env: "TZ",
-    group: "location",
+    group: "timezone",
     required: true,
     secret: false,
     input: "text",
@@ -206,3 +212,40 @@ export const SETUP_FIELD_KEYS = SETUP_FIELDS.map((field) => field.key);
 export const SECRET_FIELD_KEYS = SETUP_FIELDS.filter((field) => field.secret).map((field) => field.key);
 
 export const PUBLIC_FIELD_KEYS = SETUP_FIELDS.filter((field) => !field.secret).map((field) => field.key);
+
+export function validTimezone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function validateSetupLocation(
+  timezone: string,
+  lat: string,
+  lon: string,
+): string[] {
+  const errors: string[] = [];
+
+  if (!timezone.trim()) {
+    errors.push("timezone is required");
+  } else if (!validTimezone(timezone.trim())) {
+    errors.push("timezone must be a valid IANA timezone");
+  }
+
+  const trimmedLat = lat.trim();
+  const latitude = trimmedLat ? Number(trimmedLat) : Number.NaN;
+  if (!trimmedLat || !Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    errors.push("latitude must be a number between -90 and 90");
+  }
+
+  const trimmedLon = lon.trim();
+  const longitude = trimmedLon ? Number(trimmedLon) : Number.NaN;
+  if (!trimmedLon || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    errors.push("longitude must be a number between -180 and 180");
+  }
+
+  return errors;
+}

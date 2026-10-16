@@ -3,7 +3,7 @@
   "version": "0.1.17-dev",
   "private": true,
   "scripts": {
-    "dev": "docker compose up -d && next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "node scripts/start-standalone.mjs",
     "lint": "eslint",
@@ -20,7 +20,6 @@
     "date-fns": "^4.1.0",
     "googleapis": "^171.4.0",
     "lucide-react": "^0.577.0",
-    "mysql2": "^3.18.2",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",

@@ -1,6 +1,8 @@
 import {
   SECRET_FIELD_KEYS,
   SETUP_FIELD_KEYS,
+  validateSetupLocation,
+  validTimezone,
   type SetupFieldKey,
 } from "@/features/settings/setup-fields";
 import type {
@@ -109,14 +111,7 @@ function hasText(value: string | null | undefined): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-export function validTimezone(value: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
-    return true;
-  } catch {
-    return false;
-  }
-}
+export { validateSetupLocation, validTimezone };
 
 function assertString(value: unknown, field: string): asserts value is string | null {
   if (value !== null && typeof value !== "string") {

@@ -124,9 +124,16 @@
 .input { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: inherit; font-size: 12px; background: color-mix(in srgb, var(--surface2) 55%, var(--surface)); color: var(--foreground); transition: border-color 160ms, box-shadow 160ms; }
 .input::placeholder { color: var(--muted); opacity: .65; }
 .input:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--border)); }
+.input[data-error="true"] { border-color: #ce4747; box-shadow: 0 0 0 2px rgb(206 71 71 / 12%); }
+:global([data-theme="dark"]) .input[data-error="true"] { border-color: #ffa0a0; }
 textarea.input { resize: vertical; min-height: 82px; line-height: 1.6; }
 .help { font-size: 10px; line-height: 1.55; color: var(--muted); }
 .coordinates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.locationActions { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.locationButton { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--surface2) 70%, var(--surface)); color: var(--foreground); cursor: pointer; transition: border-color 160ms, background 160ms; }
+.locationButton:hover:not(:disabled) { border-color: var(--settings-accent); background: var(--settings-tint); color: var(--settings-accent); }
+.locationError { font-size: 11px; line-height: 1.5; color: #ce4747; }
+:global([data-theme="dark"]) .locationError { color: #ffa0a0; }
 .resetRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--settings-line); padding-top: 16px; }
 .textButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; padding: 5px 0; cursor: pointer; color: var(--muted); font-size: 10px; }
 .textButton:hover { color: var(--foreground); }
@@ -140,6 +147,7 @@ textarea.input { resize: vertical; min-height: 82px; line-height: 1.6; }
 .primaryButton:hover { filter: brightness(1.08); }
 .secondaryButton { color: var(--foreground); background: var(--surface2); border-color: var(--border); }
 .errorMessage, .successMessage { display: flex; align-items: flex-start; gap: 8px; padding: 11px 13px; border-radius: 8px; font-size: 11px; line-height: 1.6; }
+.errorList { display: flex; flex-direction: column; gap: 4px; }
 .errorMessage { color: #ce4747; background: color-mix(in srgb, #ce4747 8%, var(--surface)); }
 :global([data-theme="dark"]) .errorMessage { color: #ffa0a0; }
 .successMessage { color: var(--settings-accent); background: var(--settings-tint); }

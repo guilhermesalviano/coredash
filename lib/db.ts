@@ -29,19 +29,8 @@ const sqliteOptions: DataSourceOptions = {
   logging: CONFIG.isDev,
 };
 
-const mariaDbOptions: DataSourceOptions = {
-  type: "mariadb",
-  host: DB.host,
-  port: DB.port,
-  database: DB.name,
-  username: DB.username,
-  password: DB.password,
-  synchronize: false,
-  logging: false,
-};
-
 export const AppDataSource = new DataSource({
-  ...(DB.driver === "sqlite" ? sqliteOptions : mariaDbOptions),
+  ...sqliteOptions,
   entities,
   subscribers: [],
   migrations: [],
@@ -55,7 +44,7 @@ export async function getDatabaseConnection(): Promise<DataSource> {
 
   initializationPromise = AppDataSource.initialize()
     .then((dataSource) => {
-      console.info(`Database initialized using ${DB.driver}`);
+      console.info(`Database initialized using sqlite (${DB.sqlitePath})`);
       return dataSource;
     })
     .catch((error: unknown) => {
