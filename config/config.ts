@@ -48,5 +48,6 @@ export const APIS = {
 
 export const CONFIG = {
   isDev,
+  port: Number(optional("PORT", "3000")) || 3000,
   logLevel: optional("LOG_LEVEL", isDev ? "debug" : "info"),
 } as const;
