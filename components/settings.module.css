@@ -31,6 +31,21 @@
   box-shadow: 0 30px 100px rgb(0 0 0 / 30%), 0 2px 12px rgb(0 0 0 / 8%);
   animation: settings-enter 180ms ease-out;
 }
+
+/* Focused single-group setup dialog (e.g. "Ativar calendário" from the dashboard) */
+.compactModal {
+  width: min(620px, 100%);
+  height: min(680px, calc(100dvh - 48px));
+}
+
+.compactBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
 .header { display: flex; align-items: center; gap: 14px; padding: 22px 28px; border-bottom: 1px solid var(--settings-line); flex-shrink: 0; }
 .headerIcon { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid color-mix(in srgb, var(--settings-accent) 22%, transparent); border-radius: 13px; background: var(--settings-tint); color: var(--settings-accent); }
 .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -.025em; line-height: 1.4; }

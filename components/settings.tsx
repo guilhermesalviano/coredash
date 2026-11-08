@@ -81,7 +81,7 @@ function ThemeSection() {
   );
 }
 
-function trapFocus(event: KeyboardEvent<HTMLDialogElement>) {
+export function trapFocus(event: KeyboardEvent<HTMLDialogElement>) {
   if (event.key !== "Tab") return;
   const dialog = event.currentTarget;
   const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(

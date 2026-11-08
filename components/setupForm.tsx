@@ -115,9 +115,11 @@ function locationErrorMessage(error: unknown): string {
 
 export default function SetupForm({
   presentation = "panel",
+  groups,
   onSaved,
 }: {
   presentation?: "panel" | "screen";
+  groups?: SetupGroupId[];
   onSaved?: () => void;
 }) {
   const [data, setData] = useState<RuntimeSettingsResponse | null>(null);
@@ -250,6 +252,10 @@ export default function SetupForm({
     return false;
   };
 
+  const visibleGroups = groups
+    ? SETUP_GROUPS.filter((group) => groups.includes(group.id))
+    : SETUP_GROUPS;
+
   const form = !draft || !data ? (
     <div className={styles.runtimeEmpty} role={loadError ? "alert" : "status"}>
       {loadError ? <TriangleAlert size={28} /> : <LoaderCircle size={28} className={styles.spinner} />}
@@ -264,11 +270,13 @@ export default function SetupForm({
   ) : (
     <form className={styles.runtimeForm} aria-busy={saving || loading} onSubmit={(event) => { event.preventDefault(); void persist(); }}>
       <div className={styles.runtimeBody}>
-        <div className={styles.panelIntro}>
-          <span className={styles.eyebrow}>{presentation === "screen" ? "Welcome to CoreDash" : "Application setup"}</span>
-          <h2>{data.setupRequired ? "Let’s get CoreDash ready." : "Your setup."}</h2>
-          <p>Your day starts here. Set your region and connect the services you use. Optional integrations can wait — saved secrets stay on the server.</p>
-        </div>
+        {!groups && (
+          <div className={styles.panelIntro}>
+            <span className={styles.eyebrow}>{presentation === "screen" ? "Welcome to CoreDash" : "Application setup"}</span>
+            <h2>{data.setupRequired ? "Let’s get CoreDash ready." : "Your setup."}</h2>
+            <p>Your day starts here. Set your region and connect the services you use. Optional integrations can wait — saved secrets stay on the server.</p>
+          </div>
+        )}
 
         {errors.length > 0 && (
           <div role="alert" className={styles.errorMessage}>
@@ -282,7 +290,7 @@ export default function SetupForm({
         )}
 
         <fieldset disabled={saving || loading} className={styles.fieldGroups}>
-          {SETUP_GROUPS.map((group) => {
+          {visibleGroups.map((group) => {
             const GroupIcon = GROUP_ICONS[group.id];
             return (
               <section key={group.id} className={styles.fieldGroup} aria-labelledby={`setup-${group.id}`}>
@@ -390,7 +398,7 @@ export default function SetupForm({
           })}
         </fieldset>
         {message && <p role="status" className={styles.successMessage}><Check size={16} aria-hidden="true" />{message}</p>}
-        {!data.setupRequired && (
+        {!data.setupRequired && !groups && (
           <div className={styles.resetRow}>
             <button type="button" onClick={() => void persist(true)} disabled={saving || loading} className={styles.textButton}>
               <RotateCcw size={14} aria-hidden="true" /> Restore defaults

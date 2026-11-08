@@ -10,6 +10,7 @@ import {
   ListChecks,
   ListTodo,
   Moon,
+  Plug,
   Plus,
   RefreshCw,
   RotateCw,
@@ -19,6 +20,7 @@ import {
 import WeatherCardClient from "./cards/clients/weatherCardClient";
 import StatusReporter from "./statusReporter";
 import Settings from "./settings";
+import CalendarSetupModal from "./calendarSetupModal";
 import TaskModal from "./cards/todo/taskModal";
 import { useActiveCards } from "@/hooks/useActiveCards";
 import { useDayChange } from "@/hooks/useDayChange";
@@ -27,6 +29,7 @@ import { fetchJson } from "@/lib/api-client";
 import { fetchAll } from "@/lib/dashboardStore";
 import storage from "@/lib/storage";
 import type { CalendarEventItem, CalendarInternalAPIResponse } from "@/types/calendar";
+import type { RuntimeSettingsResponse } from "@/features/settings/types";
 import type { TodoItem } from "@/features/todos/types";
 import type { NewTaskForm, Priority, TodoState, TodoType } from "@/types/task";
 import { priorityColor } from "@/types/task";
@@ -118,6 +121,8 @@ export default function ActiveCards() {
   const [theme, setTheme] = useState<ThemeMode>("light");
   const [now, setNow] = useState(() => new Date());
   const [calendar, setCalendar] = useState<CalendarInternalAPIResponse | null>(null);
+  const [calendarConfigured, setCalendarConfigured] = useState<boolean | null>(null);
+  const [calendarSetupOpen, setCalendarSetupOpen] = useState(false);
   const [todos, setTodos] = useState<TodoState[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [busyTodoId, setBusyTodoId] = useState<number | null>(null);
@@ -150,9 +155,10 @@ export default function ActiveCards() {
   }, []);
 
   const loadDashboardData = useCallback(async () => {
-    const [calRes, todoRes] = await Promise.allSettled([
+    const [calRes, todoRes, settingsRes] = await Promise.allSettled([
       fetchJson<CalendarInternalAPIResponse>("/api/calendar"),
       fetchJson<TodoItem[]>("/api/todo?type=all"),
+      fetchJson<RuntimeSettingsResponse>("/api/settings"),
     ]);
 
     if (calRes.status === "fulfilled") {
@@ -160,6 +166,18 @@ export default function ActiveCards() {
       reportStatus("calendar", "success");
     } else {
       reportStatus("calendar", "error");
+    }
+
+    if (settingsRes.status === "fulfilled") {
+      const { settings, secrets } = settingsRes.value;
+      // Mirrors the resolved-settings check in services/google-calendar-api.ts
+      setCalendarConfigured(
+        settings.calendarIds.length > 0 &&
+          settings.googleClientEmail.trim() !== "" &&
+          secrets.googlePrivateKey,
+      );
+    } else {
+      setCalendarConfigured(null);
     }
 
     if (todoRes.status === "fulfilled") {
@@ -449,6 +467,21 @@ export default function ActiveCards() {
                         {formatNextHighlightMeta(nextEvent)}
                       </p>
                     </>
+                  ) : calendarConfigured === false ? (
+                    <>
+                      <h2 className="wall-next-title">Calendário não configurado</h2>
+                      <p className="wall-next-meta">
+                        Ative a integração para ver seus próximos eventos
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCalendarSetupOpen(true)}
+                        className="wall-cta-button"
+                      >
+                        <Plug size={14} strokeWidth={2.4} />
+                        Ativar calendário
+                      </button>
+                    </>
                   ) : (
                     <>
                       <h2 className="wall-next-title">Sem eventos próximos</h2>
@@ -522,6 +555,24 @@ export default function ActiveCards() {
                           </div>
                         );
                       })}
+                    </div>
+                  ) : calendarConfigured === false ? (
+                    <div className="wall-empty-state">
+                      <div className="wall-empty-badge wall-empty-badge--amber">
+                        <Plug size={26} strokeWidth={2.2} />
+                      </div>
+                      <h4 className="wall-empty-title">Calendário não configurado</h4>
+                      <p className="wall-empty-subtitle">
+                        Conecte sua conta Google para ver seus eventos aqui
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCalendarSetupOpen(true)}
+                        className="wall-cta-button"
+                      >
+                        <Plug size={14} strokeWidth={2.4} />
+                        Ativar calendário
+                      </button>
                     </div>
                   ) : (
                     <div className="wall-empty-state">
@@ -730,6 +781,15 @@ export default function ActiveCards() {
         onClose={() => setModalOpen(false)}
         onAdd={handleAddTodo}
         defaultType={modalDefaultType}
+      />
+
+      <CalendarSetupModal
+        isOpen={calendarSetupOpen}
+        onClose={() => setCalendarSetupOpen(false)}
+        onSaved={() => {
+          setCalendarSetupOpen(false);
+          void loadDashboardData();
+        }}
       />
     </>
   );
