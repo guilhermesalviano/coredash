@@ -1,0 +1,171 @@
+import { parseISO } from "date-fns";
+import { ONE_MINUTE_IN_MS } from "@/constants";
+import { getRuntimeSettings } from "@/features/settings/server/runtime-settings";
+import type { RuntimeSettings } from "@/features/settings/types";
+import { fetchGoogleCalendarAPI } from "@/services/google-calendar-api";
+import type { CalendarInternalAPIResponse } from "@/types/calendar";
+import { createSwrCache } from "@/utils/in-memory-cache";
+
+function getEventType(summary: string) {
+  if (/birthday|anivers[áa]rio/i.test(summary)) return "birthday";
+  if (/holiday|feriado/i.test(summary)) return "holiday";
+  return "default";
+}
+
+function formatCalendarName(name: string): string {
+  const emailMatch = name.match(/^[^@]+@(.+)$/);
+  return emailMatch ? emailMatch[1] : name;
+}
+
+const CALENDAR_COLORS = [
+  "#6EE7B7", "#93C5FD", "#FCA5A5", "#FCD34D",
+  "#C4B5FD", "#F9A8D4", "#6EE7F3", "#86EFAC",
+];
+
+// Deterministic color per calendar name
+function getCalendarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return CALENDAR_COLORS[hash % CALENDAR_COLORS.length];
+}
+
+// Refresh every 15 minutes, but keep answering from the previous snapshot for
+// up to 3 hours so the card never waits on Google once it has loaded.
+const calendarCache = createSwrCache<CalendarInternalAPIResponse>({
+  ttlMs: ONE_MINUTE_IN_MS * 15,
+  staleMs: ONE_MINUTE_IN_MS * 165,
+});
+
+function formatInTimezone(value: string, timezone: string, withYear = false): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    day: "2-digit",
+    month: "2-digit",
+    ...(withYear ? { year: "numeric" as const } : { hour: "2-digit" as const, minute: "2-digit" as const, hour12: false }),
+  }).formatToParts(parseISO(value));
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return withYear ? `${get("year")}-${get("month")}-${get("day")}` : `${get("day")}/${get("month")} - ${get("hour")}:${get("minute")}`;
+}
+
+function formatTimeInTimezone(value: string, timezone: string): string {
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: timezone, hour: "2-digit", minute: "2-digit", hour12: false }).format(parseISO(value));
+}
+
+function todayInTimezone(timezone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+export async function getCalendar(): Promise<{ data: CalendarInternalAPIResponse; fromCache: boolean }> {
+  const { settings } = await getRuntimeSettings();
+  const todayStr = todayInTimezone(settings.timezone);
+  // The snapshot is split into today/tomorrow, so it must not outlive the day.
+  const cacheKey = `${todayStr}|${settings.timezone}|${settings.calendarIds.join(",")}`;
+  return calendarCache.resolve(cacheKey, () => loadCalendar(settings, todayStr));
+}
+
+async function loadCalendar(settings: RuntimeSettings, todayStr: string): Promise<CalendarInternalAPIResponse> {
+  const [todayYear, todayMonth, todayDay] = todayStr.split("-").map(Number);
+  const tomorrowDate = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay + 1));
+  const tomorrowStr = tomorrowDate.toISOString().slice(0, 10);
+  const events = await fetchGoogleCalendarAPI();
+
+  const computeDaysUntil = (dateStr: string): number => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const targetUtc = Date.UTC(y, m - 1, d);
+    const todayUtc = Date.UTC(todayYear, todayMonth - 1, todayDay);
+    return Math.max(0, Math.round((targetUtc - todayUtc) / (1000 * 60 * 60 * 24)));
+  };
+
+  const futureEvents = events
+    .filter((event) => {
+      const eventDate = event.start.dateTime 
+        ? formatInTimezone(event.start.dateTime, settings.timezone, true)
+        : event.start.date
+          ? event.start.date
+          : null;
+
+      return eventDate !== null && eventDate > todayStr;
+    })
+    .map((event) => {
+      const eventDateStr = event.start.dateTime
+        ? formatInTimezone(event.start.dateTime, settings.timezone, true)
+        : event.start.date ?? todayStr;
+      const calendarLabel = formatCalendarName(event.calendarName ?? "");
+      const summary = event.summary || "Ocupado";
+      return {
+        id: event.id,
+        start: event.start.dateTime ? formatInTimezone(event.start.dateTime, settings.timezone) : event.start.date
+          ? `${event.start.date.slice(8, 10)}/${event.start.date.slice(5, 7)}/${event.start.date.slice(0, 4)}` : "Horário não definido",
+        end: (event.end.dateTime ? formatTimeInTimezone(event.end.dateTime, settings.timezone) : ""),
+        startDateTime: event.start.dateTime || event.start.date,
+        endDateTime: event.end.dateTime || event.end.date,
+        title: [calendarLabel, summary].filter(Boolean).join(" - "),
+        summary,
+        calendarName: calendarLabel,
+        location: event.location,
+        daysUntil: computeDaysUntil(eventDateStr),
+        color: getCalendarColor(event.calendarName ?? ""),
+        type: getEventType(event.description || event.summary)
+      };
+    });
+
+  const importantEvents = futureEvents.filter((event) => event.type === "birthday");
+
+  const isEventOnDate = (event: typeof events[number], targetDateStr: string) => {
+    const eventStart = event.start.dateTime || event.start.date;
+    if (!eventStart) return false;
+    if (event.start.dateTime) {
+      return formatInTimezone(event.start.dateTime, settings.timezone, true) === targetDateStr;
+    }
+    return event.start.date === targetDateStr;
+  };
+
+  const mapCalendarEvent = (event: typeof events[number], daysUntil = 0) => {
+    const calendarLabel = formatCalendarName(event.calendarName ?? "");
+    const summary = event.summary || "Ocupado";
+    return {
+      id: event.id,
+      start: (event.start.dateTime ? formatTimeInTimezone(event.start.dateTime, settings.timezone) : "All day"),
+      end: (event.end.dateTime ? formatTimeInTimezone(event.end.dateTime, settings.timezone) : ""),
+      startDateTime: event.start.dateTime || event.start.date,
+      endDateTime: event.end.dateTime || event.end.date,
+      title: [calendarLabel, summary].filter(Boolean).join(" - "),
+      summary,
+      calendarName: calendarLabel,
+      location: event.location,
+      daysUntil,
+      color: getCalendarColor(event.calendarName ?? ""),
+      type: getEventType(event.summary)
+    };
+  };
+
+  const sortCalendarEvents = (a: { start: string }, b: { start: string }) => {
+    if (a.start === "All day" && b.start !== "All day") return -1;
+    if (a.start !== "All day" && b.start === "All day") return 1;
+    return a.start.localeCompare(b.start);
+  };
+
+  const todayEvents = events
+    .filter((event) => isEventOnDate(event, todayStr))
+    .map((event) => mapCalendarEvent(event, 0))
+    .sort(sortCalendarEvents);
+
+  const nextDayEvents = events
+    .filter((event) => isEventOnDate(event, tomorrowStr))
+    .map((event) => mapCalendarEvent(event, 1))
+    .sort(sortCalendarEvents);
+
+  const responseBody: CalendarInternalAPIResponse = { 
+    todayEvents, 
+    nextDayEvents,
+    importantEvents,
+    futureEvents,
+  };
+
+  return responseBody;
+}
