@@ -14,16 +14,24 @@ interface LocationCache {
   longitude: string;
 }
 
+// Last location read from or written to disk, so the file is not re-read on every lookup.
+let memoryCache: LocationCache | null = null;
+
 function readCache(latitude: string, longitude: string): LocationCache | null {
+  const matches = (cached: LocationCache) => cached.latitude === latitude && cached.longitude === longitude;
+  if (memoryCache && matches(memoryCache)) return memoryCache;
   try {
     const cached = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8")) as LocationCache;
-    return cached.latitude === latitude && cached.longitude === longitude ? cached : null;
+    if (!matches(cached)) return null;
+    memoryCache = cached;
+    return cached;
   } catch {
     return null;
   }
 }
 
 function writeCache(data: LocationCache): void {
+  memoryCache = data;
   try {
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(data, null, 2), "utf-8");
   } catch {

@@ -13,11 +13,18 @@ import {
   type ResolvedRuntimeSettings,
   type StoredSettings,
 } from "@/features/settings/server/setup-validation";
+import { globalSingleton } from "@/lib/global-singleton";
 import { fetchNominatimAPI } from "@/services/nominatim-api";
 import { isErrorResponse } from "@/utils/check-service-error";
 
 const SETTINGS_ID = 1;
-let settingsTablePromise: Promise<DataSource> | null = null;
+
+// Shared by the page and every route bundle, so the table is prepared once and
+// the settings row is read once until it is saved again.
+const state = globalSingleton("runtimeSettings", () => ({
+  tablePromise: null as Promise<DataSource> | null,
+  storedPromise: null as Promise<StoredSettings> | null,
+}));
 
 interface RuntimeSettingsRow {
   timezone?: string | null;
@@ -111,8 +118,8 @@ function fromRow(row: RuntimeSettingsRow | undefined): StoredSettings {
 }
 
 async function getSettingsDataSource() {
-  if (!settingsTablePromise) {
-    settingsTablePromise = (async () => {
+  if (!state.tablePromise) {
+    state.tablePromise = (async () => {
       const { getDatabaseConnection } = await import("@/lib/db");
       const dataSource = await getDatabaseConnection();
       await dataSource.query(`
@@ -143,20 +150,35 @@ async function getSettingsDataSource() {
       }
       return dataSource;
     })().catch((error: unknown) => {
-      settingsTablePromise = null;
+      state.tablePromise = null;
       throw error;
     });
   }
-  return settingsTablePromise;
+  return state.tablePromise;
 }
 
-async function readStored(): Promise<StoredSettings> {
+async function loadStored(): Promise<StoredSettings> {
   const dataSource = await getSettingsDataSource();
   const rows = await dataSource.query(
     `SELECT ${SELECT_COLUMNS} FROM app_settings WHERE id = ?`,
     [SETTINGS_ID],
   ) as RuntimeSettingsRow[];
   return fromRow(rows[0]);
+}
+
+/**
+ * Settings are read on every request, often several times, so the row is kept
+ * in memory. This process is the only writer; saveRuntimeSettings drops the copy.
+ */
+function readStored(): Promise<StoredSettings> {
+  if (!state.storedPromise) {
+    const pending = loadStored().catch((error: unknown) => {
+      if (state.storedPromise === pending) state.storedPromise = null;
+      throw error;
+    });
+    state.storedPromise = pending;
+  }
+  return state.storedPromise;
 }
 
 export async function getResolvedRuntimeSettings(): Promise<ResolvedRuntimeSettings> {
@@ -210,6 +232,7 @@ export async function saveRuntimeSettings(
     VALUES (${placeholders})
     ON CONFLICT(id) DO UPDATE SET ${assignments}, updated_at=CURRENT_TIMESTAMP
   `, parameters);
+  state.storedPromise = null;
 
   return getRuntimeSettings();
 }

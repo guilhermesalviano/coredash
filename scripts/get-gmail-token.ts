@@ -9,7 +9,7 @@
 
 import http from "http";
 import { URL } from "url";
-import { google } from "googleapis";
+import { auth } from "@googleapis/gmail";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env" });
@@ -21,7 +21,7 @@ const LISTEN_PORT = 3001;
 const baseUrl = new URL("http://localhost:3001");
 const REDIRECT_URI = `${baseUrl.protocol}//${baseUrl.hostname}:${LISTEN_PORT}/oauth/callback`;
 
-const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+const oauth2Client = new auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
 const authUrl = oauth2Client.generateAuthUrl({
   access_type: "offline",

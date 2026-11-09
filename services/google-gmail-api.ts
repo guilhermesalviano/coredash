@@ -1,6 +1,7 @@
 import { getResolvedRuntimeSettings } from '@/features/settings/server/runtime-settings';
 import { GmailMessage } from '@/types/gmail';
-import { google } from 'googleapis';
+import { auth as googleAuth, gmail as createGmail, type gmail_v1 } from '@googleapis/gmail';
+import { globalSingleton } from '@/lib/global-singleton';
 
 function getHeader(headers: { name: string; value: string }[], name: string): string {
   return headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? '';
@@ -41,11 +42,25 @@ function extractHtmlBody(payload: {
   return '';
 }
 
+// One client per credential set. Reusing it keeps the OAuth access token between
+// requests instead of exchanging the refresh token on every call.
+const gmailClients = globalSingleton('gmailClients', () => new Map<string, gmail_v1.Gmail>());
+
 async function createGmailClient() {
   const settings = await getResolvedRuntimeSettings();
-  const auth = new google.auth.OAuth2(settings.gmailClientId, settings.gmailClientSecret);
-  auth.setCredentials({ refresh_token: settings.gmailRefreshToken });
-  return { gmail: google.gmail({ version: 'v1', auth }), timezone: settings.timezone };
+  const key = [settings.gmailClientId, settings.gmailClientSecret, settings.gmailRefreshToken].join('\n');
+
+  let gmail = gmailClients.get(key);
+  if (!gmail) {
+    const auth = new googleAuth.OAuth2(settings.gmailClientId, settings.gmailClientSecret);
+    auth.setCredentials({ refresh_token: settings.gmailRefreshToken });
+    gmail = createGmail({ version: 'v1', auth });
+    // Credentials changed in Settings: the previous client is no longer needed.
+    gmailClients.clear();
+    gmailClients.set(key, gmail);
+  }
+
+  return { gmail, timezone: settings.timezone };
 }
 
 export async function markGmailMessageAsRead(id: string): Promise<void> {

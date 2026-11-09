@@ -18,10 +18,11 @@
     "test:settings": "tsx --test features/settings/server/*.test.ts"
   },
   "dependencies": {
+    "@googleapis/calendar": "^20.1.0",
+    "@googleapis/gmail": "^22.0.2",
     "@toon-format/toon": "^4.1.1",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
-    "googleapis": "^171.4.0",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
