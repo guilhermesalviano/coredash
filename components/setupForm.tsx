@@ -33,6 +33,7 @@ const GROUP_ICONS: Record<SetupGroupId, typeof MapPin> = {
   stocks: Lock,
   calendar: Lock,
   gmail: Lock,
+  camera: Lock,
 };
 
 function browserTimezone(): string {

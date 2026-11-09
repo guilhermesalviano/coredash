@@ -1,3 +1,4 @@
+import { parseCameraUrl } from "@/features/camera/camera-url";
 import {
   SECRET_FIELD_KEYS,
   SETUP_FIELD_KEYS,
@@ -28,6 +29,7 @@ export interface StoredSettings {
   googlePrivateKey: string | null;
   gmailClientSecret: string | null;
   gmailRefreshToken: string | null;
+  cameraUrl: string | null;
 }
 
 export interface EnvironmentSettings {
@@ -44,6 +46,7 @@ export interface EnvironmentSettings {
   googlePrivateKey: string;
   gmailClientSecret: string;
   gmailRefreshToken: string;
+  cameraUrl: string;
 }
 
 export interface ResolvedRuntimeSettings extends RuntimeSettings {
@@ -53,6 +56,7 @@ export interface ResolvedRuntimeSettings extends RuntimeSettings {
   googlePrivateKey: string;
   gmailClientSecret: string;
   gmailRefreshToken: string;
+  cameraUrl: string;
 }
 
 const STRING_PATCH_KEYS = [
@@ -68,6 +72,7 @@ const STRING_PATCH_KEYS = [
   "googlePrivateKey",
   "gmailClientSecret",
   "gmailRefreshToken",
+  "cameraUrl",
 ] as const;
 
 const REQUIRED_PUBLIC = ["timezone", "latitude", "longitude"] as const;
@@ -100,6 +105,7 @@ export function emptyStoredSettings(): StoredSettings {
     googlePrivateKey: null,
     gmailClientSecret: null,
     gmailRefreshToken: null,
+    cameraUrl: null,
   };
 }
 
@@ -175,6 +181,9 @@ export function validateRuntimeSettingsPatch(input: unknown): RuntimeSettingsPat
       limited(normalized, key, 255);
     }
     if (key === "googlePrivateKey") limited(normalized, key, 8000);
+    if (key === "cameraUrl" && !parseCameraUrl(normalized)) {
+      throw new Error("cameraUrl must be an http:// or https:// address");
+    }
     if (SECRET_FIELD_KEYS.includes(key as SecretFieldKey) && key !== "googlePrivateKey") {
       limited(normalized, key, 2000);
     }
@@ -224,6 +233,7 @@ export function resolveSettings(stored: StoredSettings, env: EnvironmentSettings
     googlePrivateKey: normalizePrivateKey(pickText(stored.googlePrivateKey, env.googlePrivateKey)),
     gmailClientSecret: pickText(stored.gmailClientSecret, env.gmailClientSecret),
     gmailRefreshToken: pickText(stored.gmailRefreshToken, env.gmailRefreshToken),
+    cameraUrl: pickText(stored.cameraUrl, env.cameraUrl),
   };
 }
 

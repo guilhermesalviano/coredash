@@ -77,5 +77,8 @@ The first-run screen appears when the timezone, latitude, or longitude is missin
 | Gmail OAuth client ID | `GOOGLE_GMAIL_CLIENT_ID` | no | no |
 | Gmail OAuth client secret | `GOOGLE_GMAIL_CLIENT_SECRET` | no | yes |
 | Gmail refresh token | `GOOGLE_GMAIL_REFRESH_TOKEN` | no | yes |
+| Camera address | `CAMERA_URL` | no | yes |
 
 Weather uses Open-Meteo and does not need an API key. Optional groups are all-or-nothing when you edit them: Calendar needs the email, private key, and at least one calendar ID together; Gmail needs the client ID, client secret, and refresh token together. A blank secret field keeps the value already stored.
+
+The camera card shows a small live view of a camera on your network. Give it the camera's HTTP snapshot or MJPEG address (credentials may be embedded, e.g. `http://user:pass@192.168.1.20/snapshot.jpg`; basic and digest authentication are supported). The server fetches the frames, so the address and password never reach the browser. RTSP addresses are not supported directly; put a bridge such as go2rtc or MediaMTX in front of the camera and use its snapshot URL.

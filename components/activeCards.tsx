@@ -8,6 +8,7 @@ import TodoCardClient from "./cards/clients/todoCardClient";
 import GmailCard from "./cards/gmail";
 import { CardId, useActiveCards } from "@/hooks/useActiveCards";
 import NewsCard from "./cards/news";
+import CameraCard from "./cards/camera";
 
 const isWeekend = [0, 6].includes(new Date().getDay());
 
@@ -18,6 +19,7 @@ const CARD_MAP: Record<CardId, React.ComponentType | null> = {
   todo:      TodoCardClient,
   stocks:    isWeekend ? null : StocksCardClient,
   news:     NewsCard,
+  camera:    CameraCard,
 };
 
 export default function ActiveCards() {

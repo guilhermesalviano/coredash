@@ -27,6 +27,7 @@ function environment(overrides: Partial<EnvironmentSettings> = {}): EnvironmentS
     googlePrivateKey: "",
     gmailClientSecret: "",
     gmailRefreshToken: "",
+    cameraUrl: "",
     ...overrides,
   };
 }

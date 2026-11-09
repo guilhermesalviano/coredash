@@ -35,6 +35,12 @@ export const SETUP_GROUPS = [
     description: "Optional. Save the OAuth client ID, client secret, and refresh token together, or leave all of them empty.",
     optional: true,
   },
+  {
+    id: "camera",
+    title: "Camera",
+    description: "Optional. A camera on your network fills the camera card. The dashboard server must be able to reach it.",
+    optional: true,
+  },
 ] as const;
 
 export type SetupGroupId = (typeof SETUP_GROUPS)[number]["id"];
@@ -52,7 +58,8 @@ export type SetupFieldKey =
   | "calendarIds"
   | "gmailClientId"
   | "gmailClientSecret"
-  | "gmailRefreshToken";
+  | "gmailRefreshToken"
+  | "cameraUrl";
 
 export type SetupInputKind = "text" | "number" | "textarea" | "secret" | "secret-textarea" | "list";
 
@@ -204,6 +211,16 @@ export const SETUP_FIELDS: readonly SetupField[] = [
     secret: true,
     input: "secret",
     help: "OAuth refresh token. scripts/get-gmail-token.ts can mint one.",
+  },
+  {
+    key: "cameraUrl",
+    label: "Camera address",
+    env: "CAMERA_URL",
+    group: "camera",
+    required: false,
+    secret: true,
+    input: "secret",
+    help: "HTTP snapshot or MJPEG address, e.g. http://user:pass@192.168.1.20/snapshot.jpg. Kept on the server because it can hold the camera password.",
   },
 ];
 

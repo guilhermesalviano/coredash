@@ -10,6 +10,7 @@ export const CARD_REGISTRY = [
   { id: "stocks",    label: "Stocks",           emoji: "📈" },
   { id: "todo",      label: "To-Do",            emoji: "✅" },
   { id: "news",      label: "News",             emoji: "📰" },
+  { id: "camera",    label: "Camera",           emoji: "📷" },
 ] as const;
 
 export type CardId = (typeof CARD_REGISTRY)[number]["id"];

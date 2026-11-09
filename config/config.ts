@@ -46,6 +46,11 @@ export const APIS = {
   newsApiKey: optional("NEWS_API_KEY"),
 } as const;
 
+export const CAMERA = {
+  /** http(s) snapshot or MJPEG address of a LAN camera; may carry credentials. */
+  url: optional("CAMERA_URL"),
+} as const;
+
 export const CONFIG = {
   isDev,
   port: Number(optional("PORT", "3000")) || 3000,

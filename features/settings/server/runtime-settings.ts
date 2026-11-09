@@ -1,6 +1,6 @@
 import type { DataSource } from "typeorm";
 
-import { APIS, GOOGLE, LOCATION } from "@/config/config";
+import { APIS, CAMERA, GOOGLE, LOCATION } from "@/config/config";
 import type { RuntimeSettingsPatch, RuntimeSettingsResponse } from "@/features/settings/types";
 import {
   applySettingsPatch,
@@ -40,6 +40,7 @@ interface RuntimeSettingsRow {
   gmail_client_id?: string | null;
   gmail_client_secret?: string | null;
   gmail_refresh_token?: string | null;
+  camera_url?: string | null;
 }
 
 const EXTRA_COLUMNS = [
@@ -52,6 +53,7 @@ const EXTRA_COLUMNS = [
   "gmail_client_id TEXT NULL",
   "gmail_client_secret TEXT NULL",
   "gmail_refresh_token TEXT NULL",
+  "camera_url TEXT NULL",
 ];
 
 const SELECT_COLUMNS = [
@@ -68,6 +70,7 @@ const SELECT_COLUMNS = [
   "gmail_client_id",
   "gmail_client_secret",
   "gmail_refresh_token",
+  "camera_url",
 ].join(", ");
 
 function environmentDefaults(): EnvironmentSettings {
@@ -85,6 +88,7 @@ function environmentDefaults(): EnvironmentSettings {
     newsApiKey: APIS.newsApiKey,
     serpApiKey: APIS.serpApiKey,
     brapiToken: APIS.brapiToken,
+    cameraUrl: CAMERA.url,
   };
 }
 
@@ -114,6 +118,7 @@ function fromRow(row: RuntimeSettingsRow | undefined): StoredSettings {
     googlePrivateKey: row.google_private_key ?? null,
     gmailClientSecret: row.gmail_client_secret ?? null,
     gmailRefreshToken: row.gmail_refresh_token ?? null,
+    cameraUrl: row.camera_url ?? null,
   };
 }
 
@@ -138,6 +143,7 @@ async function getSettingsDataSource() {
           gmail_client_id TEXT NULL,
           gmail_client_secret TEXT NULL,
           gmail_refresh_token TEXT NULL,
+          camera_url TEXT NULL,
           updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
@@ -208,6 +214,7 @@ function storedParameters(stored: StoredSettings): unknown[] {
     stored.gmailClientId,
     stored.gmailClientSecret,
     stored.gmailRefreshToken,
+    stored.cameraUrl,
   ];
 }
 
@@ -223,6 +230,7 @@ export async function saveRuntimeSettings(
     "id", "timezone", "latitude", "longitude", "calendar_ids", "city",
     "news_api_key", "brapi_token", "serpapi_key", "google_client_email",
     "google_private_key", "gmail_client_id", "gmail_client_secret", "gmail_refresh_token",
+    "camera_url",
   ];
   const placeholders = columns.map(() => "?").join(", ");
   const assignments = columns.slice(1).map((column) => `${column}=excluded.${column}`).join(", ");

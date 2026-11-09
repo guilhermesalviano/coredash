@@ -29,6 +29,7 @@ export type SecretFieldKey = Extract<SetupFieldKey,
   | "googlePrivateKey"
   | "gmailClientSecret"
   | "gmailRefreshToken"
+  | "cameraUrl"
 >;
 
 export type SecretConfiguration = Record<SecretFieldKey, boolean>;
@@ -54,4 +55,5 @@ export interface RuntimeSettingsPatch {
   googlePrivateKey?: string | null;
   gmailClientSecret?: string | null;
   gmailRefreshToken?: string | null;
+  cameraUrl?: string | null;
 }
