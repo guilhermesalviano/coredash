@@ -1,10 +1,10 @@
 "use client";
 
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusState } from "@/contexts/statusContext";
 import { useLocale } from "@/contexts/localeContext";
 
 export default function SystemsStatus() {
-  const { isAllLive, anyLoading } = useStatus();
+  const { isAllLive, anyLoading } = useStatusState();
   const { t } = useLocale();
 
   if (anyLoading) {

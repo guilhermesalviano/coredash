@@ -6,7 +6,7 @@ export default function Logo() {
       <div className="relative shrink-0">
         <div className="absolute inset-0 bg-cyan-500/10 rounded-full blur-md" />
         <Image
-          src="/icon.png" 
+          src="/icons/favicon-96x96.png"
           width={32}
           height={32} 
           alt="coredash logo" 

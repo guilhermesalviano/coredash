@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useDashboard } from "@/hooks/useDashboard";
+import { useDashboardSlice } from "@/hooks/useDashboard";
 import { retrySlice } from "@/lib/dashboardStore";
 import { errorCopy } from "@/lib/i18n";
 import { useLocale } from "@/contexts/localeContext";
@@ -10,7 +10,7 @@ import Card from "../card";
 import CardState from "../cardState";
 
 const NewsCard = () => {
-  const { news } = useDashboard();
+  const news = useDashboardSlice("news");
   const { locale, t } = useLocale();
   const [blurred, setBlurred] = useState(true);
 

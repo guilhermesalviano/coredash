@@ -1,76 +1,26 @@
-import { ONE_MINUTE_IN_MS } from "@/constants";
-import { STOCKS } from "@/constants/stocks";
+import { getStocks } from "@/features/stocks/server/get-stocks";
+import { AppError } from "@/lib/api-error";
 import { formatResponse } from "@/lib/api-response";
 import logger from "@/lib/logger";
-import { getResolvedRuntimeSettings } from "@/features/settings/server/runtime-settings";
-import { fetchBrapiAPI } from "@/services/brapi-api";
-import { fetchYahooPrice } from "@/services/yahoo-finance";
-import { StockInternalAPIResponse } from "@/types/stock-api";
-import { isErrorResponse } from "@/utils/check-service-error";
-import { createMemoryCache } from "@/utils/in-memory-cache";
 import { NextRequest, NextResponse } from "next/server";
-
-interface StockResult {
-  symbol: string;
-  regularMarketPrice: number;
-  regularMarketDayHigh: number;
-  regularMarketChange: number;
-  regularMarketChangePercent: number;
-}
-
-function mapStocks(results: StockResult[]): StockInternalAPIResponse[] {
-  return results.map((stock) => ({
-    ticker: stock.symbol,
-    price: stock.regularMarketPrice,
-    priceOpened: stock.regularMarketDayHigh,
-    change: stock.regularMarketChange,
-    pct: stock.regularMarketChangePercent,
-  }));
-}
-
-const stocksCache = createMemoryCache<StockInternalAPIResponse[]>(ONE_MINUTE_IN_MS * 10);
 
 export async function GET(req: NextRequest) {
   try {
-    const cached = stocksCache.get("default");
-    if (cached) {
+    const { data, source, fromCache } = await getStocks();
+    if (fromCache) {
       logger.info("Stocks data retrieved from cache successfully");
-      return formatResponse(req, { message: "Stocks data from cache successfully", data: cached });
+      return formatResponse(req, { message: "Stocks data from cache successfully", data });
     }
 
-    const symbols = Object.values(STOCKS).flat();
-
-    const settings = await getResolvedRuntimeSettings();
-    const brapiData = await fetchBrapiAPI(symbols.join(","), settings.brapiToken);
-    if (!isErrorResponse(brapiData) && brapiData.results?.length) {
-      const data = mapStocks(brapiData.results);
-      stocksCache.set("default", data);
-
-      return formatResponse(req, {
-        message: "Stocks data retrieved successfully",
-        source: "brapi",
-        data,
-      }, { status: 200 });
-    }
-
-    const yahooSymbols = symbols.map((s) => `${s}.SA`);
-    const yahooData = await fetchYahooPrice(yahooSymbols);
-    if (yahooData?.results?.length) {
-      const data = mapStocks(yahooData.results as StockResult[]);
-      stocksCache.set("default", data);
-
-      return formatResponse(req, {
-        message: "Stocks data retrieved successfully",
-        source: "yahoo",
-        data,
-      }, { status: 200 });
-    }
-
-    return NextResponse.json(
-      { message: "Nenhuma ação encontrada no momento" },
-      { status: 404 }
-    );
+    return formatResponse(req, {
+      message: "Stocks data retrieved successfully",
+      source,
+      data,
+    }, { status: 200 });
   } catch (error: unknown) {
+    if (error instanceof AppError && error.status === 404) {
+      return NextResponse.json({ message: error.message }, { status: 404 });
+    }
     console.error(error);
     return NextResponse.json(
       { error: "Failed to retrieve stocks data" },

@@ -3,12 +3,22 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { fetchJson } from "@/lib/api-client";
 import type { RuntimeSettingsResponse } from "@/features/settings/types";
-import SetupForm from "@/components/setupForm";
+import dynamic from "next/dynamic";
 
-export default function SetupGate({ children }: { children: ReactNode }) {
-  const [setupRequired, setSetupRequired] = useState<boolean | null>(null);
+// Only a fresh install ever shows the setup screen.
+const SetupForm = dynamic(() => import("@/components/setupForm"), { ssr: false });
+
+interface SetupGateProps {
+  children: ReactNode;
+  /** Value resolved on the server. When null or omitted the gate asks the API. */
+  initialSetupRequired?: boolean | null;
+}
+
+export default function SetupGate({ children, initialSetupRequired = null }: SetupGateProps) {
+  const [setupRequired, setSetupRequired] = useState<boolean | null>(initialSetupRequired);
 
   useEffect(() => {
+    if (initialSetupRequired !== null) return;
     const controller = new AbortController();
     void (async () => {
       try {
@@ -19,7 +29,7 @@ export default function SetupGate({ children }: { children: ReactNode }) {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [initialSetupRequired]);
 
   if (setupRequired === null) return null;
   if (setupRequired) {

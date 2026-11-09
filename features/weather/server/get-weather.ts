@@ -5,19 +5,37 @@ import { getWeatherCondition, getWeatherIcon } from "@/utils/weather";
 import { isErrorResponse } from "@/utils/check-service-error";
 import getUserCity from "@/utils/get-user-city";
 import { withRetry } from "@/utils/retry";
-import { createMemoryCache } from "@/utils/in-memory-cache";
+import { createSwrCache, type SwrCacheEntry } from "@/utils/in-memory-cache";
 import { AppError } from "@/lib/api-error";
+import type { RuntimeSettingsResponse } from "@/features/settings/types";
 import type { WeatherData } from "@/features/weather/types";
+import { globalSingleton } from "@/lib/global-singleton";
 
-const weatherCache = createMemoryCache<WeatherData>(ONE_MINUTE_IN_MS);
+export const DEFAULT_WEATHER_HOURS = 24;
+
+// Open-Meteo refreshes its models hourly at best; the stale window keeps the
+// card instant while a refresh runs and covers short provider outages.
+const weatherCache = globalSingleton("weatherCache", () => createSwrCache<WeatherData>({
+  ttlMs: ONE_MINUTE_IN_MS * 10,
+  staleMs: ONE_MINUTE_IN_MS * 20,
+}));
+
+function weatherCacheKey(limit: number, settings: RuntimeSettingsResponse): string {
+  return [limit, settings.settings.latitude, settings.settings.longitude, settings.settings.timezone].join(":");
+}
 
 export async function getWeatherData(limit?: number): Promise<WeatherData> {
   const settings = await getRuntimeSettings();
-  const effectiveLimit = limit ?? 24;
-  const cacheKey = [effectiveLimit, settings.settings.latitude, settings.settings.longitude, settings.settings.timezone].join(":");
-  const cached = weatherCache.get(cacheKey);
-  if (cached) return cached;
+  const effectiveLimit = limit ?? DEFAULT_WEATHER_HOURS;
+  return weatherCache.get(weatherCacheKey(effectiveLimit, settings), () => loadWeatherData(effectiveLimit, settings));
+}
 
+/** Returns the cached weather without contacting the provider. */
+export async function peekWeatherData(limit = DEFAULT_WEATHER_HOURS): Promise<SwrCacheEntry<WeatherData> | null> {
+  return weatherCache.peek(weatherCacheKey(limit, await getRuntimeSettings()));
+}
+
+async function loadWeatherData(effectiveLimit: number, settings: RuntimeSettingsResponse): Promise<WeatherData> {
   const weather = await withRetry(() => fetchOpenMeteoAPI({
     latitude: settings.settings.latitude,
     longitude: settings.settings.longitude,
@@ -82,6 +100,5 @@ export async function getWeatherData(limit?: number): Promise<WeatherData> {
     forecast,
     daily,
   };
-  weatherCache.set(cacheKey, data);
   return data;
 }

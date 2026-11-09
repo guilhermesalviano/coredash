@@ -1,13 +1,30 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 type ServiceStatus = "loading" | "success" | "error";
 
-const StatusContext = createContext({
-  reportStatus: (name: string, status: ServiceStatus) => {},
-  startAction: (id: string) => {},
-  endAction: (id: string) => {},
+interface StatusActions {
+  reportStatus: (name: string, status: ServiceStatus) => void;
+  startAction: (id: string) => void;
+  endAction: (id: string) => void;
+}
+
+interface StatusState {
+  isAllLive: boolean;
+  anyLoading: boolean;
+  anyActionLoading: boolean;
+}
+
+// Two contexts: the actions never change, so a card that only reports its
+// status is not re-rendered every time another card reports.
+const StatusActionsContext = createContext<StatusActions>({
+  reportStatus: () => {},
+  startAction: () => {},
+  endAction: () => {},
+});
+
+const StatusStateContext = createContext<StatusState>({
   isAllLive: false,
   anyLoading: true,
   anyActionLoading: false,
@@ -25,7 +42,7 @@ export const StatusProvider = ({ children }: { children: React.ReactNode }) => {
   const [actions, setActions] = useState<Set<string>>(new Set());
 
   const reportStatus = useCallback((name: string, status: ServiceStatus) => {
-    setSystems(prev => ({ ...prev, [name]: status }));
+    setSystems(prev => (prev[name] === status ? prev : { ...prev, [name]: status }));
   }, []);
 
   // Failsafe: if a system never reports (e.g. unmounted card, network timeout, reverse proxy error), mark as error after 4s
@@ -58,11 +75,33 @@ export const StatusProvider = ({ children }: { children: React.ReactNode }) => {
   const anyLoading = Object.values(systems).some(v => v === "loading");
   const anyActionLoading = actions.size > 0;
 
+  const actionsValue = useMemo<StatusActions>(
+    () => ({ reportStatus, startAction, endAction }),
+    [reportStatus, startAction, endAction],
+  );
+  const stateValue = useMemo<StatusState>(
+    () => ({ isAllLive, anyLoading, anyActionLoading }),
+    [isAllLive, anyLoading, anyActionLoading],
+  );
+
   return (
-    <StatusContext.Provider value={{ reportStatus, startAction, endAction, isAllLive, anyLoading, anyActionLoading }}>
-      {children}
-    </StatusContext.Provider>
+    <StatusActionsContext.Provider value={actionsValue}>
+      <StatusStateContext.Provider value={stateValue}>
+        {children}
+      </StatusStateContext.Provider>
+    </StatusActionsContext.Provider>
   );
 };
 
-export const useStatus = () => useContext(StatusContext);
+/** Stable callbacks; using only this hook never causes a re-render. */
+export const useStatusActions = () => useContext(StatusActionsContext);
+
+/** Aggregated flags; re-renders only when one of them flips. */
+export const useStatusState = () => useContext(StatusStateContext);
+
+/** Both of the above. Prefer the narrower hooks in new code. */
+export const useStatus = () => {
+  const actions = useStatusActions();
+  const state = useStatusState();
+  return { ...actions, ...state };
+};

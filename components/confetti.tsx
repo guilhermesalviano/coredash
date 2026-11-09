@@ -1,6 +1,6 @@
-import confetti from "canvas-confetti";
-
-const handleFireConfetti = () => {
+const handleFireConfetti = async () => {
+  // Loaded on first use; it is not needed to render the dashboard.
+  const { default: confetti } = await import("canvas-confetti");
   const duration = 3 * 1000;
   const animationEnd = Date.now() + duration;
   const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -9,7 +9,7 @@ const handleFireConfetti = () => {
     return Math.random() * (max - min) + min;
   };
 
-  const interval: any = setInterval(function() {
+  const interval = setInterval(function() {
     const timeLeft = animationEnd - Date.now();
 
     if (timeLeft <= 0) {

@@ -17,3 +17,15 @@ export interface DashboardStore {
   stocks: DashboardSlice<StockInternalAPIResponse[]>;
 }
 
+
+/** Server-cached slice handed to the client so the first paint has data. */
+export interface DashboardSeedEntry<T> {
+  data: T;
+  fetchedAt: number;
+  /** False when the server already considers the value due for a refresh. */
+  fresh: boolean;
+}
+
+export type DashboardSeed = {
+  [K in keyof DashboardStore]?: DashboardSeedEntry<NonNullable<DashboardStore[K]["data"]>>;
+};

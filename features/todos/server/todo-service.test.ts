@@ -15,7 +15,7 @@ import {
 } from "./todo-service";
 
 const testDataSource = new DataSource({
-  type: "sqlite",
+  type: "better-sqlite3",
   database: ":memory:",
   synchronize: true,
   entities: [Todo, TodoCheck, TodoRecurrence],
@@ -223,3 +223,37 @@ test("records TodoCheck completion hour when task status updates to done", async
   await deleteTodo(task.id);
 });
 
+
+test("uses the most recent completed check per todo and ignores unchecked days", async () => {
+  const task = await createTodo({ title: "History Task", type: "task", status: "todo" });
+  const other = await createTodo({ title: "Other History Task", type: "task", status: "todo" });
+  const checkRepo = testDataSource.getRepository(TodoCheck);
+
+  await checkRepo.save([
+    { id: uuidv4(), timestamp: "2026-01-01", hour: "22:00", checked: 1, todo: task },
+    { id: uuidv4(), timestamp: "2026-01-03", hour: "07:30", checked: 1, todo: task },
+    { id: uuidv4(), timestamp: "2026-01-03", hour: "09:45", checked: 1, todo: task },
+    { id: uuidv4(), timestamp: "2026-01-04", hour: "23:59", checked: 0, todo: task },
+    { id: uuidv4(), timestamp: "2026-01-02", hour: "06:10", checked: 1, todo: other },
+  ]);
+  setTodoDatabaseConnection(testDataSource); // drop the cached list
+
+  const items = await getTodos({ type: "task" });
+  assert.equal(items.find((t) => t.id === task.id)?.lastCheckedHour, "09:45");
+  assert.equal(items.find((t) => t.id === other.id)?.lastCheckedHour, "06:10");
+
+  await deleteTodo(task.id);
+  await deleteTodo(other.id);
+});
+
+test("reads today's check for a reminder", async () => {
+  const reminder = await createTodo({ title: "Range Reminder", type: "reminder", checked: 0 });
+  assert.equal((await getTodos({ type: "reminder" })).find((t) => t.id === reminder.id)?.checked, 0);
+
+  await updateTodo({ id: reminder.id, checked: 1 });
+  const done = (await getTodos({ type: "reminder" })).find((t) => t.id === reminder.id);
+  assert.equal(done?.checked, 1);
+  assert.equal(done?.status, "done");
+
+  await deleteTodo(reminder.id);
+});

@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "node scripts/start-standalone.mjs",
     "lint": "eslint",
-    "test": "npm run test:focus && npm run test:todos && npm run test:settings && npm run test:news && npm run test:cards && npm run test:i18n && npm run test:weather",
+    "test": "npm run test:focus && npm run test:todos && npm run test:settings && npm run test:news && npm run test:cards && npm run test:i18n && npm run test:weather && npm run test:cache",
     "test:weather": "tsx --test components/cards/weather.test.ts",
+    "test:cache": "tsx --test utils/in-memory-cache.test.ts",
     "test:i18n": "tsx --test lib/i18n.test.ts",
     "test:cards": "tsx --test hooks/useActiveCards.test.ts",
     "test:news": "tsx --test services/google-news-api.test.ts",
@@ -17,17 +18,18 @@
     "test:settings": "tsx --test features/settings/server/*.test.ts"
   },
   "dependencies": {
+    "@googleapis/calendar": "^20.1.0",
+    "@googleapis/gmail": "^22.0.2",
     "@toon-format/toon": "^4.1.1",
+    "better-sqlite3": "^12.11.1",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
-    "googleapis": "^171.4.0",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "reflect-metadata": "^0.2.2",
-    "sqlite3": "^5.1.7",
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
@@ -35,11 +37,12 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "sqlite3"
+      "better-sqlite3"
     ]
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20.17.19",
     "@types/react": "^19",

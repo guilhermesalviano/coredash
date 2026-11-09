@@ -38,6 +38,8 @@ yarn-error.log*
 !.env.example
 
 database.db
+database.db-wal
+database.db-shm
 
 # vercel
 .vercel

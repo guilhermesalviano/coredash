@@ -3,8 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { QrCode, X, Copy, Check, ExternalLink } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import dynamic from "next/dynamic";
 import { useLocale } from "@/contexts/localeContext";
+
+// Only needed once the dialog is open.
+const QRCodeSVG = dynamic(() => import("qrcode.react").then((module) => module.QRCodeSVG), { ssr: false });
 
 export function resolveBaseUrl(customUrl?: string, clientOrigin?: string): string {
   if (customUrl) return customUrl;

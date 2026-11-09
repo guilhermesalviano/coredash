@@ -1,10 +1,14 @@
 "use client";
 
 import Card from "@/components/card";
-import TaskModal from "./taskModal";
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import TodoItem from "./todoItem";
 import { NewTaskForm, TodoState } from "@/types/task";
 import { useLocale } from "@/contexts/localeContext";
+
+// Downloaded the first time the "new reminder" dialog is opened.
+const TaskModal = dynamic(() => import("./taskModal"), { ssr: false });
 
 interface TodoProps {
   modalOpen: boolean;
@@ -38,13 +42,18 @@ export default function TodoCard({
   onRetry,
 }: TodoProps) {
   const { t } = useLocale();
+  // Once opened the modal stays mounted so an unfinished draft survives closing it.
+  const [modalLoaded, setModalLoaded] = useState(false);
+  if (modalOpen && !modalLoaded) setModalLoaded(true);
   return (
     <>
-      <TaskModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onAdd={add}
-      />
+      {modalLoaded && (
+        <TaskModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onAdd={add}
+        />
+      )}
 
       <Card>
         {/* Header with Title and Actions */}

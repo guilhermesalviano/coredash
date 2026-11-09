@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
+import { getInbox } from "@/features/emails/server/gmail-inbox";
 import { formatResponse } from "@/lib/api-response";
-import { fetchGoogleGmailAPI } from "@/services/google-gmail-api";
-import { gmailAliasIdCache, gmailListCache } from "@/lib/gmail-cache";
-import { GmailInternalAPIResponse } from "@/types/gmail";
 import logger from "@/lib/logger";
 
 export async function GET(request: Request) {
@@ -11,34 +9,14 @@ export async function GET(request: Request) {
   const startAtRaw = Number(searchParams.get("startAt") ?? "1");
   const startAt = Number.isFinite(startAtRaw) && startAtRaw > 0 ? Math.floor(startAtRaw) : 1;
 
-  // Don't cache paginated requests
-  if (!pageToken) {
-    const cached = gmailListCache.get("default");
-    if (cached) {
-      logger.info("Gmail data retrieved from cache successfully");
-      return formatResponse(request, { message: "Gmail data from cache successfully", data: cached });
-    }
-  }
-
   try {
-    const result = await fetchGoogleGmailAPI({ pageToken });
-    const emailsWithRecentId = result.emails.map((email, index) => {
-      const recentId = String(startAt + index);
-      gmailAliasIdCache.set(recentId, email.id);
-      return {
-        ...email,
-        id: recentId,
-      };
-    });
+    const { data, fromCache } = await getInbox({ pageToken, startAt });
+    if (fromCache) {
+      logger.info("Gmail data retrieved from cache successfully");
+      return formatResponse(request, { message: "Gmail data from cache successfully", data });
+    }
 
-    const responseBody: GmailInternalAPIResponse = {
-      emails: emailsWithRecentId,
-      nextPageToken: result.nextPageToken,
-    };
-
-    if (!pageToken) gmailListCache.set("default", responseBody);
-
-    return formatResponse(request, { message: "Gmail data retrieved successfully", data: responseBody });
+    return formatResponse(request, { message: "Gmail data retrieved successfully", data });
   } catch (error: unknown) {
     console.error(error);
     return NextResponse.json({ error: "Failed to retrieve Gmail data" }, { status: 500 });

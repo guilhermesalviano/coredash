@@ -3,7 +3,7 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NewTaskForm, TodoState } from "@/types/task";
 import handleFireConfetti from "@/components/confetti";
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusActions } from "@/contexts/statusContext";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
 import { fetchJson, ApiClientError } from "@/lib/api-client";
 import { useDayChange } from "@/hooks/useDayChange";
@@ -15,7 +15,7 @@ export default function TodoCardClient() {
   const [isBusy, setIsBusy] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const { reportStatus } = useStatus();
+  const { reportStatus } = useStatusActions();
 
   const isFirstRender = useRef(true);
 
