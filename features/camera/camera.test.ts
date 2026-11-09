@@ -7,10 +7,10 @@ import { validateRuntimeSettingsPatch } from "@/features/settings/server/setup-v
 import { digestAuthorization, extractJpegFrame } from "@/services/lan-camera";
 
 test("splits credentials out of a camera URL", () => {
-  assert.deepEqual(parseCameraUrl(" http://admin:p%40ss@192.168.1.20:8080/snap.jpg?ch=1 "), {
+  assert.deepEqual(parseCameraUrl(" http://admin:test%2Dpassword@192.168.1.20:8080/snap.jpg?ch=1 "), {
     url: "http://192.168.1.20:8080/snap.jpg?ch=1",
     username: "admin",
-    password: "p@ss",
+    password: "test-password",
   });
   assert.deepEqual(parseCameraUrl("https://cam.lan/video"), {
     url: "https://cam.lan/video",
@@ -51,10 +51,10 @@ test("answers a digest challenge", () => {
   const md5 = (value: string) => createHash("md5").update(value).digest("hex");
   const header = digestAuthorization(
     'Digest realm="cam", nonce="abc", qop="auth", opaque="xyz"',
-    { method: "GET", uri: "/snap.jpg", username: "admin", password: "secret" },
+    { method: "GET", uri: "/snap.jpg", username: "admin", password: "test-password" },
     "0a0b",
   );
-  const expected = md5(`${md5("admin:cam:secret")}:abc:00000001:0a0b:auth:${md5("GET:/snap.jpg")}`);
+  const expected = md5(`${md5("admin:cam:test-password")}:abc:00000001:0a0b:auth:${md5("GET:/snap.jpg")}`);
   assert.ok(header?.startsWith("Digest "));
   assert.ok(header?.includes(`response="${expected}"`));
   assert.ok(header?.includes('opaque="xyz"'));
