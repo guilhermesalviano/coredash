@@ -21,6 +21,7 @@
     "@googleapis/calendar": "^20.1.0",
     "@googleapis/gmail": "^22.0.2",
     "@toon-format/toon": "^4.1.1",
+    "better-sqlite3": "^12.11.1",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.577.0",
@@ -29,7 +30,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "reflect-metadata": "^0.2.2",
-    "sqlite3": "^5.1.7",
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
@@ -37,11 +37,12 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "sqlite3"
+      "better-sqlite3"
     ]
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20.17.19",
     "@types/react": "^19",

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { In, IsNull, Like, type DataSource } from "typeorm";
+import { Between, In, IsNull, Like, type DataSource } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { ONE_MINUTE_IN_MS } from "@/constants";
 import { createMemoryCache } from "@/utils/in-memory-cache";
@@ -94,33 +94,47 @@ export async function getTodos(
   const reminderIds = activeReminders.map((t) => t.id);
   const allTodoIds = [...reminderIds, ...tasks.map((t) => t.id)];
 
-  const [todayChecks, completionChecks] = await Promise.all([
+  const [todayChecks, latestChecks] = await Promise.all([
     reminderIds.length > 0
       ? checkRepository.find({
-          where: { todo: In(reminderIds), timestamp: Like(`${todayString}%`) },
+          // Same rows as a `today%` prefix match, written as a range so the
+          // (todo, timestamp) index covers it.
+          where: { todo: In(reminderIds), timestamp: Between(todayString, `${todayString}\uffff`) },
           relations: ["todo"],
         })
       : Promise.resolve([]),
     allTodoIds.length > 0
-      ? checkRepository.find({
-          where: { todo: In(allTodoIds), checked: 1 },
-          order: { timestamp: "DESC", hour: "DESC" },
-          relations: ["todo"],
-        })
+      ? // One row per todo instead of its whole check history. SQLite returns the
+        // bare `hour` column from the row that holds the MAX().
+        checkRepository
+          .createQueryBuilder("c")
+          .select("c.todoId", "todoId")
+          .addSelect("c.hour", "hour")
+          .addSelect("MAX(c.timestamp || ' ' || c.hour)", "latest")
+          .where("c.todoId IN (:...ids)", { ids: allTodoIds })
+          .andWhere("c.checked = 1")
+          .andWhere("c.hour != ''")
+          .groupBy("c.todoId")
+          .getRawMany<{ todoId: number; hour: string }>()
       : Promise.resolve([]),
   ]);
 
   const lastCheckedHourMap = new Map<number, string>();
-  for (const check of completionChecks) {
-    if (check.todo?.id && !lastCheckedHourMap.has(check.todo.id) && check.hour) {
-      lastCheckedHourMap.set(check.todo.id, check.hour);
+  for (const check of latestChecks) {
+    lastCheckedHourMap.set(Number(check.todoId), check.hour);
+  }
+
+  const todayCheckedByTodo = new Map<number, number>();
+  for (const check of todayChecks) {
+    if (check.todo?.id !== undefined && !todayCheckedByTodo.has(check.todo.id)) {
+      todayCheckedByTodo.set(check.todo.id, check.checked);
     }
   }
 
   const items: TodoItem[] = [];
 
   for (const todo of activeReminders) {
-    const checked = todayChecks.find((c) => c.todo?.id === todo.id)?.checked ?? 0;
+    const checked = todayCheckedByTodo.get(todo.id) ?? 0;
     if (normalizedOptions.onlyUnchecked && checked === 1) continue;
     if (normalizedOptions.status && (checked === 1 ? "done" : "todo") !== normalizedOptions.status) continue;
 

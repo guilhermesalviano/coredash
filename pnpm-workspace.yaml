@@ -1,5 +1,5 @@
 allowBuilds:
   esbuild: true
   sharp: true
-  sqlite3: true
+  better-sqlite3: true
   unrs-resolver: true
