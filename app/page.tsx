@@ -1,61 +1,18 @@
-"use client";
+import DashboardShell from "@/components/dashboardShell";
+import { getDashboardSeed } from "@/features/dashboard/server/get-dashboard-seed";
+import { pickLoadingGif } from "@/features/dashboard/server/loading-gifs";
+import { getRuntimeSettings } from "@/features/settings/server/runtime-settings";
 
-import { useEffect } from "react";
-import Loading from "@/components/loading";
-import ActionLoader from "@/components/actionLoader";
-import Clock from "@/components/clock";
-import SystemsStatus from "@/components/systemsStatus";
-import ActiveCards from "@/components/activeCards";
-import Logo from "@/components/logo";
-import Settings from "@/components/settings";
-import StoreStatusBridge from "@/components/storeStatusBridge";
-import FocusMode from "@/components/focusMode";
-import FocusModeToggle from "@/components/focusModeToggle";
-import ProjectQrButton from "@/components/projectQrButton";
-import SetupGate from "@/components/setupGate";
-import { useViewMode } from "@/hooks/useViewMode";
+// Reads settings and the in-memory caches on every request.
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  const { mode, mounted } = useViewMode();
+export default async function Page() {
+  const [settings, loadingGif] = await Promise.all([
+    getRuntimeSettings().catch(() => null),
+    pickLoadingGif(),
+  ]);
+  const setupRequired = settings ? settings.setupRequired : null;
+  const seed = setupRequired === false ? await getDashboardSeed() : {};
 
-  // Lets the stylesheet size the focus shell against the real header height
-  // instead of a hardcoded viewport offset.
-  useEffect(() => {
-    if (!mounted || mode !== "focus") return;
-    document.body.dataset.focus = "on";
-    return () => {
-      delete document.body.dataset.focus;
-    };
-  }, [mode, mounted]);
-
-  return (
-    <SetupGate>
-    <>
-      <Loading />
-      <StoreStatusBridge />
-      <ActionLoader />
-      <div className="header grid grid-cols-3 items-center w-full py-4! sm:px-14! sticky z-60">
-        <div className="header-brand flex gap-2 items-center">
-          <Logo />
-        </div>
-
-        <div className="header-clock flex justify-center">
-          <Clock />
-        </div>
-
-        <div className="header-status flex items-center justify-end gap-4">
-          <SystemsStatus />
-          <FocusModeToggle />
-          <Settings />
-        </div>
-      </div>
-      {mounted && mode === "focus" ? (
-        <FocusMode />
-      ) : (
-        <ActiveCards />
-      )}
-      <ProjectQrButton />
-    </>
-    </SetupGate>
-  );
+  return <DashboardShell setupRequired={setupRequired} seed={seed} loadingGif={loadingGif} />;
 }

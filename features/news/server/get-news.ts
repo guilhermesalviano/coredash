@@ -8,11 +8,12 @@ import { parseRelativeDate } from "@/utils/parse-relative-date";
 import type { NewsItem } from "@/features/news/types";
 import { differenceInHours } from "date-fns";
 import { detectLocale, newsMarket, relativeHours, type Locale } from "@/lib/i18n";
+import { globalSingleton } from "@/lib/global-singleton";
 
-const newsCache = createSwrCache<NewsItem[]>({
+const newsCache = globalSingleton("newsCache", () => createSwrCache<NewsItem[]>({
   ttlMs: ONE_MINUTE_IN_MS * 30,
   staleMs: ONE_MINUTE_IN_MS * 120,
-});
+}));
 
 function newsCacheKey(locale: Locale): string {
   const market = newsMarket(locale);

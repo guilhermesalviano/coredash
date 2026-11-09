@@ -7,6 +7,7 @@ import { fetchYahooPrice } from "@/services/yahoo-finance";
 import type { StockInternalAPIResponse } from "@/types/stock-api";
 import { isErrorResponse } from "@/utils/check-service-error";
 import { createSwrCache, type SwrCacheEntry } from "@/utils/in-memory-cache";
+import { globalSingleton } from "@/lib/global-singleton";
 
 interface StockQuote {
   symbol: string;
@@ -25,10 +26,10 @@ export interface StocksSnapshot {
 
 const CACHE_KEY = "default";
 
-const stocksCache = createSwrCache<StocksSnapshot>({
+const stocksCache = globalSingleton("stocksCache", () => createSwrCache<StocksSnapshot>({
   ttlMs: ONE_MINUTE_IN_MS * 10,
   staleMs: ONE_MINUTE_IN_MS * 20,
-});
+}));
 
 function mapStocks(results: StockQuote[]): StockInternalAPIResponse[] {
   return results.map((stock) => ({

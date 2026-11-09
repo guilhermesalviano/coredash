@@ -9,15 +9,16 @@ import { createSwrCache, type SwrCacheEntry } from "@/utils/in-memory-cache";
 import { AppError } from "@/lib/api-error";
 import type { RuntimeSettingsResponse } from "@/features/settings/types";
 import type { WeatherData } from "@/features/weather/types";
+import { globalSingleton } from "@/lib/global-singleton";
 
 export const DEFAULT_WEATHER_HOURS = 24;
 
 // Open-Meteo refreshes its models hourly at best; the stale window keeps the
 // card instant while a refresh runs and covers short provider outages.
-const weatherCache = createSwrCache<WeatherData>({
+const weatherCache = globalSingleton("weatherCache", () => createSwrCache<WeatherData>({
   ttlMs: ONE_MINUTE_IN_MS * 10,
   staleMs: ONE_MINUTE_IN_MS * 20,
-});
+}));
 
 function weatherCacheKey(limit: number, settings: RuntimeSettingsResponse): string {
   return [limit, settings.settings.latitude, settings.settings.longitude, settings.settings.timezone].join(":");

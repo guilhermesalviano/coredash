@@ -5,6 +5,7 @@ import type { RuntimeSettings } from "@/features/settings/types";
 import { fetchGoogleCalendarAPI } from "@/services/google-calendar-api";
 import type { CalendarInternalAPIResponse } from "@/types/calendar";
 import { createSwrCache } from "@/utils/in-memory-cache";
+import { globalSingleton } from "@/lib/global-singleton";
 
 function getEventType(summary: string) {
   if (/birthday|anivers[áa]rio/i.test(summary)) return "birthday";
@@ -31,10 +32,10 @@ function getCalendarColor(name: string): string {
 
 // Refresh every 15 minutes, but keep answering from the previous snapshot for
 // up to 3 hours so the card never waits on Google once it has loaded.
-const calendarCache = createSwrCache<CalendarInternalAPIResponse>({
+const calendarCache = globalSingleton("calendarCache", () => createSwrCache<CalendarInternalAPIResponse>({
   ttlMs: ONE_MINUTE_IN_MS * 15,
   staleMs: ONE_MINUTE_IN_MS * 165,
-});
+}));
 
 function formatInTimezone(value: string, timezone: string, withYear = false): string {
   const parts = new Intl.DateTimeFormat("en-US", {

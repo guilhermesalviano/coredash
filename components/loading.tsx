@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStatus } from "@/contexts/statusContext";
 import Image from "next/image";
 
@@ -18,51 +18,61 @@ const PHRASES = [
 ];
 
 const FADE_DURATION = 400;
-const MIN_DISPLAY = 1500;
+// Fast loads never show the overlay at all.
+const SHOW_DELAY = 300;
+// Once shown, stay long enough not to read as a flicker.
+const MIN_VISIBLE = 500;
 const MAX_DISPLAY = 4500;
 
-export default function Loading() {
+type Phase = "waiting" | "visible" | "exiting" | "done";
+
+export default function Loading({ gif = null }: { gif?: string | null }) {
   const { anyLoading } = useStatus();
-  const [visible, setVisible] = useState(true);
-  const [exiting, setExiting] = useState(false);
-  const [gif, setGif] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("waiting");
   const [phrase, setPhrase] = useState<string>("");
+  const shownAt = useRef(0);
+  // The overlay belongs to the first load only; later refreshes never bring it back.
+  const settled = useRef(false);
 
   useEffect(() => {
-    const phraseFrame = requestAnimationFrame(() => {
+    if (!anyLoading) {
+      settled.current = true;
+      return;
+    }
+    if (settled.current) return;
+    const timer = setTimeout(() => {
+      shownAt.current = Date.now();
       setPhrase(PHRASES[Math.floor(Math.random() * PHRASES.length)]);
-    });
-    fetch("/api/gifs")
-      .then((r) => r.json())
-      .then((gifs: string[]) => {
-        if (Array.isArray(gifs) && gifs.length > 0) {
-          setGif(gifs[Math.floor(Math.random() * gifs.length)]);
-        }
-      })
-      .catch(() => {});
-    return () => cancelAnimationFrame(phraseFrame);
-  }, []);
+      setPhase((current) => (current === "waiting" ? "visible" : current));
+    }, SHOW_DELAY);
+    return () => clearTimeout(timer);
+  }, [anyLoading]);
+
+  useEffect(() => {
+    if (anyLoading || phase !== "visible") return;
+    const remaining = Math.max(0, MIN_VISIBLE - (Date.now() - shownAt.current));
+    const timer = setTimeout(() => setPhase("exiting"), remaining);
+    return () => clearTimeout(timer);
+  }, [anyLoading, phase]);
+
+  useEffect(() => {
+    if (phase !== "exiting") return;
+    const timer = setTimeout(() => setPhase("done"), FADE_DURATION);
+    return () => clearTimeout(timer);
+  }, [phase]);
 
   // Failsafe: dismiss loading screen after MAX_DISPLAY even if a service or network request is pending
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
-      setExiting(true);
-      setTimeout(() => setVisible(false), FADE_DURATION);
+      settled.current = true;
+      setPhase((current) => (current === "visible" ? "exiting" : current === "waiting" ? "done" : current));
     }, MAX_DISPLAY);
     return () => clearTimeout(safetyTimer);
   }, []);
 
-  useEffect(() => {
-    if (anyLoading) return;
+  if (phase === "waiting" || phase === "done") return null;
+  const exiting = phase === "exiting";
 
-    const t = setTimeout(() => {
-      setExiting(true);
-      setTimeout(() => setVisible(false), FADE_DURATION);
-    }, MIN_DISPLAY);
-    return () => clearTimeout(t);
-  }, [anyLoading]);
-
-  if (!visible) return null;
 
   return (
     <>
