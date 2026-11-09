@@ -1,6 +1,6 @@
 "use client";
 
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusActions } from "@/contexts/statusContext";
 import { format } from "date-fns";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
@@ -13,7 +13,7 @@ const HabitTracker = () => {
   const [weekDaysMap, setWeekDaysMap] = useState<Object>();
   const [questionToday, setQuestionToday] = useState(false);
   const [noToday, setNoToday] = useState(false);
-  const { reportStatus } = useStatus();
+  const { reportStatus } = useStatusActions();
 
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");

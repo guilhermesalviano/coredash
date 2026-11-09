@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { hydrateDashboard, subscribe, getSnapshot } from "@/lib/dashboardStore";
 import type { DashboardSeed } from "@/features/dashboard/types";
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusActions } from "@/contexts/statusContext";
 
 type ServiceStatus = "loading" | "success" | "error";
 
@@ -16,7 +16,7 @@ const toServiceStatus = (s: string): ServiceStatus | null =>
  * It is the first subscriber, so it also applies the server seed.
  */
 export default function StoreStatusBridge({ seed }: { seed?: DashboardSeed }) {
-  const { reportStatus } = useStatus();
+  const { reportStatus } = useStatusActions();
 
   useEffect(() => {
     // Must run before the first subscription, which starts the fetches.

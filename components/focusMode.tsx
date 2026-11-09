@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDayChange } from "@/hooks/useDayChange";
-import { useDashboard } from "@/hooks/useDashboard";
+import { useDashboardSlice } from "@/hooks/useDashboard";
 import { retrySlice } from "@/lib/dashboardStore";
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusActions } from "@/contexts/statusContext";
 import { fetchJson } from "@/lib/api-client";
 import type { TodoItem } from "@/features/todos/types";
 import type { CalendarInternalAPIResponse } from "@/types/calendar";
@@ -65,9 +65,9 @@ function FocusTodo({
 }
 
 export default function FocusMode() {
-  const { weather } = useDashboard();
+  const weather = useDashboardSlice("weather");
   const { locale, t } = useLocale();
-  const { reportStatus } = useStatus();
+  const { reportStatus } = useStatusActions();
   const [calendar, setCalendar] = useState<CalendarInternalAPIResponse | null>(null);
   const [todos, setTodos] = useState<TodoState[]>([]);
   const [isLoading, setIsLoading] = useState(true);

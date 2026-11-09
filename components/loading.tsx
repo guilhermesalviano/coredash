@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusState } from "@/contexts/statusContext";
 import Image from "next/image";
 
 const PHRASES = [
@@ -27,7 +27,7 @@ const MAX_DISPLAY = 4500;
 type Phase = "waiting" | "visible" | "exiting" | "done";
 
 export default function Loading({ gif = null }: { gif?: string | null }) {
-  const { anyLoading } = useStatus();
+  const { anyLoading } = useStatusState();
   const [phase, setPhase] = useState<Phase>("waiting");
   const [phrase, setPhrase] = useState<string>("");
   const shownAt = useRef(0);

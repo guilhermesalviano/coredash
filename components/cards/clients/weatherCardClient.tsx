@@ -1,6 +1,6 @@
 "use client";
 
-import { useDashboard } from "@/hooks/useDashboard";
+import { useDashboardSlice } from "@/hooks/useDashboard";
 import { retrySlice } from "@/lib/dashboardStore";
 import { errorCopy } from "@/lib/i18n";
 import { useLocale } from "@/contexts/localeContext";
@@ -9,7 +9,7 @@ import WeatherCard from "../weather";
 import CardState from "../../cardState";
 
 export default function WeatherCardClient() {
-  const { weather } = useDashboard();
+  const weather = useDashboardSlice("weather");
   const { locale, t } = useLocale();
 
   if ((weather.status === "idle" || weather.status === "loading") && !weather.data) {

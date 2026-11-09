@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, X } from "lucide-react";
 import SetupForm from "@/components/setupForm";
-import { trapFocus } from "@/components/settings";
+import { trapFocus } from "@/lib/trap-focus";
 import styles from "@/components/settings.module.css";
 
 export default function CalendarSetupModal({

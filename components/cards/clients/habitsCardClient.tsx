@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { format } from "date-fns";
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusActions } from "@/contexts/statusContext";
 import { useDayChange } from "@/hooks/useDayChange";
 import MultiHabitTracker from "../habitsTracker";
 
 export default function HabitsCardClient() {
   const [view, setView] = useState<"day" | "month">("day");
   const [completedDates, setCompletedDates] = useState<Record<string, string[]>>({});
-  const { reportStatus } = useStatus();
+  const { reportStatus } = useStatusActions();
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
   const fetchHabits = useCallback(async () => {

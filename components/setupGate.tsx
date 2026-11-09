@@ -3,7 +3,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { fetchJson } from "@/lib/api-client";
 import type { RuntimeSettingsResponse } from "@/features/settings/types";
-import SetupForm from "@/components/setupForm";
+import dynamic from "next/dynamic";
+
+// Only a fresh install ever shows the setup screen.
+const SetupForm = dynamic(() => import("@/components/setupForm"), { ssr: false });
 
 interface SetupGateProps {
   children: ReactNode;

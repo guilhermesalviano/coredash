@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import dynamic from "next/dynamic";
 import Loading from "@/components/loading";
 import ActionLoader from "@/components/actionLoader";
 import Clock from "@/components/clock";
@@ -9,12 +10,14 @@ import ActiveCards from "@/components/activeCards";
 import Logo from "@/components/logo";
 import Settings from "@/components/settings";
 import StoreStatusBridge from "@/components/storeStatusBridge";
-import FocusMode from "@/components/focusMode";
 import FocusModeToggle from "@/components/focusModeToggle";
 import ProjectQrButton from "@/components/projectQrButton";
 import SetupGate from "@/components/setupGate";
 import { useViewMode } from "@/hooks/useViewMode";
 import type { DashboardSeed } from "@/features/dashboard/types";
+
+// Focus mode is opt-in, so its code is only downloaded when it is switched on.
+const FocusMode = dynamic(() => import("@/components/focusMode"), { ssr: false });
 
 interface DashboardShellProps {
   /** Null when the server could not read the settings; the gate then asks the API. */

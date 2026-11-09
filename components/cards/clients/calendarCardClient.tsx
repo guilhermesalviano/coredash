@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusActions } from "@/contexts/statusContext";
 import { useLocale } from "@/contexts/localeContext";
 import { useDayChange } from "@/hooks/useDayChange";
 import { ApiClientError, fetchJson } from "@/lib/api-client";
@@ -13,7 +13,7 @@ export default function CalendarCardClient() {
   const [calendar, setCalendar] = useState<CalendarInternalAPIResponse | null>(null);
   const [status, setStatus] = useState<"loading" | "error" | "success">("loading");
   const [errorCode, setErrorCode] = useState<string | null>(null);
-  const { reportStatus } = useStatus();
+  const { reportStatus } = useStatusActions();
   const { locale, t } = useLocale();
 
   const fetchCalendar = useCallback(async () => {

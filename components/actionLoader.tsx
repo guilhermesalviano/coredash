@@ -1,9 +1,9 @@
 "use client";
 
-import { useStatus } from "@/contexts/statusContext";
+import { useStatusState } from "@/contexts/statusContext";
 
 export default function ActionLoader() {
-  const { anyActionLoading } = useStatus();
+  const { anyActionLoading } = useStatusState();
 
   return (
     <div
