@@ -1190,5 +1190,140 @@ body[data-focus="on"] .header {
   color: var(--muted);
   font-family: var(--font-mono);
   text-align: right;
+  white-space: nowrap;
+}
+
+.card-state {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.card-retry {
+  margin-top: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.card-retry:hover,
+.card-retry:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.cards-board {
+  columns: 25rem;
+  margin: 1rem;
+}
+
+.server-qr-button {
+  position: fixed;
+  z-index: 40;
+  right: max(1.5rem, env(safe-area-inset-right));
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  cursor: pointer;
+}
+
+.news-title,
+.event-title,
+.todo-text {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+  }
+
+  .header-brand,
+  .header-status {
+    min-width: 0;
+  }
+
+  .header-status {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .header-clock {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    font-size: 15px;
+  }
+
+  .focus-toggle {
+    min-height: 44px;
+  }
+
+  .card {
+    min-width: 0;
+    max-width: none;
+    padding: 16px;
+  }
+
+  .cards-board {
+    columns: 1;
+    margin: 12px;
+  }
+
+  .weather-temp {
+    font-size: 44px;
+  }
+
+  .weather-hours,
+  .stocks-list {
+    overflow-x: auto;
+  }
+
+  .stock-row {
+    min-width: 280px;
+    gap: 8px;
+  }
+
+  .news-item,
+  .calendar-event {
+    min-width: 0;
+  }
+
+  .news-tag {
+    width: auto;
+    max-width: 5.5rem;
+  }
+
+  .focus-date {
+    white-space: normal;
+  }
+
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
 }
 

@@ -3,25 +3,43 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useDashboard } from "@/hooks/useDashboard";
+import { retrySlice } from "@/lib/dashboardStore";
+import { errorCopy } from "@/lib/i18n";
+import { useLocale } from "@/contexts/localeContext";
 import Card from "../card";
+import CardState from "../cardState";
 
 const NewsCard = () => {
   const { news } = useDashboard();
+  const { locale, t } = useLocale();
   const [blurred, setBlurred] = useState(true);
 
+  if ((news.status === "idle" || news.status === "loading") && !news.data) {
+    return <CardState title={t("newsTitle")} message={t("newsLoading")} loading />;
+  }
+  if (news.status === "error" && !news.data?.length) {
+    return (
+      <CardState
+        title={t("newsTitle")}
+        message={news.error ? errorCopy(news.error, locale) : t("newsError")}
+        onRetry={() => { void retrySlice("news"); }}
+      />
+    );
+  }
   if (!news.data?.length) return null;
 
   return (
     <Card>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="section-title">📰 Últimas Notícias</h2>
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <h2 className="section-title">📰 {t("newsTitle")}</h2>
         <button
-          onClick={() => setBlurred(b => !b)}
+          type="button"
+          onClick={() => setBlurred((value) => !value)}
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-white/5"
-          aria-label={blurred ? "Mostrar notícias" : "Ocultar notícias"}
+          aria-label={blurred ? t("newsShowLabel") : t("newsHideLabel")}
         >
           {blurred ? <Eye size={14} /> : <EyeOff size={14} />}
-          {blurred ? "Mostrar" : "Ocultar"}
+          {blurred ? t("newsShow") : t("newsHide")}
         </button>
       </div>
 
@@ -29,16 +47,16 @@ const NewsCard = () => {
         className="news-list transition-all duration-300 select-none"
         style={{ filter: blurred ? "blur(6px)" : "none", pointerEvents: blurred ? "none" : "auto" }}
       >
-        {news.data.map((n: any) => (
+        {news.data.map((item) => (
           <div
-            key={n.id}
+            key={item.id}
             className="news-item cursor-pointer"
-            onClick={() => window.open(n.url, "_blank")}
+            onClick={() => { if (item.url) window.open(item.url, "_blank", "noopener,noreferrer"); }}
           >
-            <span className="news-tag w-16">{n.tag}</span>
-            <div>
-              <div className="news-title max-w-82">{n.title}</div>
-              <div className="news-source">{n.source}</div>
+            <span className="news-tag">{item.tag}</span>
+            <div className="min-w-0">
+              <div className="news-title">{item.title}</div>
+              <div className="news-source">{item.source}</div>
             </div>
           </div>
         ))}

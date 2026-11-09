@@ -78,6 +78,9 @@
 .sectionHeading h3, .sectionTitleRow h3 { font-size: 13px; font-weight: 600; }
 .sectionHeading p { margin-top: 4px; font-size: 11px; color: var(--muted); line-height: 1.6; }
 .themeGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.languageGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.languageOption { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: transparent; color: var(--foreground); cursor: pointer; font: inherit; }
+.languageOption[aria-pressed="true"] { border-color: var(--settings-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--settings-accent) 12%, transparent); }
 .themeOption { min-width: 0; border: 1px solid var(--border); padding: 7px; border-radius: 13px; background: transparent; color: var(--foreground); text-align: left; cursor: pointer; transition: border-color 160ms, box-shadow 160ms; }
 .themeOption:hover { border-color: color-mix(in srgb, var(--settings-accent) 60%, var(--border)); }
 .themeOption[aria-pressed="true"] { border-color: var(--settings-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--settings-accent) 12%, transparent); }

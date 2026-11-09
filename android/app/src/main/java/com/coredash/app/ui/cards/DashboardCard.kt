@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.coredash.app.R
 import com.coredash.app.ui.theme.Spacing
 
 @Composable
@@ -112,13 +114,13 @@ internal fun ErrorState(message: String, onRetry: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(Spacing.xxs),
         ) {
             Text(message, style = MaterialTheme.typography.titleSmall)
-            Text("Verifique sua conexão e tente novamente.", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.error_check_connection), style = MaterialTheme.typography.bodyMedium)
             TextButton(
                 onClick = onRetry,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onErrorContainer),
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text("Tentar novamente", modifier = Modifier.padding(start = Spacing.xs),
+                Text(stringResource(R.string.error_try_again), modifier = Modifier.padding(start = Spacing.xs),
                     color = MaterialTheme.colorScheme.onErrorContainer)
             }
         }

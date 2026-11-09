@@ -5,7 +5,7 @@ import { NewTaskForm, TodoState } from "@/types/task";
 import handleFireConfetti from "@/components/confetti";
 import { useStatus } from "@/contexts/statusContext";
 import { fetchWithTimeout } from "@/lib/fetchWithTimeout";
-import { fetchJson } from "@/lib/api-client";
+import { fetchJson, ApiClientError } from "@/lib/api-client";
 import { useDayChange } from "@/hooks/useDayChange";
 import TodoCard from "../todo";
 
@@ -13,6 +13,8 @@ export default function TodoCardClient() {
   const [todos, setTodos] = useState<TodoState[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [isBusy, setIsBusy] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const { reportStatus } = useStatus();
 
   const isFirstRender = useRef(true);
@@ -21,8 +23,10 @@ export default function TodoCardClient() {
     try {
       const data = await fetchJson<TodoState[]>("/api/todo?type=reminder");
       setTodos(data ?? []);
+      setLoadError(null);
       reportStatus("todo", "success");
-    } catch {
+    } catch (error: unknown) {
+      setLoadError(error instanceof ApiClientError && error.status === 504 ? "timeout" : "failed");
       reportStatus("todo", "error");
     } finally {
       setIsBusy(false);
@@ -60,6 +64,7 @@ export default function TodoCardClient() {
 
     if (response.ok) {
       const data = await response.json();
+      setActionError(null);
       setTodos((prev) => [
         ...prev,
         {
@@ -73,7 +78,7 @@ export default function TodoCardClient() {
         },
       ]);
     } else {
-      console.error(`Error ${response.status} creating todo.`);
+      setActionError("failed");
     }
   };
 
@@ -111,6 +116,7 @@ export default function TodoCardClient() {
       }),
     ])
       .catch(() => {
+        setActionError("failed");
         startTransition(() => {
           setTodos((prev) =>
             prev.map((t) => (t.id === id ? { ...t, checked: currentStatus } : t)),
@@ -156,6 +162,9 @@ export default function TodoCardClient() {
       todos={todos}
       isBusy={isBusy}
       progress={progress}
+      loadError={loadError}
+      actionError={actionError}
+      onRetry={() => { void fetchTodos(); }}
     />
   );
 }

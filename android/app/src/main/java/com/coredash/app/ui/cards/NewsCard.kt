@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
+import com.coredash.app.R
 import com.coredash.app.data.remote.NewsArticle
 import com.coredash.app.ui.theme.Spacing
 
@@ -30,7 +32,7 @@ fun NewsCard(
         when {
             !configured -> EmptyState("Conecte suas notícias", "Adicione a chave da Mediastack na configuração inicial para acompanhar as novidades.")
             loading -> LoadingState("Atualizando notícias…")
-            error -> ErrorState("Não foi possível carregar as notícias", onRetry)
+            error -> ErrorState(stringResource(R.string.error_news), onRetry)
             articles.isEmpty() -> EmptyState("Nenhuma notícia por aqui", "As notícias disponíveis aparecerão aqui.")
             else -> articles.forEachIndexed { index, article ->
                 Column(

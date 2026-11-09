@@ -1,7 +1,10 @@
+"use client";
+
 import Card from "@/components/card";
 import TaskModal from "./taskModal";
 import TodoItem from "./todoItem";
 import { NewTaskForm, TodoState } from "@/types/task";
+import { useLocale } from "@/contexts/localeContext";
 
 interface TodoProps {
   modalOpen: boolean;
@@ -14,6 +17,9 @@ interface TodoProps {
   todos?: TodoState[];
   isBusy: boolean;
   progress: number;
+  loadError?: string | null;
+  actionError?: string | null;
+  onRetry?: () => void;
 }
 
 export default function TodoCard({
@@ -27,7 +33,11 @@ export default function TodoCard({
   todos,
   isBusy,
   progress,
+  loadError,
+  actionError,
+  onRetry,
 }: TodoProps) {
+  const { t } = useLocale();
   return (
     <>
       <TaskModal
@@ -42,7 +52,7 @@ export default function TodoCard({
           <div className="flex items-center justify-between">
             {/* Title */}
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-foreground">⏰ Lembretes</span>
+              <span className="font-semibold text-sm text-foreground">⏰ {t("reminders")}</span>
               {todos && todos.length > 0 && (
                 <span className="text-xs font-mono text-muted">({todos.length})</span>
               )}
@@ -56,7 +66,7 @@ export default function TodoCard({
                 className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
               >
                 <span className="text-sm leading-none">+</span>
-                Lembrete
+                {t("addReminder")}
               </button>
             </div>
           </div>
@@ -65,6 +75,13 @@ export default function TodoCard({
         <div
           className={`todo-list relative transition-opacity ${isBusy ? "opacity-50 pointer-events-none" : "opacity-100"}`}
         >
+          {loadError ? (
+            <div className="card-state" role="alert">
+              <p>{loadError === "timeout" ? t("errorTimeout") : t("todosError")}</p>
+              {onRetry ? <button type="button" className="card-retry" onClick={onRetry}>{t("retry")}</button> : null}
+            </div>
+          ) : null}
+          {actionError ? <p className="card-state" role="alert">{t("errorSave")}</p> : null}
           {isBusy && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-black/40 z-30 rounded-lg backdrop-blur-xs">
               <div className="relative w-10 h-10">
@@ -77,16 +94,16 @@ export default function TodoCard({
           {todos?.length === 0 || !todos ? (
             <div className="py-6 text-center">
               <p className="text-sm text-gray-400">
-                Nenhum lembrete programado para hoje.
+                {t("noReminders")}
               </p>
             </div>
           ) : (
             <>
-              {pending.map((t) => (
-                <TodoItem key={t.id} todo={t} onToggle={toggleCheck} />
+              {pending.map((todo) => (
+                <TodoItem key={todo.id} todo={todo} onToggle={toggleCheck} />
               ))}
-              {completed.map((t) => (
-                <TodoItem key={t.id} todo={t} onToggle={toggleCheck} />
+              {completed.map((todo) => (
+                <TodoItem key={todo.id} todo={todo} onToggle={toggleCheck} />
               ))}
             </>
           )}
@@ -105,7 +122,7 @@ export default function TodoCard({
             </div>
           </div>
           <div className="todo-summary">
-            {checkedCount}/{todos?.length || 0} concluídas
+            {t("completedCount", { done: checkedCount, total: todos?.length || 0 })}
           </div>
         </div>
       </Card>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_try_again">Try again</string>
+    <string name="error_check_connection">Check your connection and try again.</string>
+    <string name="error_weather">Could not load the weather</string>
+    <string name="error_news">Could not load the news</string>
+    <string name="error_calendar">Could not load the calendar</string>
+</resources>

@@ -27,6 +27,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.coredash.app.R
 import com.coredash.app.data.calendar.CalendarEvent
 import com.coredash.app.ui.calendar.rememberCalendarPermission
 import com.coredash.app.ui.theme.Spacing
@@ -41,9 +43,11 @@ private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/M
 fun CalendarCard(
     events: List<CalendarEvent>,
     loading: Boolean,
+    error: Boolean = false,
     selectedCalendarIds: Set<Long>,
     calendarDays: Int,
     onLoad: (Set<Long>, Int) -> Unit,
+    onRetry: () -> Unit = {},
 ) {
     val permission = rememberCalendarPermission()
     val context = LocalContext.current
@@ -54,7 +58,7 @@ fun CalendarCard(
                 LaunchedEffect(selectedCalendarIds, calendarDays) {
                     onLoad(selectedCalendarIds, calendarDays)
                 }
-                CalendarEvents(events = events, loading = loading)
+                CalendarEvents(events = events, loading = loading, error = error, onRetry = onRetry)
             }
             permission.permanentlyDenied -> {
                 HintText("O acesso à agenda está bloqueado.")
@@ -83,9 +87,12 @@ fun CalendarCard(
 private fun CalendarEvents(
     events: List<CalendarEvent>,
     loading: Boolean,
+    error: Boolean,
+    onRetry: () -> Unit,
 ) {
     when {
         loading -> LoadingState("Carregando sua agenda…")
+        error -> ErrorState(stringResource(R.string.error_calendar), onRetry)
         events.isEmpty() -> EmptyState("Sua agenda está livre", "Nenhum compromisso nos próximos dias.")
         else -> {
             val grouped = remember(events) { groupByDay(events) }

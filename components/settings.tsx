@@ -10,6 +10,8 @@ import {
 import storage from "@/lib/storage";
 import { CARD_REGISTRY, type CardId, useActiveCards } from "@/hooks/useActiveCards";
 import { useFocusMode } from "@/hooks/useFocusMode";
+import { useLocale } from "@/contexts/localeContext";
+import { LOCALES } from "@/lib/i18n";
 import SetupForm from "@/components/setupForm";
 import styles from "./settings.module.css";
 
@@ -38,6 +40,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
 }
 
 function ThemeSection() {
+  const { t } = useLocale();
   const [mode, setMode] = useState<ThemeMode>(() =>
     document.documentElement.dataset.theme === "light" ? "light" : "dark",
   );
@@ -49,14 +52,14 @@ function ThemeSection() {
   return (
     <section className={styles.section} aria-labelledby="theme-heading">
       <div className={styles.sectionHeading}>
-        <h3 id="theme-heading">Color theme</h3><p>Set the mood for your dashboard.</p>
+        <h3 id="theme-heading">{t("colorTheme")}</h3><p>{t("colorThemeHint")}</p>
       </div>
       <div className={styles.themeGrid}>
         {(["light", "dark"] as const).map((theme) => {
           const Icon = theme === "light" ? Sun : Moon;
           return (
             <button key={theme} type="button" aria-pressed={mode === theme}
-              aria-label={`${theme === "light" ? "Light" : "Dark"} theme`}
+              aria-label={theme === "light" ? t("themeLightLabel") : t("themeDarkLabel")}
               onClick={() => apply(theme)} className={styles.themeOption}>
               <div className={styles.themePreview} data-preview={theme} aria-hidden="true">
                 <div className={styles.previewTop}><span /><i /><i /><i /></div>
@@ -70,7 +73,7 @@ function ThemeSection() {
                 </div>
               </div>
               <div className={styles.themeCaption}>
-                <Icon size={17} aria-hidden="true" /><span>{theme === "light" ? "Light" : "Dark"}</span>
+                <Icon size={17} aria-hidden="true" /><span>{theme === "light" ? t("themeLight") : t("themeDark")}</span>
                 <span className={styles.selectionMark}>{mode === theme && <Check size={12} aria-hidden="true" />}</span>
               </div>
             </button>
@@ -105,6 +108,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
   const [section, setSection] = useState<SectionId>("appearance");
   const { isActive, toggle, active } = useActiveCards();
   const { enabled: focusEnabled, setEnabled: setFocusEnabled } = useFocusMode();
+  const { locale, setLocale, t } = useLocale();
 
   useEffect(() => {
     const element = dialog.current;
@@ -138,70 +142,84 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
       <div className={styles.modal}>
         <header className={styles.header}>
           <div className={styles.headerIcon}><Settings2 size={21} aria-hidden="true" /></div>
-          <div><h1 id="settings-title">Settings</h1><p>A space that works for you.</p></div>
-          <button type="button" onClick={onClose} aria-label="Close settings" className={styles.closeButton}><X size={19} /></button>
+          <div><h1 id="settings-title">{t("settings")}</h1><p>{t("settingsSubtitle")}</p></div>
+          <button type="button" onClick={onClose} aria-label={t("closeSettings")} className={styles.closeButton}><X size={19} /></button>
         </header>
         <div className={styles.workspace}>
           <aside className={styles.sidebar}>
-            <p className={styles.navLabel}>Your workspace</p>
-            <div role="tablist" aria-label="Settings categories" className={styles.tabs}>
-              {SECTIONS.map(({ id, label, icon: Icon }, index) => (
+            <p className={styles.navLabel}>{t("settingsNav")}</p>
+            <div role="tablist" aria-label={t("settingsCategories")} className={styles.tabs}>
+              {SECTIONS.map(({ id, icon: Icon }, index) => (
                 <button key={id} type="button" role="tab" id={`settings-tab-${id}`}
                   aria-selected={section === id} aria-controls={`settings-panel-${id}`}
                   tabIndex={section === id ? 0 : -1}
                   ref={(element) => { tabButtons.current[index] = element; }}
                   onClick={() => setSection(id)} onKeyDown={(event) => navigateTabs(event, index)} className={styles.tab}>
-                  <Icon size={17} aria-hidden="true" /><span>{label}</span>
+                  <Icon size={17} aria-hidden="true" /><span>{t(id === "appearance" ? "sectionAppearance" : id === "cards" ? "sectionCards" : "sectionApplication")}</span>
                   <ChevronRight size={14} className={styles.tabArrow} aria-hidden="true" />
                 </button>
               ))}
             </div>
             <div className={styles.sidebarNote}>
               <span className={styles.brand}>CORE<span>DASH</span></span>
-              <p>A little more you.<br />A little less noise.</p>
+              <p>{t("brandNote")}</p>
             </div>
           </aside>
           <div className={styles.panels}>
             <div role="tabpanel" id="settings-panel-appearance" aria-labelledby="settings-tab-appearance"
               hidden={section !== "appearance"} className={styles.panel} tabIndex={0}>
               <div className={styles.panelIntro}>
-                <span className={styles.eyebrow}>Look & feel</span><h2>Make it yours.</h2>
-                <p>A comfortable theme. A calmer way to focus.</p>
+                <span className={styles.eyebrow}>{t("lookFeel")}</span><h2>{t("makeYours")}</h2>
+                <p>{t("themeHint")}</p>
               </div>
               <ThemeSection />
+              <section className={styles.section} aria-labelledby="language-heading">
+                <div className={styles.sectionHeading}>
+                  <h3 id="language-heading">{t("language")}</h3><p>{t("languageHint")}</p>
+                </div>
+                <div className={styles.languageGrid}>
+                  {LOCALES.map((code) => (
+                    <button key={code} type="button" aria-pressed={locale === code}
+                      onClick={() => setLocale(code)} className={styles.languageOption}>
+                      <span>{code === "en" ? t("languageEnglish") : t("languagePortuguese")}</span>
+                      <span className={styles.selectionMark}>{locale === code && <Check size={12} aria-hidden="true" />}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
               <section className={styles.section} aria-labelledby="focus-setting-heading">
                 <div className={styles.sectionHeading}>
-                  <h3 id="focus-setting-heading">Less noise, more focus</h3><p>Keep your attention on the day ahead.</p>
+                  <h3 id="focus-setting-heading">{t("focusSettingTitle")}</h3><p>{t("focusSettingHint")}</p>
                 </div>
                 <div className={styles.focusRow}>
                   <span className={styles.featureIcon}><Focus size={23} aria-hidden="true" /></span>
-                  <div><h4>Focus mode</h4><p>Your next event, reminders, and weather.</p></div>
-                  <Toggle label="Focus mode" checked={focusEnabled} onChange={() => setFocusEnabled(!focusEnabled)} />
+                  <div><h4>{t("focusSettingName")}</h4><p>{t("focusSettingBody")}</p></div>
+                  <Toggle label={t("focusSettingName")} checked={focusEnabled} onChange={() => setFocusEnabled(!focusEnabled)} />
                 </div>
               </section>
-              <p className={styles.instantNote}><Check size={14} aria-hidden="true" /> Appearance changes are saved automatically on this device.</p>
+              <p className={styles.instantNote}><Check size={14} aria-hidden="true" /> {t("appearanceSaved")}</p>
             </div>
             <div role="tabpanel" id="settings-panel-cards" aria-labelledby="settings-tab-cards"
               hidden={section !== "cards"} className={styles.panel} tabIndex={0}>
               <div className={styles.panelIntro}>
-                <span className={styles.eyebrow}>Your daily overview</span><h2>A dashboard that fits.</h2>
-                <p>Choose what has a place on your dashboard.</p>
+                <span className={styles.eyebrow}>{t("cardsEyebrow")}</span><h2>{t("cardsTitle")}</h2>
+                <p>{t("cardsHint")}</p>
               </div>
-              <div className={styles.sectionTitleRow}><h3>Dashboard cards</h3><span className={styles.count}>{active.length} of {CARD_REGISTRY.length} enabled</span></div>
+              <div className={styles.sectionTitleRow}><h3>{t("sectionCards")}</h3><span className={styles.count}>{t("cardsEnabled", { active: active.length, total: CARD_REGISTRY.length })}</span></div>
               <div className={styles.cardGrid}>
                 {CARD_REGISTRY.map((card) => {
-                  const { icon: Icon, description } = CARD_DETAILS[card.id];
+                  const { icon: Icon } = CARD_DETAILS[card.id];
                   const checked = isActive(card.id);
                   return (
                     <div key={card.id} className={styles.cardOption} data-enabled={checked}>
                       <span className={styles.cardIcon}><Icon size={20} aria-hidden="true" /></span>
                       <Toggle label={card.label} checked={checked} onChange={() => toggle(card.id)} />
-                      <div className={styles.cardText}><h4>{card.label}</h4><p>{description}</p></div>
+                      <div className={styles.cardText}><h4>{card.label}</h4><p>{t(`card${card.id[0].toUpperCase()}${card.id.slice(1)}`)}</p></div>
                     </div>
                   );
                 })}
               </div>
-              <p className={styles.instantNote}><Check size={14} aria-hidden="true" /> Your card selection is saved automatically on this device.</p>
+              <p className={styles.instantNote}><Check size={14} aria-hidden="true" /> {t("cardsSaved")}</p>
             </div>
             <div role="tabpanel" id="settings-panel-application" aria-labelledby="settings-tab-application"
               hidden={section !== "application"} className={`${styles.panel} ${styles.applicationPanel}`} tabIndex={0}>
@@ -217,9 +235,10 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
 
 export default function Settings({ className = "icon-button" }: { className?: string }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLocale();
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-label="Open settings" className={className}>
+      <button type="button" onClick={() => setOpen(true)} aria-label={t("openSettings")} className={className}>
         <Settings2 size={18} strokeWidth={1.8} aria-hidden="true" />
       </button>
       {open && <SettingsModal onClose={() => setOpen(false)} />}

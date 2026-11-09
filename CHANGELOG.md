@@ -13,6 +13,13 @@ the next stable version; 0.1.2, 0.1.3 and 0.1.8 never had a stable release.
 
 - First-run setup screen for the fields in `coredash/features/settings/setup-fields.ts`. It appears when timezone or coordinates are missing and can be reopened from Settings. Secrets stay on the server.
 
+### Fixed
+
+- Dashboard cards now show a retryable error instead of disappearing when weather, news, stocks, calendar, reminders, or mail fail to load.
+- Habits API errors no longer return the raw exception object, and a failed habit toggle is rolled back.
+- Portuguese and English can be switched in Settings. Dates, weather labels, and the news feed follow the choice.
+- Narrow screens no longer force 22rem cards or a three-column header. The Android app is no longer locked to landscape.
+
 ### Removed
 
 - AI chat, the `/ai` page, the daily narrative, the Rocky card, and the OpenRouter provider.

@@ -53,8 +53,9 @@ export async function GET(req: NextRequest) {
       data: completions
     });
 
-  } catch (error) {
-    return NextResponse.json({ message: "Error", error }, { status: 500 });
+  } catch (error: unknown) {
+    logger.error("Failed to retrieve habits", error);
+    return formatResponse(req, { error: "Failed to retrieve habits data" }, { status: 500 });
   }
 }
 
@@ -77,8 +78,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: "Habit saved successfully", data: habitTrackerSaved });
   } catch (error: unknown) {
-    console.error(error)
-    return NextResponse.json({ error: "Failed to save todos data" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ error: "Failed to save habit data" }, { status: 500 });
   }
 }
 

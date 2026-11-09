@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.coredash.app.R
 import com.coredash.app.data.remote.Weather
 import com.coredash.app.ui.theme.Spacing
 import java.time.LocalDate
@@ -29,7 +31,7 @@ fun WeatherCard(
     DashboardCard(title = "Clima", icon = Icons.Default.LocationOn) {
         when {
             loading -> LoadingState("Atualizando o clima…")
-            error -> ErrorState("Não foi possível carregar o clima", onRetry)
+            error -> ErrorState(stringResource(R.string.error_weather), onRetry)
             weather != null -> {
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,

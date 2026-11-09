@@ -37,6 +37,7 @@ data class DashboardUiState(
     val newsLoading: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
     val calendarLoading: Boolean = false,
+    val calendarError: Boolean = false,
 )
 
 class DashboardViewModel(
@@ -81,11 +82,21 @@ class DashboardViewModel(
     }
 
     fun loadCalendar(calendarIds: Set<Long>, days: Int) {
-        _uiState.update { it.copy(calendarLoading = true) }
+        _uiState.update { it.copy(calendarLoading = true, calendarError = false) }
         viewModelScope.launch {
-            val events = calendarRepository.upcomingEvents(calendarIds, days)
-            _uiState.update { it.copy(calendarEvents = events, calendarLoading = false) }
+            runCatching { calendarRepository.upcomingEvents(calendarIds, days) }
+                .onSuccess { events ->
+                    _uiState.update { it.copy(calendarEvents = events, calendarLoading = false, calendarError = false) }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(calendarLoading = false, calendarError = true) }
+                }
         }
+    }
+
+    fun retryCalendar() {
+        val settings = _uiState.value.settings ?: return
+        if (!_uiState.value.calendarLoading) loadCalendar(settings.selectedCalendarIds, settings.calendarDays)
     }
 
     fun addTodo(title: String, priority: String, dueDate: LocalDate?, recurrence: Recurrence) {
@@ -161,7 +172,18 @@ class DashboardViewModel(
     private fun loadNews(settings: AppSettings, apiKey: String) {
         _uiState.update { it.copy(newsLoading = true, newsError = false) }
         viewModelScope.launch {
-            newsRepository.getNews(apiKey, settings.newsCount, settings.newsTopic)
+            newsRepository.getNews(
+                apiKey,
+                settings.newsCount,
+                settings.newsTopic,
+                languages = java.util.Locale.getDefault().language.let { language ->
+                    when (language) {
+                        "en" -> "en"
+                        "pt" -> "pt"
+                        else -> "pt,en"
+                    }
+                },
+            )
                 .onSuccess { news -> _uiState.update { it.copy(news = news, newsError = false, newsLoading = false) } }
                 .onFailure { _uiState.update { it.copy(newsError = true, newsLoading = false) } }
         }

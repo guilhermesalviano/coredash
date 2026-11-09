@@ -5,7 +5,7 @@ import { getNews } from "@/features/news/server/get-news";
 
 export async function GET(req: NextRequest) {
   try {
-    return formatResponse(req, { message: "News data retrieved successfully", data: await getNews() });
+    return formatResponse(req, { message: "News data retrieved successfully", data: await getNews(req.nextUrl.searchParams.get("lang")) });
   } catch (error: unknown) {
     return NextResponse.json({ error: "Failed to retrieve news data", reason: errorMessage(error) }, { status: 503 });
   }

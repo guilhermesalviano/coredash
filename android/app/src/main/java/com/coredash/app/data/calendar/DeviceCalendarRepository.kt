@@ -141,6 +141,6 @@ class DeviceCalendarRepository(private val context: Context) {
                 }
             }
             events
-        }.getOrDefault(emptyList())
+        }.getOrElse { error -> throw error }
     }
 }

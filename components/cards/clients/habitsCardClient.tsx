@@ -15,8 +15,9 @@ export default function HabitsCardClient() {
   const fetchHabits = useCallback(async () => {
     try {
       const res = await fetch("/api/habits");
+      if (!res.ok) throw new Error("habits");
       const data = await res.json();
-      setCompletedDates(data.data);
+      setCompletedDates(data.data ?? {});
       reportStatus("habit", "success");
     } catch {
       reportStatus("habit", "error");
@@ -29,14 +30,21 @@ export default function HabitsCardClient() {
   const toggleHabit = async (habitId: string) => {
     const current = completedDates[todayStr] || [];
     const isCompleted = current.includes(habitId);
+    const previous = completedDates;
     setCompletedDates({
       ...completedDates,
       [todayStr]: isCompleted ? current.filter((id) => id !== habitId) : [...current, habitId],
     });
-    await fetch("/api/habits", {
-      method: "POST",
-      body: JSON.stringify({ habit: habitId, createdAt: todayStr }),
-    });
+    try {
+      const response = await fetch("/api/habits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ habit: habitId, createdAt: todayStr }),
+      });
+      if (!response.ok) throw new Error("habit");
+    } catch {
+      setCompletedDates(previous);
+    }
   };
 
   return (

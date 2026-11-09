@@ -1,11 +1,18 @@
-import { fetchJson } from "@/lib/api-client";
+import { ApiClientError, fetchJson } from "@/lib/api-client";
 import type { DashboardSlice, DashboardStore } from "@/features/dashboard/types";
+import { detectLocale, type Locale } from "@/lib/i18n";
 
 const STALE_MS = 20 * 60 * 1000;
 type DashboardKey = keyof DashboardStore;
 type Listener = () => void;
 
-const emptySlice = <T>(): DashboardSlice<T> => ({ data: null, status: "idle", lastFetchedAt: 0 });
+const emptySlice = <T>(): DashboardSlice<T> => ({ data: null, status: "idle", lastFetchedAt: 0, error: null });
+
+let newsLanguage: Locale = "pt-BR";
+
+function failureCode(error: unknown): string {
+  return error instanceof ApiClientError && error.status === 504 ? "timeout" : "failed";
+}
 
 let store: DashboardStore = {
   weather: emptySlice(),
@@ -24,17 +31,28 @@ async function fetchSlice<K extends DashboardKey>(key: K, endpoint: string) {
   setSlice(key, { status: "loading" });
   try {
     const data = await fetchJson<DashboardStore[K]["data"]>(endpoint);
-    setSlice(key, { data, status: "success", lastFetchedAt: Date.now() });
-  } catch {
-    setSlice(key, { status: "error" });
+    setSlice(key, { data, status: "success", lastFetchedAt: Date.now(), error: null });
+  } catch (error: unknown) {
+    setSlice(key, { status: "error", error: failureCode(error) });
   }
 }
 
 const fetchers: Record<DashboardKey, () => Promise<void>> = {
   weather: () => fetchSlice("weather", "/api/weather?limit=24"),
-  news: () => fetchSlice("news", "/api/news"),
+  news: () => fetchSlice("news", `/api/news?lang=${encodeURIComponent(newsLanguage)}`),
   stocks: () => fetchSlice("stocks", "/api/stocks"),
 };
+
+export function setNewsLanguage(language: string) {
+  const next = detectLocale(language);
+  if (next === newsLanguage) return;
+  newsLanguage = next;
+  if (subscriberCount > 0) void fetchers.news();
+}
+
+export function retrySlice(key: DashboardKey) {
+  return fetchers[key]();
+}
 
 export async function fetchAll() {
   await Promise.all(Object.values(fetchers).map((fetcher) => fetcher()));

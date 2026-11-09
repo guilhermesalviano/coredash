@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StatusProvider } from "@/contexts/statusContext";
+import { LocaleProvider } from "@/contexts/localeContext";
 import { SvgParticles } from "@/components/svgParticles";
 
 const geistSans = Geist({
@@ -19,6 +20,12 @@ export const metadata: Metadata = {
   description: "A minimalist, self-hosted command center(Dashboard) designed for CasaOS",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,17 +37,19 @@ export default function RootLayout({
         {/* Apply the saved theme before paint; dark is the default */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);var l=localStorage.getItem("locale");if(l==="en"||l==="pt-BR")document.documentElement.lang=l}catch(e){}`,
           }}
         />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <StatusProvider>
-          {children}
-          <SvgParticles />
-        </StatusProvider>
+        <LocaleProvider>
+          <StatusProvider>
+            {children}
+            <SvgParticles />
+          </StatusProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

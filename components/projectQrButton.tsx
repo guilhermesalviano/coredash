@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { QrCode, X, Copy, Check, ExternalLink } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useLocale } from "@/contexts/localeContext";
 
 export function resolveBaseUrl(customUrl?: string, clientOrigin?: string): string {
   if (customUrl) return customUrl;
@@ -31,6 +32,7 @@ export default function ProjectQrButton({
       typeof window !== "undefined" ? window.location.origin : undefined
     )
   );
+  const { t } = useLocale();
 
   useEffect(() => {
     setMounted(true);
@@ -95,12 +97,12 @@ export default function ProjectQrButton({
         {/* Header */}
         <div className="flex w-full items-center justify-between">
           <h2 id="qr-modal-title" className="text-base font-semibold">
-            Server Link
+            {t("qrTitle")}
           </h2>
           <button
             type="button"
             onClick={handleClose}
-            aria-label="Close modal"
+            aria-label={t("qrClose")}
             className="cursor-pointer rounded-lg p-1 text-[var(--muted)] transition-colors hover:bg-[var(--surface2)] hover:text-[var(--foreground)]"
           >
             <X size={18} />
@@ -118,7 +120,7 @@ export default function ProjectQrButton({
         </div>
 
         <p className="text-center text-xs text-[var(--muted)]">
-          Scan with your phone to open the running server
+          {t("qrHint")}
         </p>
 
         {/* URL Display & Action Buttons */}
@@ -130,8 +132,8 @@ export default function ProjectQrButton({
             <button
               type="button"
               onClick={handleCopy}
-              aria-label="Copy server URL"
-              title={copied ? "Copied!" : "Copy link"}
+              aria-label={t("qrCopy")}
+              title={copied ? t("qrCopied") : t("qrCopyLink")}
               className="cursor-pointer rounded p-1 text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
             >
               {copied ? (
@@ -144,8 +146,8 @@ export default function ProjectQrButton({
               href={activeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Open server link in new tab"
-              title="Open link"
+              aria-label={t("qrOpen")}
+              title={t("qrOpenLink")}
               className="rounded p-1 text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
             >
               <ExternalLink size={15} />
@@ -161,9 +163,9 @@ export default function ProjectQrButton({
       <button
         type="button"
         onClick={handleOpen}
-        aria-label="Open server QR code"
-        title="Server QR code"
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-lg transition-all duration-200 hover:scale-105 hover:border-[var(--border-hover)] active:scale-95 focus:outline-none"
+        aria-label={t("qrButton")}
+        title={t("qrButtonTitle")}
+        className="server-qr-button"
       >
         <QrCode size={22} strokeWidth={1.8} />
       </button>

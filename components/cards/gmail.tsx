@@ -4,21 +4,23 @@ import { useCallback, useEffect, useState } from "react";
 import Card from "@/components/card";
 import SectionTitle from "@/components/sectionTitle";
 import { GmailMessage } from "@/types/gmail";
+import { useLocale } from "@/contexts/localeContext";
+import type { Locale } from "@/lib/i18n";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function relativeDate(dateStr: string): string {
+function relativeDate(dateStr: string, locale: Locale): string {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr;
   const diffMs = Date.now() - date.getTime();
   const diffMin = Math.floor(diffMs / 60_000);
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 1) return locale === "en" ? "just now" : "agora";
+  if (diffMin < 60) return locale === "en" ? `${diffMin}m ago` : `há ${diffMin} min`;
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h ago`;
+  if (diffH < 24) return locale === "en" ? `${diffH}h ago` : `há ${diffH} h`;
   const diffD = Math.floor(diffH / 24);
-  if (diffD < 7) return `${diffD}d ago`;
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  if (diffD < 7) return locale === "en" ? `${diffD}d ago` : `há ${diffD} d`;
+  return date.toLocaleDateString(locale, { day: "2-digit", month: "short" });
 }
 
 function senderName(from: string): string {
@@ -37,6 +39,7 @@ function EmailRow({
   email: GmailMessage;
   onOpen: (id: string) => void;
 }) {
+  const { locale } = useLocale();
   return (
     <button
       onClick={() => onOpen(email.id)}
@@ -72,7 +75,7 @@ function EmailRow({
           {senderName(email.from)}
         </span>
         <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--font-mono)", flexShrink: 0 }}>
-          {relativeDate(email.date)}
+          {relativeDate(email.date, locale)}
         </span>
       </div>
 
@@ -110,6 +113,7 @@ function EmailModal({
   email: GmailMessage;
   onClose: () => void;
 }) {
+  const { locale } = useLocale();
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -155,7 +159,7 @@ function EmailModal({
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 12, color: "var(--muted)" }}>{email.from}</span>
-            <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--font-mono)" }}>{relativeDate(email.date)}</span>
+            <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--font-mono)" }}>{relativeDate(email.date, locale)}</span>
           </div>
         </div>
 
@@ -189,32 +193,46 @@ export default function GmailCard() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
+  const [olderError, setOlderError] = useState(false);
   const [nextPageToken, setNextPageToken] = useState<string | undefined>();
   const [openEmail, setOpenEmail] = useState<GmailMessage | null>(null);
   const [loadingBody, setLoadingBody] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/emails")
-      .then((r) => r.json())
-      .then((json) => {
-        setEmails(json.data?.emails ?? []);
-        setNextPageToken(json.data?.nextPageToken);
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+  const { t } = useLocale();
+
+  const loadInbox = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const response = await fetch("/api/emails");
+      if (!response.ok) throw new Error("gmail");
+      const json = await response.json();
+      setEmails(json.data?.emails ?? []);
+      setNextPageToken(json.data?.nextPageToken);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadInbox();
+  }, [loadInbox]);
 
   const loadMore = async () => {
     if (!nextPageToken || loadingMore) return;
     setLoadingMore(true);
+    setOlderError(false);
     try {
       const startAt = emails.length + 1;
       const res = await fetch(`/api/emails?pageToken=${encodeURIComponent(nextPageToken)}&startAt=${startAt}`);
+      if (!res.ok) throw new Error("gmail");
       const json = await res.json();
       setEmails((prev) => [...prev, ...(json.data?.emails ?? [])]);
       setNextPageToken(json.data?.nextPageToken);
     } catch {
-      // silently fail — user can retry
+      setOlderError(true);
     } finally {
       setLoadingMore(false);
     }
@@ -245,6 +263,7 @@ export default function GmailCard() {
     setLoadingBody(true);
     try {
       const res = await fetch(`/api/emails/${id}`);
+      if (!res.ok) return;
       const json = await res.json();
       if (json.data) {
         setOpenEmail((prev) => prev ? { ...prev, body: json.data.body } : prev);
@@ -262,7 +281,7 @@ export default function GmailCard() {
       <Card>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <SectionTitle>📧 Inbox</SectionTitle>
+            <SectionTitle>📧 {t("gmailInbox")}</SectionTitle>
             {unreadCount > 0 && (
               <span style={{
                 background: "#1a73e8", color: "#fff",
@@ -275,34 +294,42 @@ export default function GmailCard() {
             )}
           </div>
           <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--font-mono)" }}>
-            {emails.length} shown
+            {t("gmailShown", { count: emails.length })}
           </span>
         </div>
 
         {loading && (
-          <div style={{ color: "var(--muted)", fontSize: 13 }}>Loading…</div>
+          <div style={{ color: "var(--muted)", fontSize: 13 }}>{t("gmailLoading")}</div>
         )}
 
         {error && (
-          <div style={{ color: "var(--muted)", fontSize: 13 }}>Failed to load emails.</div>
+          <div className="card-state" role="alert">
+            <p>{t("gmailError")}</p>
+            <button type="button" className="card-retry" onClick={() => { void loadInbox(); }}>{t("retry")}</button>
+          </div>
         )}
 
         {!loading && !error && emails.length === 0 && (
-          <div style={{ color: "var(--muted)", fontSize: 13 }}>No emails found.</div>
+          <div style={{ color: "var(--muted)", fontSize: 13 }}>{t("gmailEmpty")}</div>
         )}
 
         {!loading && !error && emails.map((email) => (
           <EmailRow key={email.id} email={email} onOpen={handleOpen} />
         ))}
 
+        {!loading && !error && olderError && (
+          <p className="card-state" role="alert">{t("gmailOlderError")}</p>
+        )}
         {!loading && !error && nextPageToken && (
           <button
+            type="button"
             onClick={loadMore}
             disabled={loadingMore}
             style={{
               width: "100%",
               marginTop: 10,
-              padding: "8px 0",
+              padding: "12px 0",
+              minHeight: 44,
               background: "none",
               border: "1px solid var(--border)",
               borderRadius: 8,
@@ -313,10 +340,8 @@ export default function GmailCard() {
               transition: "border-color 0.15s, color 0.15s",
               opacity: loadingMore ? 0.5 : 1,
             }}
-            onMouseEnter={(e) => { if (!loadingMore) { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--foreground)"; }}}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted)"; }}
           >
-            {loadingMore ? "Loading…" : "Load older emails"}
+            {loadingMore ? t("gmailLoading") : t("gmailOlder")}
           </button>
         )}
       </Card>

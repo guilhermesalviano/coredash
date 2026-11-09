@@ -41,7 +41,7 @@ export default function ActiveCards() {
         <StatusReporter statuses={autoSuccessStatuses} />
       )}
 
-      <div className="gap-4 m-4!" style={{ columns: "25rem" }}>
+      <div className="cards-board">
         {cards.map(({ id, Component }) => (
           <div key={id} style={{ breakInside: "avoid", marginBottom: "1rem" }}>
             <Component />

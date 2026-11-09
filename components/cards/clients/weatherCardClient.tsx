@@ -1,18 +1,29 @@
 "use client";
 
 import { useDashboard } from "@/hooks/useDashboard";
+import { retrySlice } from "@/lib/dashboardStore";
+import { errorCopy } from "@/lib/i18n";
+import { useLocale } from "@/contexts/localeContext";
 import type { WeatherData } from "@/features/weather/types";
 import WeatherCard from "../weather";
-import Card from "../../card";
+import CardState from "../../cardState";
 
 export default function WeatherCardClient() {
   const { weather } = useDashboard();
+  const { locale, t } = useLocale();
 
-  if (weather.status === "idle" || weather.status === "loading") {
-    return <Card className="weather-card">Carregando clima...</Card>;
+  if ((weather.status === "idle" || weather.status === "loading") && !weather.data) {
+    return <CardState title={t("weatherTitle")} message={t("weatherLoading")} loading />;
   }
-  if (weather.status === "error" || !weather.data) {
-    return <Card className="weather-card">Erro na busca de dados, tente novamente.</Card>;
+  if (weather.status === "error" && !weather.data) {
+    return (
+      <CardState
+        title={t("weatherTitle")}
+        message={errorCopy(weather.error, locale)}
+        onRetry={() => { void retrySlice("weather"); }}
+      />
+    );
   }
+  if (!weather.data) return null;
   return <WeatherCard data={weather.data as WeatherData} />;
 }

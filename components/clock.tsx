@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/contexts/localeContext";
 
 export default function Clock() {
+  const { locale, t } = useLocale();
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -15,9 +17,9 @@ export default function Clock() {
     };
   }, []);
 
-  return time?.toLocaleTimeString("pt-BR", {
+  return time?.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-  }) ?? "loading";
+  }) ?? t("clockLoading");
 }

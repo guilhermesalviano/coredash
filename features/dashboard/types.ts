@@ -8,6 +8,7 @@ export interface DashboardSlice<T> {
   data: T | null;
   status: DashboardStatus;
   lastFetchedAt: number;
+  error: string | null;
 }
 
 export interface DashboardStore {

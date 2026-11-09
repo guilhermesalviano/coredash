@@ -155,9 +155,11 @@ fun DashboardScreen(
                             CardId.CALENDAR -> CalendarCard(
                                 events = uiState.calendarEvents,
                                 loading = uiState.calendarLoading,
+                                error = uiState.calendarError,
                                 selectedCalendarIds = current.selectedCalendarIds,
                                 calendarDays = current.calendarDays,
                                 onLoad = viewModel::loadCalendar,
+                                onRetry = viewModel::retryCalendar,
                             )
                             CardId.GMAIL -> PlaceholderCard(title = "Gmail")
                             CardId.TODO -> TodoCard(
